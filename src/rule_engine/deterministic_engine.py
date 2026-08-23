@@ -43,12 +43,14 @@ class DeterministicRuleEngine:
         flat_facts = self._flatten_fact_values(enriched_facts)
         applicable_topic_num = enriched_facts.get("applicable_topic_num")
 
-        # 2. Avaliação de Regras da Norma Ativa
+        # 2. Avaliação de Regras da Norma Ativa com as 6 Travas Arquiteturais
         for rule in self.rules:
-            rule_code = rule["rule_code"]
-            title = rule["title"]
-            condition = rule["condition"]
+            rule_code = rule.get("rule_code", "UNKNOWN_RULE")
+            title = rule.get("title", rule_code)
+            condition = rule.get("condition", {})
             required_evidences = rule.get("required_evidence_fields", [])
+            is_mandatory = rule.get("mandatory", True)
+            is_blocking = rule.get("blocking", True)
 
             # Se for regra de tema específico (TEMA_XX_), avalia apenas se for o tema do processo
             tema_match = re.match(r'TEMA_(\d{1,2})_', rule_code)
@@ -57,36 +59,44 @@ class DeterministicRuleEngine:
                 if rule_topic_num != applicable_topic_num:
                     continue
             
-            # 2.1 Validação de Evidência Obrigatória
+            # TRAVA 1: PASS sem evidência idônea comprovada é INVÁLIDO -> Vira UNKNOWN
             missing_evidence = False
+            ev_ids = []
             for req_field in required_evidences:
                 evidence_obj = self._extract_nested_value(enriched_facts, f"{req_field}.evidence")
                 if not evidence_obj:
                     val = self._extract_nested_value(enriched_facts, req_field)
                     if isinstance(val, dict) and val.get("evidence"):
                         evidence_obj = val.get("evidence")
-                if not evidence_obj:
+                if not evidence_obj or not isinstance(evidence_obj, dict) or not evidence_obj.get("page_number"):
                     missing_evidence = True
                     break
+                else:
+                    ev_ids.append(f"{evidence_obj.get('document_type', 'DOC')}_PAG_{evidence_obj.get('page_number')}")
 
-            if missing_evidence:
+            if missing_evidence and required_evidences:
+                on_unknown_effect = rule.get("on_unknown", "UNKNOWN")
                 rule_results.append(RuleEvaluationResult(
                     rule_code=rule_code,
                     title=title,
                     status="UNKNOWN",
-                    failure_reason=f"Evidência documental obrigatória não comprovada para o critério: {title}"
+                    failure_reason=f"Evidência documental obrigatória não comprovada nos autos para o critério: {title}",
+                    evidence_ids=ev_ids
                 ))
-                has_unknown = True
+                if is_mandatory or is_blocking or on_unknown_effect in ["UNKNOWN", "FAIL", "REVIEW"]:
+                    has_unknown = True
                 continue
 
-            # 2.2 Avaliação Determinística da Expressão Lógica
+            # Avaliação Determinística da Expressão JSON-Logic
             try:
                 passed = bool(evaluate_json_logic(condition, flat_facts))
                 if passed:
+                    # TRAVA 1 (Verificação Cruzada): se for PASS, garante que não seja modelo sem evidência
                     rule_results.append(RuleEvaluationResult(
                         rule_code=rule_code,
                         title=title,
-                        status="PASS"
+                        status="PASS",
+                        evidence_ids=ev_ids
                     ))
                 else:
                     failure_msg = rule.get("failure_message_template", "Critério não atendido.")
@@ -97,9 +107,10 @@ class DeterministicRuleEngine:
                         rule_code=rule_code,
                         title=title,
                         status="FAIL",
-                        failure_reason=failure_msg
+                        failure_reason=failure_msg,
+                        evidence_ids=ev_ids
                     ))
-                    if rule.get("mandatory", True):
+                    if is_mandatory or is_blocking:
                         has_critical_failure = True
 
             except Exception as e:
@@ -137,17 +148,18 @@ class DeterministicRuleEngine:
                 "do STJ (REsp 2.064.964/SP e AgInt no REsp 2.122.472/SP)."
             )
 
-        # 5. Consolidação do Veredito Final
-        if has_unknown:
-            overall_verdict = "REQUIRES_HUMAN_REVIEW"
-            summary = "Processo requer revisão humana devido a evidências ausentes ou inconclusivas."
-        elif has_critical_failure:
+        # 5. Consolidação do Veredito Final (TRAVA 2: ELIGIBLE com requisito pendente é ESTRITAMENTE BLOQUEADO)
+        if has_critical_failure:
             overall_verdict = "INELIGIBLE"
-            failed_titles = [r.title for r in rule_results if r.status == "FAIL"]
-            summary = f"Processo não elegível para acordo. Não atende aos critérios: {'; '.join(failed_titles)}."
+            failed_rules = [r.title for r in rule_results if r.status == "FAIL"]
+            summary = f"Processo não elegível para acordo. Não atende aos critérios: {'; '.join(failed_rules)}."
+        elif has_unknown:
+            overall_verdict = "REQUIRES_HUMAN_REVIEW"
+            unknown_rules = [r.title for r in rule_results if r.status == "UNKNOWN"]
+            summary = f"Processo encaminhado para fila Human-in-the-Loop (HITL). Informações pendentes de validação: {'; '.join(unknown_rules)}."
         elif is_conditionally_eligible:
             overall_verdict = "CONDITIONALLY_ELIGIBLE"
-            summary = "Processo elegível para acordo em caráter CONDICIONADO (exige renúncia expressa a A.T. Escolar homologada judicialmente)."
+            summary = "Processo elegível para acordo condicionado à aceitação de cláusulas restritivas específicas."
         else:
             overall_verdict = "ELIGIBLE"
             summary = "Processo 100% elegível para celebração de acordo conforme a norma interna vigente."
