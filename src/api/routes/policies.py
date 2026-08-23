@@ -43,13 +43,18 @@ async def get_active_policy(tenant_id: Optional[str] = None):
         if not active_ver:
             return {"status": "NO_ACTIVE_POLICY", "message": "Nenhuma norma ativa cadastrada."}
 
+        structured = active_ver.structured_rules or {}
+        rules_list = structured.get("all_rules") or structured.get("rules", [])
+        if not rules_list and "topics" in structured:
+            rules_list = [r for t in structured["topics"] for r in t.get("rules", [])]
+
         return {
             "id": active_ver.id,
             "version": active_ver.version,
             "status": active_ver.status,
-            "structured_rules": active_ver.structured_rules,
-            "rules": active_ver.structured_rules.get("rules", []),
-            "total_rules": len(active_ver.structured_rules.get("rules", []))
+            "structured_rules": structured,
+            "rules": rules_list,
+            "total_rules": len(rules_list)
         }
     finally:
         db.close()

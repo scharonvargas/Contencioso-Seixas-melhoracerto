@@ -285,7 +285,7 @@ class ProcessExecutionService:
         Extrai valores monetários, diagnósticos, comprovantes, negativas e fatos de cada página do processo,
         avaliando tópicos e vedações de forma 100% dinâmica a partir do PDF da norma ativa.
         """
-        full_text = " \n ".join([p.get("raw_text", "") for p in pages])
+        full_text = " \n ".join([p.get("raw_text") or "" for p in pages])
         full_text_lower = full_text.lower()
 
         # 1. Extração robusta de valor pleiteado na petição inicial, decisões e comprovantes
@@ -323,8 +323,8 @@ class ProcessExecutionService:
         material_amount = requested_amount if moral_amount == 0 else max(0.0, requested_amount - moral_amount)
 
         # 1.2 Detecção Precisa de Fase Processual (Petição Inicial vs Sentença/Acórdão)
-        first_pages_text = " \n ".join([p.get("raw_text", "").lower() for p in pages[:3]])
-        last_pages_text = " \n ".join([p.get("raw_text", "").lower() for p in pages[-5:]])
+        first_pages_text = " \n ".join([(p.get("raw_text") or "").lower() for p in pages[:3]])
+        last_pages_text = " \n ".join([(p.get("raw_text") or "").lower() for p in pages[-5:]])
 
         is_initial_petition = any(k in first_pages_text for k in [
             "petição inicial", "peticao inicial", "excelentíssimo senhor doutor", "excelentissimo senhor doutor",
@@ -347,32 +347,40 @@ class ProcessExecutionService:
 
         best_topic = None
         best_score = 0
+        norm_full_text = BrazilianDomainValidator.normalize_text_for_matching(full_text_lower)
+
         if structured_rules and "topics" in structured_rules:
             for t in structured_rules["topics"]:
                 t_num = t.get("topic_number", 1)
-                t_name = t.get("topic_name", "").lower()
-                clean_keywords = [w for w in re.findall(r'\w{4,}', t_name) if w not in ["tema", "para", "com", "sem", "sobre", "acordo", "acordos", "entre", "outros", "demais"]]
+                t_name = t.get("topic_name", "")
+                norm_t_name = BrazilianDomainValidator.normalize_text_for_matching(t_name)
+                
+                clean_keywords = [w for w in re.findall(r'[a-z]{4,}', norm_t_name) if w not in ["tema", "para", "com", "sem", "sobre", "acordo", "acordos", "entre", "outros", "demais"]]
                 if clean_keywords:
-                    matched_words = [kw for kw in clean_keywords if kw in full_text_lower]
+                    matched_words = [kw for kw in clean_keywords if kw in norm_full_text]
                     if matched_words:
-                        # Pontua pela quantidade de palavras casadas e frequência no documento
                         score = len(matched_words) * 20
                         for kw in matched_words:
-                            cnt = min(full_text_lower.count(kw), 10)
+                            cnt = min(norm_full_text.count(kw), 15)
                             score += cnt * len(kw)
 
-                        # Bônus de frase exata do título
-                        clean_t_name = re.sub(r'\(.*?\)', '', t_name).strip()
-                        if len(clean_t_name) > 6 and clean_t_name in full_text_lower:
+                        clean_t_name = re.sub(r'\(.*?\)', '', norm_t_name).strip()
+                        if len(clean_t_name) > 5 and clean_t_name in norm_full_text:
                             score += 80
 
-                        # Casos especiais de alta precisão baseados no léxico do tema
-                        if "fraude" in clean_keywords and any(k in full_text_lower for k in ["boleto falso", "golpe do boleto", "fraude de boleto", "fatura falsa"]):
+                        # Bônus léxicos especializados por tema
+                        if "carencia" in clean_keywords and any(k in norm_full_text for k in ["carencia", "parto", "urgencia", "emergencia"]):
+                            score += 200
+                        if "fraude" in clean_keywords and any(k in norm_full_text for k in ["boleto falso", "golpe do boleto", "fraude de boleto", "fatura falsa"]):
+                            score += 250
+                        if "terapias" in clean_keywords and any(k in norm_full_text for k in ["aba", "denver", "prompt", "pecs", "espectro autista"]):
+                            score += 200
+                        if "medicamento" in clean_keywords and any(k in norm_full_text for k in ["antineoplasico", "farmaco", "medicamento importado"]):
                             score += 150
-                        if "terapias" in clean_keywords and any(k in full_text_lower for k in ["aba", "denver", "prompt", "pecs", "espectro autista"]):
-                            score += 150
-                        if "medicamento" in clean_keywords and any(k in full_text_lower for k in ["antineoplásico", "fármaco", "medicamento importado"]):
-                            score += 100
+                        if "autorizacao" in clean_keywords and any(k in norm_full_text for k in ["demora na autorizacao", "atraso na autorizacao", "tempo habil"]):
+                            score += 180
+                        if "reembolso" in clean_keywords and any(k in norm_full_text for k in ["reembolso", "despesas medicas", "restituicao do valor"]):
+                            score += 180
 
                         if score > best_score:
                             best_score = score
@@ -381,18 +389,21 @@ class ProcessExecutionService:
                 identified_theme = f"Tema {best_topic.get('topic_number', 1):02d}: {best_topic.get('topic_name')}"
                 applicable_topic_num = best_topic.get("topic_number", 1)
         else:
-            if any(k in full_text_lower for k in ["aba", "denver", "prompt", "pecs", "terapia especial", "espectro autista", "f84"]):
+            if any(k in norm_full_text for k in ["carencia"]):
+                identified_theme = "Tema 04: Carência"
+                applicable_topic_num = 4
+            elif any(k in norm_full_text for k in ["aba", "denver", "prompt", "pecs", "terapia especial", "espectro autista"]):
                 identified_theme = "Tema 01: Terapias Especiais"
                 applicable_topic_num = 1
-            elif any(k in full_text_lower for k in ["home care", "internação domiciliar", "assistência domiciliar"]):
+            elif any(k in norm_full_text for k in ["home care", "internacao domiciliar", "assistencia domiciliar"]):
                 identified_theme = "Tema 02: Home Care"
                 applicable_topic_num = 2
-            elif any(k in full_text_lower for k in ["medicamento", "antineoplásico", "fármaco", "remédio"]):
+            elif any(k in norm_full_text for k in ["medicamento", "antineoplasico", "farmaco", "remedio"]):
                 identified_theme = "Tema 03: Medicamentos"
                 applicable_topic_num = 3
-            elif any(k in full_text_lower for k in ["reembolso", "despesas médicas", "nota fiscal", "recibo"]):
-                identified_theme = "Tema 11: Reembolso"
-                applicable_topic_num = 11
+            elif any(k in norm_full_text for k in ["reembolso", "despesas medicas", "nota fiscal", "recibo"]):
+                identified_theme = "Tema 18: Reembolso"
+                applicable_topic_num = 18
 
         # 3. Inicialização e Avaliação Dinâmica de Vedações do PDF da Norma Ativa
         topics_facts = {}
@@ -407,7 +418,6 @@ class ProcessExecutionService:
                         "evidence": {"document_type": "PETICAO_INICIAL", "page_number": 1}
                     }
         else:
-            # Fallback dinâmico agnóstico
             topics_facts["topic_01"] = {
                 "requirements_met": True,
                 "has_prohibition": False,
@@ -424,23 +434,42 @@ class ProcessExecutionService:
                 reqs = t.get("requirements", [])
                 prohibitions = t.get("prohibitions", [])
 
-                # Se a norma exige sentença e o processo está em fase pré-sentença
+                # Se a norma veda acordo expressamente em fase pré-sentença para este tema (ex: Fraude de boleto)
                 if procedural_stage == "PRE_SENTENCA":
                     combined_rules_text = " ".join([BrazilianDomainValidator.normalize_text_for_matching(x) for x in reqs + prohibitions])
                     if any(k in combined_rules_text for k in [
-                        "somente com sentenca", "nao fazer acordo pre sentenca", "nao fazer acordo pre",
-                        "pos sentenca", "apos sentenca", "sentenca de procedencia", "fraude"
+                        "somente com sentenca", "nao fazer acordo pre sentenca", "nao faremos acordo em casos pre-sentenca",
+                        "nao faremos acordo pre sentenca", "somente em casos com sentenca"
                     ]):
                         topics_facts[f"topic_{t_num:02d}"]["has_prohibition"] = True
                         topics_facts[f"topic_{t_num:02d}"]["requirements_met"] = False
                         break
 
+                # Avaliação de Vedações Específicas: verifica se o processo incide em termos vedados específicos
                 for prohib in prohibitions:
                     prohib_clean = BrazilianDomainValidator.normalize_text_for_matching(prohib)
-                    prohib_tokens = [w for w in prohib_clean.split() if len(w) > 4 and w not in ["acordo", "acordos", "sentenca", "hipoteses", "permitido", "fazemos", "operadora", "beneficiario"]]
-                    if len(prohib_tokens) >= 1:
-                        match_count = sum(1 for tok in prohib_tokens if tok in full_text_lower)
-                        if (len(prohib_tokens) == 1 and match_count >= 1) or (match_count >= 2) or any(phrase.strip() in full_text_lower for phrase in prohib.lower().split(',') if len(phrase.strip()) > 6):
+                    
+                    # Extrai termos específicos entre parênteses ou termos técnicos chave
+                    specific_terms = re.findall(r'\((.*?)\)', prohib)
+                    terms_to_check = []
+                    if specific_terms:
+                        for st in specific_terms:
+                            terms_to_check.extend([s.strip().lower() for s in st.split(',') if len(s.strip()) > 2])
+                    
+                    # Adiciona expressões compostas proibitivas extraídas do manual
+                    for direct_term in [
+                        "transplante", "gastroplastia endoscopica", "fertilizacao in vitro",
+                        "procedimento com fins esteticos", "foundation one", "sem registro na anvisa",
+                        "paciente sus na rede privada", "protese customizada", "off label", "off-label",
+                        "experimental", "reembolso integral", "prestador particular", "nao nacionalizado",
+                        "mig", "treini", "padovan", "cuevas", "pediasuit", "therasuit", "floortime", "neurofeedback"
+                    ]:
+                        if direct_term in prohib_clean:
+                            terms_to_check.append(direct_term)
+
+                    for term in terms_to_check:
+                        norm_term = BrazilianDomainValidator.normalize_text_for_matching(term)
+                        if len(norm_term) >= 3 and norm_term in norm_full_text:
                             topics_facts[f"topic_{t_num:02d}"]["has_prohibition"] = True
                             topics_facts[f"topic_{t_num:02d}"]["requirements_met"] = False
                             break
@@ -486,7 +515,7 @@ class ProcessExecutionService:
 
         # 6. Varredura profunda em cada página individual para associar evidências exatas
         for p in pages:
-            raw_text = p.get("raw_text", "")
+            raw_text = p.get("raw_text") or ""
             raw_lower = raw_text.lower()
             page_num = p.get("page_number", 1)
 

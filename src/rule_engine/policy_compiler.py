@@ -297,23 +297,22 @@ class DynamicPolicyCompiler:
         """
         rules = []
 
-        # 1. Regra de Limite Financeiro / Dano Moral se especificado no tema (ex: R$ 7.200, R$ 2.000, R$ 100.000)
-        all_text = " ".join(parameters + requirements + prohibitions)
-        amounts = re.findall(r'R\$\s*([\d.,]+)', all_text)
-        
-        if amounts:
+        # 1. Regra de Limite de Alto Custo (ex: procedimentos acima de R$ 100.000,00)
+        high_cost_matches = re.findall(r'(?:superior\s+a|acima\s+de)\s+R\$\s*([\d.,]+)', " ".join(requirements + prohibitions), re.IGNORECASE)
+        if high_cost_matches:
             from src.validators.brazilian_validators import BrazilianDomainValidator
-            parsed_vals = [BrazilianDomainValidator.parse_brazilian_currency(a) for a in amounts if BrazilianDomainValidator.parse_brazilian_currency(a)]
-            if parsed_vals:
-                limit_val = max(parsed_vals)
-                rules.append({
-                    "rule_code": f"TEMA_{topic_num:02d}_LIMITE_VALOR",
-                    "title": f"Teto Operacional de Acordo ({topic_name})",
-                    "mandatory": True,
-                    "condition": {"<=": [{"var": "financial.capped_amount"}, limit_val]},
-                    "required_evidence_fields": ["financial"],
-                    "failure_message_template": f"Valor excede a alçada autorizada no tema ({topic_name}): R$ {limit_val:,.2f}."
-                })
+            for hm in high_cost_matches:
+                p_val = BrazilianDomainValidator.parse_brazilian_currency(hm)
+                if p_val and p_val >= 50000.0:
+                    rules.append({
+                        "rule_code": f"TEMA_{topic_num:02d}_ALTO_CUSTO_MAXIMO",
+                        "title": f"Teto de Alto Custo ({topic_name})",
+                        "mandatory": True,
+                        "condition": {"<=": [{"var": "financial.requested_amount"}, p_val]},
+                        "required_evidence_fields": ["financial"],
+                        "failure_message_template": f"Custo do procedimento excede o teto de alto custo de R$ {p_val:,.2f} sem prévia autorização."
+                    })
+                    break
 
         # 2. Regras de Evidências Específicas baseadas no texto dos requisitos
         reqs_lower = " ".join(requirements).lower()
