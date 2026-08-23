@@ -171,88 +171,107 @@ class DynamicPolicyCompiler:
         topics: List[DynamicTopicRule] = []
         all_rules: List[Dict[str, Any]] = []
 
-        # 1. Tenta extração via tópicos numerados estruturados (1. Terapias Especiais:, 2. Home Care:, etc.)
-        numbered_topic_pattern = re.compile(
-            r'(?:^|\n)\s*(\d{1,3})\.\s+([A-Za-zÀ-ÖØ-öø-ÿ\s\(\)/,\-]{3,120}):\s*\n(.*?)(?=(?:(?:\n\s*\d{1,3}\.\s+[A-Za-zÀ-ÖØ-öø-ÿ\s\(\)/,\-]{3,120}:)|(?:\n\s*Rotinas e Atualização)|(?:\n\s*Atributos do Documento)|$))',
-            re.DOTALL
-        )
-        numbered_matches = list(numbered_topic_pattern.finditer(cleaned_text))
+        # 1. Tenta extração via marcadores com bullets (•) - padrão dos manuais corporativos Amil / Operadoras
+        bullet_matches = list(re.finditer(r'(?:^|\n)\s*[•]\s*([^\n]+)', cleaned_text))
+        
+        if len(bullet_matches) >= 3:
+            for idx, m in enumerate(bullet_matches, 1):
+                start_pos = m.start()
+                end_pos = bullet_matches[idx].start() if idx < len(bullet_matches) else len(cleaned_text)
+                raw_title = m.group(1).strip()
+                clean_title = re.sub(r'\s*\(.*?\)$', '', raw_title).strip()
+                topic_title = clean_title if (clean_title and len(clean_title) >= 2) else f"Tema {idx}"
+                section = cleaned_text[start_pos:end_pos].strip()
 
-        if len(numbered_matches) >= 2:
-            seen_topics = set()
-            for m in numbered_matches:
-                topic_num = int(m.group(1))
-                if topic_num in seen_topics:
-                    continue
-                seen_topics.add(topic_num)
-
-                raw_title = (m.group(2) or "").strip()
-                topic_title = raw_title if (raw_title and len(raw_title) >= 3 and not raw_title.lower().startswith("requisitos")) else f"Tema {topic_num}"
-
-                content = (m.group(3) or "").strip()
-                reqs = cls._extract_bullet_points(content, r'Requisitos:(.*?)(?=(?:Parâmetros do Acordo:|Acordos Pós|Não permitido|CLÁUSULA|$))')
-                params = cls._extract_bullet_points(content, r'Parâmetros do Acordo:(.*?)(?=(?:Acordos Pós|Não permitido|Requisitos:|CLÁUSULA|$))')
-                post_sentence = cls._extract_bullet_points(content, r'Acordos Pós(?:[\s\w-]+)?:\s*(.*?)(?=(?:Não permitido|Parâmetros|Requisitos:|CLÁUSULA|$))')
-                prohibitions = cls._extract_bullet_points(content, r'Não permitido(?:[\s\w-]+)?:\s*(.*?)(?=(?:Acordos Pós|Parâmetros|Requisitos:|CLÁUSULA|$))')
-                clauses = cls._extract_bullet_points(content, r'CLÁUSULA OBRIGATÓRIA(?:[\s\w-]+)?:\s*(.*?)(?=(?:Acordos Pós|Parâmetros|Requisitos:|Não permitido|$))')
-
-                # Categorização dinâmica e contextual
                 is_non_assistential = any(
-                    k in (content + " " + topic_title).lower()
+                    k in (section + " " + topic_title).lower()
                     for k in ["reajuste", "cancelamento", "movimentação", "inativo", "boleto", "fraude", "protesto", "mensalidade", "cadastro", "documento", "rescisão"]
                 )
                 category = "NÃO ASSISTENCIAL" if is_non_assistential else "ASSISTENCIAL"
 
-                topic_logic_rules = cls._build_topic_logic(topic_num, topic_title, reqs, params, prohibitions)
+                stop_headings = r'(?:Acordos\s+p[oó]s|Exce[çc][oõ]es|N[aã]o\s+faremos|N[aã]o\s+permitido|CL[AÁ]USULA|Obs:|$)'
+
+                pre_sentence = cls._extract_clean_items(
+                    section,
+                    r'(?:Acordos\s+pr[eé]-(?:senten[çc]a|condena[çc][aã]o)|Requisitos|Faremos\s+acordos\s+nas\s+seguintes\s+hip[oó]teses):\s*',
+                    stop_headings
+                )
+                
+                prohibitions = cls._extract_clean_items(
+                    section,
+                    r'(?:Exce[çc][oõ]es|N[aã]o\s+faremos\s+acordos?|N[aã]o\s+faremos\s+acordo|N[aã]o\s+permitido|N[aã]o\s+indicado\s+para\s+acordo):\s*',
+                    r'(?:Acordos\s+p[oó]s|Acordos\s+pr[eé]|CL[AÁ]USULA|Obs:|$)'
+                )
+
+                if not prohibitions and re.search(r'N[aã]o\s+faremos\s+acordo\s+em\s+casos?\s+pr[eé]', section, re.IGNORECASE):
+                    prohibitions = ["Não faremos acordo em casos pré condenação."]
+
+                post_sentence = cls._extract_clean_items(
+                    section,
+                    r'Acordos\s+p[oó]s(?:[\s\w-]+)?:\s*',
+                    r'(?:Exce[çc][oõ]es|N[aã]o\s+faremos|CL[AÁ]USULA|Obs:|$)'
+                )
+
+                params = pre_sentence + post_sentence
+
+                topic_logic_rules = cls._build_topic_logic(idx, topic_title, pre_sentence, params, prohibitions)
                 all_rules.extend(topic_logic_rules)
 
                 topics.append(DynamicTopicRule(
-                    topic_number=topic_num,
-                    topic_name=topic_title,
+                    topic_number=idx,
+                    topic_name=raw_title,
                     category=category,
-                    requirements=reqs,
+                    requirements=pre_sentence,
                     agreement_parameters=params,
                     post_sentence_rules=post_sentence,
                     prohibitions=prohibitions,
-                    mandatory_clauses=clauses,
+                    mandatory_clauses=[],
                     rules=topic_logic_rules
                 ))
         else:
-            # 2. Fallback para seções ou marcadores com bullets (• ou -)
-            bullet_splits = re.split(r'\n\s*[•\-]\s*', cleaned_text)
-            if len(bullet_splits) > 1:
-                for idx, section in enumerate(bullet_splits[1:], 1):
-                    lines = [l.strip() for l in section.strip().split('\n') if l.strip()]
-                    if not lines:
+            # 2. Tenta extração via tópicos numerados estruturados (1. Terapias Especiais:, 2. Home Care:, etc.)
+            numbered_topic_pattern = re.compile(
+                r'(?:^|\n)\s*(\d{1,2})\.\s+([A-Za-zÀ-ÖØ-öø-ÿ\s\(\)/,\-]{3,80}):\s*\n(.*?)(?=(?:(?:\n\s*\d{1,2}\.\s+[A-Za-zÀ-ÖØ-öø-ÿ\s\(\)/,\-]{3,80}:)|(?:\n\s*Rotinas e Atualização)|(?:\n\s*Atributos do Documento)|$))',
+                re.DOTALL
+            )
+            numbered_matches = list(numbered_topic_pattern.finditer(cleaned_text))
+
+            if len(numbered_matches) >= 2:
+                seen_topics = set()
+                for m in numbered_matches:
+                    topic_num = int(m.group(1))
+                    if topic_num in seen_topics:
                         continue
-                    raw_title = lines[0].strip()
-                    clean_title = re.sub(r'\s*\(.*?\)$', '', raw_title).strip()
-                    topic_title = clean_title if (clean_title and len(clean_title) >= 2) else f"Tema {idx}"
+                    seen_topics.add(topic_num)
+
+                    raw_title = (m.group(2) or "").strip()
+                    topic_title = raw_title if (raw_title and len(raw_title) >= 3 and not raw_title.lower().startswith("requisitos")) else f"Tema {topic_num}"
+
+                    content = (m.group(3) or "").strip()
+                    reqs = cls._extract_bullet_points(content, r'Requisitos:(.*?)(?=(?:Parâmetros do Acordo:|Acordos Pós|Não permitido|CLÁUSULA|$))')
+                    params = cls._extract_bullet_points(content, r'Parâmetros do Acordo:(.*?)(?=(?:Acordos Pós|Não permitido|Requisitos:|CLÁUSULA|$))')
+                    post_sentence = cls._extract_bullet_points(content, r'Acordos Pós(?:[\s\w-]+)?:\s*(.*?)(?=(?:Não permitido|Parâmetros|Requisitos:|CLÁUSULA|$))')
+                    prohibitions = cls._extract_bullet_points(content, r'Não permitido(?:[\s\w-]+)?:\s*(.*?)(?=(?:Acordos Pós|Parâmetros|Requisitos:|CLÁUSULA|$))')
+                    clauses = cls._extract_bullet_points(content, r'CLÁUSULA OBRIGATÓRIA(?:[\s\w-]+)?:\s*(.*?)(?=(?:Acordos Pós|Parâmetros|Requisitos:|Não permitido|$))')
 
                     is_non_assistential = any(
-                        k in (section + " " + topic_title).lower()
+                        k in (content + " " + topic_title).lower()
                         for k in ["reajuste", "cancelamento", "movimentação", "inativo", "boleto", "fraude", "protesto", "mensalidade", "cadastro", "documento", "rescisão"]
                     )
                     category = "NÃO ASSISTENCIAL" if is_non_assistential else "ASSISTENCIAL"
 
-                    pre_sentence = cls._extract_bullet_points(section, r'Acordos pré-(?:sentença|condenação):\s*(.*?)(?=(?:Exceções:|Acordos pós|Não faremos|Obs:|$))')
-                    post_sentence = cls._extract_bullet_points(section, r'Acordos pós(?:[\s\w-]+)?:\s*(.*?)(?=(?:Exceções:|Obs:|$))')
-                    prohibitions = cls._extract_bullet_points(section, r'(?:Exceções:|Não faremos acordos?)\s*(.*?)(?=(?:Acordos|Obs:|$))')
-                    
-                    params = pre_sentence + post_sentence
-
-                    topic_logic_rules = cls._build_topic_logic(idx, topic_title, pre_sentence, params, prohibitions)
+                    topic_logic_rules = cls._build_topic_logic(topic_num, topic_title, reqs, params, prohibitions)
                     all_rules.extend(topic_logic_rules)
 
                     topics.append(DynamicTopicRule(
-                        topic_number=idx,
+                        topic_number=topic_num,
                         topic_name=topic_title,
                         category=category,
-                        requirements=pre_sentence,
+                        requirements=reqs,
                         agreement_parameters=params,
                         post_sentence_rules=post_sentence,
                         prohibitions=prohibitions,
-                        mandatory_clauses=[],
+                        mandatory_clauses=clauses,
                         rules=topic_logic_rules
                     ))
 
@@ -267,6 +286,33 @@ class DynamicPolicyCompiler:
             topics=topics,
             all_rules=all_rules
         )
+
+    @classmethod
+    def _extract_clean_items(cls, text: str, start_pattern: str, stop_pattern: Optional[str] = None) -> List[str]:
+        if stop_pattern:
+            pattern = rf'{start_pattern}(.*?)(?={stop_pattern}|$)'
+        else:
+            pattern = rf'{start_pattern}(.*)'
+        m = re.search(pattern, text, re.DOTALL | re.IGNORECASE)
+        if not m:
+            return []
+        raw = m.group(1).strip()
+        lines = raw.split('\n')
+        items = []
+        curr = []
+        for line in lines:
+            l = line.strip()
+            if not l or l.lower().startswith("informações internas"):
+                continue
+            if re.match(r'^(?:\d+[\.\)]|[•\-*])\s*', l):
+                if curr:
+                    items.append(" ".join(curr))
+                curr = [re.sub(r'^(?:\d+[\.\)]|[•\-*])\s*', '', l).strip()]
+            else:
+                curr.append(l)
+        if curr:
+            items.append(" ".join(curr))
+        return [it for it in items if len(it) > 3]
 
     @classmethod
     def _extract_bullet_points(cls, text: str, section_regex: str) -> List[str]:

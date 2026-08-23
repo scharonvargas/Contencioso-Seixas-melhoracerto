@@ -341,6 +341,17 @@ class ProcessExecutionService:
         else:
             procedural_stage = "PRE_SENTENCA"
 
+        # 1.3 Detecção Precoce de Pedido de A.T. Escolar / Mediação Escolar / Terapias
+        has_school_aide = any(k in full_text_lower for k in [
+            "at escolar", "acompanhamento terapeutico escolar", "acompanhante terapeutico escolar",
+            "mediacao escolar", "mediador escolar", "acompanhamento em ambiente escolar", "aba em ambiente escolar",
+            "terapia aba em ambiente escolar", "ambiente escolar"
+        ])
+
+        # 1.4 Extração de CID-10 se presente
+        cid_match = re.search(r'\b([A-Z]\d{2}(?:\.\d{1,2})?)\b', full_text)
+        cid_found = cid_match.group(1) if cid_match else None
+
         # 2. Identificação do Tema da Ação a partir do conteúdo dos autos com ranking de frequência e relevância
         identified_theme = "Geral"
         applicable_topic_num = 1
@@ -355,46 +366,57 @@ class ProcessExecutionService:
                 t_name = t.get("topic_name", "")
                 norm_t_name = BrazilianDomainValidator.normalize_text_for_matching(t_name)
                 
-                clean_keywords = [w for w in re.findall(r'[a-z]{4,}', norm_t_name) if w not in ["tema", "para", "com", "sem", "sobre", "acordo", "acordos", "entre", "outros", "demais"]]
+                # Extrai palavras chave do título principal excluindo parênteses explicativos
+                clean_main_title = re.sub(r'\(.*?\)', '', norm_t_name).strip()
+                clean_keywords = [w for w in re.findall(r'[a-z]{4,}', clean_main_title) if w not in ["tema", "para", "com", "sem", "sobre", "acordo", "acordos", "entre", "outros", "demais"]]
+                
+                score = 0
                 if clean_keywords:
                     matched_words = [kw for kw in clean_keywords if kw in norm_full_text]
                     if matched_words:
-                        score = len(matched_words) * 20
+                        score = len(matched_words) * 30
                         for kw in matched_words:
                             cnt = min(norm_full_text.count(kw), 15)
                             score += cnt * len(kw)
 
-                        clean_t_name = re.sub(r'\(.*?\)', '', norm_t_name).strip()
-                        if len(clean_t_name) > 5 and clean_t_name in norm_full_text:
-                            score += 80
+                        if len(clean_main_title) > 5 and clean_main_title in norm_full_text:
+                            score += 100
 
-                        # Bônus léxicos especializados por tema
-                        if "carencia" in clean_keywords and any(k in norm_full_text for k in ["carencia", "parto", "urgencia", "emergencia"]):
-                            score += 200
-                        if "fraude" in clean_keywords and any(k in norm_full_text for k in ["boleto falso", "golpe do boleto", "fraude de boleto", "fatura falsa"]):
-                            score += 250
-                        if "terapias" in clean_keywords and any(k in norm_full_text for k in ["aba", "denver", "prompt", "pecs", "espectro autista"]):
-                            score += 200
-                        if "medicamento" in clean_keywords and any(k in norm_full_text for k in ["antineoplasico", "farmaco", "medicamento importado"]):
-                            score += 150
-                        if "autorizacao" in clean_keywords and any(k in norm_full_text for k in ["demora na autorizacao", "atraso na autorizacao", "tempo habil"]):
-                            score += 180
-                        if "reembolso" in clean_keywords and any(k in norm_full_text for k in ["reembolso", "despesas medicas", "restituicao do valor"]):
-                            score += 180
+                # Bônus léxicos especializados por tema com fronteiras de palavra exatas
+                if any(k in norm_t_name for k in ["terapia", "especial"]):
+                    if re.search(r'\b(?:aba|denver|prompt|pecs|espectro autista|autismo|f84|terapia especial|acompanhamento terapeutico)\b', norm_full_text):
+                        score += 350
+                if any(k in norm_t_name for k in ["carencia"]):
+                    if re.search(r'\b(?:carencia|prazo de carencia)\b', norm_full_text):
+                        score += 250
+                if any(k in norm_t_name for k in ["fraude", "boleto"]):
+                    if re.search(r'\b(?:boleto falso|golpe do boleto|fraude de boleto|fatura falsa)\b', norm_full_text):
+                        score += 300
+                if any(k in norm_t_name for k in ["medicamento"]):
+                    if re.search(r'\b(?:antineoplasico|farmaco|medicamento importado|anvisa)\b', norm_full_text):
+                        score += 200
+                if any(k in norm_t_name for k in ["reembolso"]):
+                    if any(k in norm_full_text for k in ["reembolso", "restituicao", "desembolso", "nota fiscal", "recibo"]):
+                        score += 350
+                    if re.search(r'\b(?:reembolso|restituicao|despesas medicas)\b', norm_full_text):
+                        score += 150
+                if any(k in norm_t_name for k in ["autorizacao", "atraso"]):
+                    if re.search(r'\b(?:demora na autorizacao|atraso na autorizacao|tempo habil)\b', norm_full_text):
+                        score += 200
 
-                        if score > best_score:
-                            best_score = score
-                            best_topic = t
+                if score > best_score:
+                    best_score = score
+                    best_topic = t
             if best_topic and best_score > 0:
                 identified_theme = f"Tema {best_topic.get('topic_number', 1):02d}: {best_topic.get('topic_name')}"
                 applicable_topic_num = best_topic.get("topic_number", 1)
         else:
-            if any(k in norm_full_text for k in ["carencia"]):
-                identified_theme = "Tema 04: Carência"
-                applicable_topic_num = 4
-            elif any(k in norm_full_text for k in ["aba", "denver", "prompt", "pecs", "terapia especial", "espectro autista"]):
+            if any(k in norm_full_text for k in ["aba", "denver", "prompt", "pecs", "terapia especial", "espectro autista"]):
                 identified_theme = "Tema 01: Terapias Especiais"
                 applicable_topic_num = 1
+            elif any(k in norm_full_text for k in ["carencia"]):
+                identified_theme = "Tema 04: Carência"
+                applicable_topic_num = 4
             elif any(k in norm_full_text for k in ["home care", "internacao domiciliar", "assistencia domiciliar"]):
                 identified_theme = "Tema 02: Home Care"
                 applicable_topic_num = 2
@@ -445,11 +467,39 @@ class ProcessExecutionService:
                         topics_facts[f"topic_{t_num:02d}"]["requirements_met"] = False
                         break
 
-                # Avaliação de Vedações Específicas: verifica se o processo incide em termos vedados específicos
+                # Avaliação de Vedações Específicas: verifica se o processo incide em termos vedados do manual
                 for prohib in prohibitions:
                     prohib_clean = BrazilianDomainValidator.normalize_text_for_matching(prohib)
                     
-                    # Extrai termos específicos entre parênteses ou termos técnicos chave
+                    # 1. Vedação de AT / Acompanhante / Mediação / Ambiente Escolar
+                    if re.search(r'\b(?:at|acompanhamento terapeutico|acompanhante terapeutico|ambiente escolar|mediacao escolar)\b', prohib_clean):
+                        if has_school_aide or any(k in norm_full_text for k in [
+                            "at escolar", "acompanhamento terapeutico escolar", "acompanhante terapeutico escolar",
+                            "ambiente escolar", "mediacao escolar", "mediador escolar", "aba em ambiente escolar",
+                            "terapia aba em ambiente escolar"
+                        ]):
+                            topics_facts[f"topic_{t_num:02d}"]["has_prohibition"] = True
+                            topics_facts[f"topic_{t_num:02d}"]["requirements_met"] = False
+                            break
+
+                    # 2. Vedação de Prestador Particular / Fora da Rede Credenciada
+                    if "prestador particular" in prohib_clean or "fora da rede" in prohib_clean:
+                        if any(k in norm_full_text for k in [
+                            "prestador nao credenciado", "clinica nao credenciada", "medico nao credenciado",
+                            "prestador particular nao credenciado", "fora da rede credenciada", "rede nao credenciada"
+                        ]):
+                            topics_facts[f"topic_{t_num:02d}"]["has_prohibition"] = True
+                            topics_facts[f"topic_{t_num:02d}"]["requirements_met"] = False
+                            break
+
+                    # 3. Vedação de Reembolso Integral
+                    if "reembolso integral" in prohib_clean:
+                        if any(k in norm_full_text for k in ["reembolso integral", "restituicao integral de 100%", "100% de reembolso"]):
+                            topics_facts[f"topic_{t_num:02d}"]["has_prohibition"] = True
+                            topics_facts[f"topic_{t_num:02d}"]["requirements_met"] = False
+                            break
+
+                    # 4. Extrai termos específicos entre parênteses ou termos técnicos chave
                     specific_terms = re.findall(r'\((.*?)\)', prohib)
                     terms_to_check = []
                     if specific_terms:
@@ -461,7 +511,7 @@ class ProcessExecutionService:
                         "transplante", "gastroplastia endoscopica", "fertilizacao in vitro",
                         "procedimento com fins esteticos", "foundation one", "sem registro na anvisa",
                         "paciente sus na rede privada", "protese customizada", "off label", "off-label",
-                        "experimental", "reembolso integral", "prestador particular", "nao nacionalizado",
+                        "experimental", "cirurgia reparadora pos-bariatrica",
                         "mig", "treini", "padovan", "cuevas", "pediasuit", "therasuit", "floortime", "neurofeedback"
                     ]:
                         if direct_term in prohib_clean:
@@ -473,16 +523,6 @@ class ProcessExecutionService:
                             topics_facts[f"topic_{t_num:02d}"]["has_prohibition"] = True
                             topics_facts[f"topic_{t_num:02d}"]["requirements_met"] = False
                             break
-
-        # 4. Detecção de Pedido de A.T. Escolar / Mediação Escolar
-        has_school_aide = any(k in full_text_lower for k in [
-            "at escolar", "acompanhamento terapeutico escolar", "acompanhante terapeutico escolar",
-            "mediacao escolar", "mediador escolar", "acompanhamento em ambiente escolar"
-        ])
-
-        # 5. Extração de CID-10 se presente
-        cid_match = re.search(r'\b([A-Z]\d{2}(?:\.\d{1,2})?)\b', full_text)
-        cid_found = cid_match.group(1) if cid_match else None
 
         facts = {
             "identified_theme": identified_theme,
