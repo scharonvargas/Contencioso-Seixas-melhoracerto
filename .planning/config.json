@@ -1,0 +1,12 @@
+{
+  "project_name": "Seixas AI",
+  "version": "1.0.0",
+  "mode": "autonomous",
+  "workflow": "GSD",
+  "default_model_profile": "hybrid",
+  "settings": {
+    "auto_approve_non_critical": true,
+    "evidence_grounding_threshold": 0.85,
+    "ocr_confidence_threshold": 0.85
+  }
+}
