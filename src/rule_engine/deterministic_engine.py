@@ -29,8 +29,9 @@ class DeterministicRuleEngine:
     """
 
     def __init__(self, structured_policy: dict):
-        self.policy_version_id = structured_policy.get("policy_version_id", "default_policy")
-        self.rules = structured_policy.get("rules", [])
+        self.structured_policy = structured_policy or {}
+        self.policy_version_id = self.structured_policy.get("policy_version_id", "default_policy")
+        self.rules = self.structured_policy.get("rules", [])
 
     def evaluate(self, process_id: str, case_fact_data: dict) -> DecisionEngineResult:
         rule_results: List[RuleEvaluationResult] = []
@@ -136,17 +137,24 @@ class DeterministicRuleEngine:
                 operator_share=op_share
             )
 
-        # 4. Tratamento de Vedações Parciais e Acordos Condicionados (A.T. Escolar)
-        has_school_aide = enriched_facts.get("treatment", {}).get("has_school_aide_request", False)
+        # 4. Cláusulas Obrigatórias e Condicionantes da Norma Ativa
         is_conditionally_eligible = False
-        if has_school_aide and not has_critical_failure and not has_unknown:
-            is_conditionally_eligible = True
-            conditional_clauses.append(
-                "RENUNCIA_EXPRESSA_AT_ESCOLAR: Proposta autorizada exclusivamente para as terapias clínicas em rede credenciada "
-                "(teto normativo), condicionada à expressa e irretratável renúncia da parte autora quanto ao pedido de "
-                "Acompanhamento Terapêutico (AT) em ambiente escolar / mediação escolar, nos termos da jurisprudência consolidada "
-                "do STJ (REsp 2.064.964/SP e AgInt no REsp 2.122.472/SP)."
-            )
+        if not has_critical_failure and not has_unknown:
+            for t in self.structured_policy.get("topics", []):
+                if t.get("topic_number") == applicable_topic_num:
+                    for mc in t.get("mandatory_clauses", []):
+                        conditional_clauses.append(mc)
+                        is_conditionally_eligible = True
+
+            has_school_aide = enriched_facts.get("treatment", {}).get("has_school_aide_request", False)
+            if has_school_aide and not is_conditionally_eligible:
+                conditional_clauses.append(
+                    "RENUNCIA_EXPRESSA_AT_ESCOLAR: Proposta autorizada exclusivamente para as terapias clínicas em rede credenciada "
+                    "(teto normativo), condicionada à expressa e irretratável renúncia da parte autora quanto ao pedido de "
+                    "Acompanhamento Terapêutico (AT) em ambiente escolar / mediação escolar, nos termos da jurisprudência consolidada "
+                    "do STJ (REsp 2.064.964/SP e AgInt no REsp 2.122.472/SP)."
+                )
+                is_conditionally_eligible = True
 
         # 5. Consolidação do Veredito Final (TRAVA 2: ELIGIBLE com requisito pendente é ESTRITAMENTE BLOQUEADO)
         if has_critical_failure:

@@ -347,8 +347,30 @@ class DynamicPolicyCompiler:
         """
         rules = []
 
-        # 1. Regra de Limite de Alto Custo (ex: procedimentos acima de R$ 100.000,00)
-        high_cost_matches = re.findall(r'(?:superior\s+a|acima\s+de)\s+R\$\s*([\d.,]+)', " ".join(requirements + prohibitions), re.IGNORECASE)
+        # 1. Regra de Limite Financeiro de Indenização / Dano Moral por Tema extraído dinamicamente do manual
+        combined_text = " ".join(requirements + prohibitions + parameters)
+        financial_ceiling_matches = re.findall(
+            r'(?:pagamento\s+de\s+at[eé]|indeniza[çc][aã]o\s*(?:\(se\s+houver\s+negativa[çc][aã]o\))?\s*de\s+at[eé]|limite\s+de|teto\s+de|at[eé]\s+o\s+limite\s+de|danos?\s+morais?\s*(?:de\s+at[eé]|at[eé])?)\s*R\$\s*([\d.,]+)',
+            combined_text,
+            re.IGNORECASE
+        )
+        if financial_ceiling_matches:
+            from src.validators.brazilian_validators import BrazilianDomainValidator
+            for cm in financial_ceiling_matches:
+                ceiling_val = BrazilianDomainValidator.parse_brazilian_currency(cm)
+                if ceiling_val and ceiling_val > 0:
+                    rules.append({
+                        "rule_code": f"TEMA_{topic_num:02d}_TETO_DANO_MORAL",
+                        "title": f"Teto de Indenização / Dano Moral ({topic_name})",
+                        "mandatory": True,
+                        "condition": {"<=": [{"var": "financial.moral_damage_amount"}, ceiling_val]},
+                        "required_evidence_fields": ["financial"],
+                        "failure_message_template": f"Pedido de indenização / dano moral excede o teto de R$ {ceiling_val:,.2f} estipulado na norma ativa para {topic_name}."
+                    })
+                    break
+
+        # 1.1 Regra de Limite de Alto Custo (ex: procedimentos acima de R$ 50.000,00)
+        high_cost_matches = re.findall(r'(?:superior\s+a|acima\s+de|ultrapassar\s+(?:o\s+montante\s+de)?)\s*(?:R\$\s*)?([\d.,]+)', combined_text, re.IGNORECASE)
         if high_cost_matches:
             from src.validators.brazilian_validators import BrazilianDomainValidator
             for hm in high_cost_matches:
