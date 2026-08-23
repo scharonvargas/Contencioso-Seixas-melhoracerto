@@ -193,7 +193,7 @@ class DynamicPolicyCompiler:
 
                 pre_sentence = cls._extract_clean_items(
                     section,
-                    r'(?:Acordos\s+pr[eé]-(?:senten[çc]a|condena[çc][aã]o)|Requisitos|Faremos\s+acordos\s+nas\s+seguintes\s+hip[oó]teses):\s*',
+                    r'(?:Acordos\s+pr[eé][\s-]*(?:senten[çc]a|condena[çc][aão-z]+)|Requisitos|Faremos\s+acordos\s+nas\s+seguintes\s+hip[oó]teses):\s*',
                     stop_headings
                 )
                 
@@ -206,9 +206,13 @@ class DynamicPolicyCompiler:
                 if not prohibitions and re.search(r'N[aã]o\s+faremos\s+acordo\s+em\s+casos?\s+pr[eé]', section, re.IGNORECASE):
                     prohibitions = ["Não faremos acordo em casos pré condenação."]
 
+                inline_prohibs = re.findall(r'([^\n]+N[aã]o\s+fazemos\s+em\s+nenhuma\s+hip[oó]tese[^\n]+)', section, re.IGNORECASE)
+                if inline_prohibs:
+                    prohibitions.extend([ip.strip() for ip in inline_prohibs])
+
                 post_sentence = cls._extract_clean_items(
                     section,
-                    r'Acordos\s+p[oó]s(?:[\s\w-]+)?:\s*',
+                    r'Acordos\s+p[oó]s[\s-]*(?:senten[çc]a|condena[çc][aão-z]+|inst[aâ]ncia[s]?)?(?:[\s\w-]+)?:\s*',
                     r'(?:Exce[çc][oõ]es|N[aã]o\s+faremos|CL[AÁ]USULA|Obs:|$)'
                 )
 

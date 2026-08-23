@@ -486,7 +486,8 @@ class ProcessExecutionService:
                     if "prestador particular" in prohib_clean or "fora da rede" in prohib_clean:
                         if any(k in norm_full_text for k in [
                             "prestador nao credenciado", "clinica nao credenciada", "medico nao credenciado",
-                            "prestador particular nao credenciado", "fora da rede credenciada", "rede nao credenciada"
+                            "prestador particular nao credenciado", "fora da rede credenciada", "rede nao credenciada",
+                            "prestador eventual", "clinica eventual"
                         ]):
                             topics_facts[f"topic_{t_num:02d}"]["has_prohibition"] = True
                             topics_facts[f"topic_{t_num:02d}"]["requirements_met"] = False
