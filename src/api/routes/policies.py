@@ -48,11 +48,14 @@ async def get_active_policy(tenant_id: Optional[str] = None):
         if not rules_list and "topics" in structured:
             rules_list = [r for t in structured["topics"] for r in t.get("rules", [])]
 
+        topics_list = structured.get("topics", [])
         return {
             "id": active_ver.id,
             "version": active_ver.version,
             "status": active_ver.status,
             "structured_rules": structured,
+            "topics": topics_list,
+            "total_topics": len(topics_list),
             "rules": rules_list,
             "total_rules": len(rules_list)
         }
@@ -198,8 +201,8 @@ async def upload_policy_pdf(
                 db.add(policy)
                 db.commit()
 
-            # Desativa outras versões para ativar esta nova
-            db.query(PolicyVersion).filter(PolicyVersion.tenant_id == t_id).update({"status": "INACTIVE"})
+            # Desativa globalmente todas as outras versões para garantir que esta nova seja a única ativa
+            db.query(PolicyVersion).update({"status": "INACTIVE"})
 
             # Busca se já existe uma versão com este nome
             p_version = db.query(PolicyVersion).filter(
@@ -231,11 +234,14 @@ async def upload_policy_pdf(
                 db.add(p_version)
                 db.commit()
 
+            topics_res = structured_rules.get("topics", [])
             return {
                 "status": "SUCCESS",
                 "version_id": new_version_id,
                 "version": effective_version,
                 "policy_name": policy.name,
+                "topics": topics_res,
+                "total_topics": len(topics_res),
                 "extracted_criteria_count": extracted_count,
                 "total_criteria_extracted": extracted_count,
                 "rules": rules_list
