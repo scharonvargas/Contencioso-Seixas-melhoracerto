@@ -108,10 +108,44 @@ async def get_process_details(process_id: str):
             "total_pages_stored": len(pages_records),
             "pages": pages_list,
             "facts": facts_dict,
-            "rules": eval_record.rules_results if eval_record and eval_record.rules_results else []
+            "rules": eval_record.rules_results if eval_record and eval_record.rules_results else [],
+            "execution_trace": eval_record.execution_trace if eval_record and eval_record.execution_trace else None
         }
     finally:
         db.close()
+
+@router.get("/{process_id}/trace")
+async def get_process_trace(process_id: str):
+    """
+    Retorna o log forense completo estruturado em JSON com as 6 fases da análise.
+    """
+    db = SessionLocal()
+    try:
+        eval_record = db.query(Evaluation).filter(Evaluation.process_id == process_id).first()
+        if not eval_record or not eval_record.execution_trace:
+            # Tenta carregar do disco
+            import os, json
+            trace_path = os.path.join("logs", "processes", f"{process_id}_trace.json")
+            if os.path.exists(trace_path):
+                with open(trace_path, "r", encoding="utf-8") as f:
+                    return json.load(f)
+            raise HTTPException(status_code=404, detail="Trace log não encontrado para este processo.")
+        return eval_record.execution_trace
+    finally:
+        db.close()
+
+@router.get("/{process_id}/log-text")
+async def get_process_log_text(process_id: str):
+    """
+    Retorna o log em texto legível para auditoria humana direta.
+    """
+    import os
+    from fastapi.responses import PlainTextResponse
+    log_path = os.path.join("logs", "processes", f"{process_id}.log")
+    if os.path.exists(log_path):
+        with open(log_path, "r", encoding="utf-8") as f:
+            return PlainTextResponse(f.read())
+    raise HTTPException(status_code=404, detail="Arquivo de log de texto não encontrado.")
 
 @router.post("/upload")
 async def upload_judicial_process(

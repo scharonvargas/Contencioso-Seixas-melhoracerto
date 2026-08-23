@@ -131,6 +131,7 @@ class Evaluation(Base):
     rules_unknown = Column(Integer, nullable=False, default=0)
     decision_summary = Column(Text, nullable=False)
     rules_results = Column(JSON, nullable=True) # Persist evaluation rules
+    execution_trace = Column(JSON, nullable=True) # Persist detailed phase-by-phase trace log
     evaluated_at = Column(DateTime(timezone=True), server_default=func.now())
 
 class HumanReview(Base):

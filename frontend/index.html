@@ -243,12 +243,15 @@
             </div>
             
             <!-- ABAS DO PAINEL LATERAL -->
-            <div class="flex gap-2 mt-3 pt-2 border-t border-slate-800 text-xs">
-              <button onclick="switchAuditSideTab('rules')" id="audit-tab-btn-rules" class="px-3 py-1 bg-slate-800 text-white font-semibold rounded-lg border border-slate-700 transition flex items-center gap-1.5">
+            <div class="flex gap-1.5 mt-3 pt-2 border-t border-slate-800 text-xs overflow-x-auto">
+              <button onclick="switchAuditSideTab('rules')" id="audit-tab-btn-rules" class="px-2.5 py-1 bg-slate-800 text-white font-semibold rounded-lg border border-slate-700 transition flex items-center gap-1.5 shrink-0">
                 <i class="fa-solid fa-scale-balanced text-[11px] text-emerald-400"></i> Regras da Norma
               </button>
-              <button onclick="switchAuditSideTab('facts')" id="audit-tab-btn-facts" class="px-3 py-1 bg-transparent text-slate-400 hover:text-slate-200 font-medium rounded-lg transition flex items-center gap-1.5">
+              <button onclick="switchAuditSideTab('facts')" id="audit-tab-btn-facts" class="px-2.5 py-1 bg-transparent text-slate-400 hover:text-slate-200 font-medium rounded-lg transition flex items-center gap-1.5 shrink-0">
                 <i class="fa-solid fa-folder-open text-[11px]"></i> Dossiê de Fatos
+              </button>
+              <button onclick="switchAuditSideTab('trace')" id="audit-tab-btn-trace" class="px-2.5 py-1 bg-transparent text-slate-400 hover:text-slate-200 font-medium rounded-lg transition flex items-center gap-1.5 shrink-0">
+                <i class="fa-solid fa-terminal text-[11px] text-amber-400"></i> Log Forense
               </button>
             </div>
           </div>
@@ -264,6 +267,28 @@
           <!-- CONTEÚDO DA ABA 2: DOSSIÊ DE FATOS CRUZADOS -->
           <div class="flex-1 overflow-y-auto p-4 space-y-3 hidden" id="audit-dossier-facts-container">
             <!-- Renderizado dinamicamente -->
+          </div>
+
+          <!-- CONTEÚDO DA ABA 3: LOG FORENSE & TRACE PASSO A PASSO -->
+          <div class="flex-1 overflow-y-auto p-4 space-y-3 hidden font-mono text-xs" id="audit-trace-container">
+            <div class="flex justify-between items-center bg-slate-950 p-2.5 rounded-xl border border-slate-800 text-[11px]">
+              <div class="flex items-center gap-2">
+                <span class="w-2 h-2 rounded-full bg-emerald-400 animate-ping"></span>
+                <span class="text-slate-300 font-bold" id="trace-exec-duration">Tempo: -- ms</span>
+              </div>
+              <div class="flex gap-1.5">
+                <button onclick="copyTraceJSON()" class="px-2 py-1 bg-slate-800 hover:bg-slate-700 text-slate-300 rounded text-[10px] border border-slate-700 transition">
+                  <i class="fa-solid fa-copy mr-1"></i> Copiar JSON
+                </button>
+                <button onclick="downloadProcessLog()" class="px-2 py-1 bg-emerald-700 hover:bg-emerald-600 text-white rounded text-[10px] shadow transition">
+                  <i class="fa-solid fa-download mr-1"></i> Baixar .log
+                </button>
+              </div>
+            </div>
+
+            <div id="audit-trace-phases-list" class="space-y-2.5">
+              <!-- Renderizado dinamicamente com as 6 fases -->
+            </div>
           </div>
 
           <div class="p-4 bg-slate-950 border-t border-slate-800">
@@ -731,20 +756,112 @@
     function switchAuditSideTab(tab) {
       const btnRules = document.getElementById('audit-tab-btn-rules');
       const btnFacts = document.getElementById('audit-tab-btn-facts');
+      const btnTrace = document.getElementById('audit-tab-btn-trace');
       const cRules = document.getElementById('audit-theme-rules-container');
       const cFacts = document.getElementById('audit-dossier-facts-container');
+      const cTrace = document.getElementById('audit-trace-container');
+
+      [btnRules, btnFacts, btnTrace].forEach(b => {
+        if (b) b.className = 'px-2.5 py-1 bg-transparent text-slate-400 hover:text-slate-200 font-medium rounded-lg transition flex items-center gap-1.5 shrink-0';
+      });
+      [cRules, cFacts, cTrace].forEach(c => {
+        if (c) c.classList.add('hidden');
+      });
 
       if (tab === 'rules') {
-        btnRules.className = 'px-3 py-1 bg-slate-800 text-white font-semibold rounded-lg border border-slate-700 transition flex items-center gap-1.5';
-        btnFacts.className = 'px-3 py-1 bg-transparent text-slate-400 hover:text-slate-200 font-medium rounded-lg transition flex items-center gap-1.5';
+        btnRules.className = 'px-2.5 py-1 bg-slate-800 text-white font-semibold rounded-lg border border-slate-700 transition flex items-center gap-1.5 shrink-0';
         cRules.classList.remove('hidden');
-        cFacts.classList.add('hidden');
-      } else {
-        btnFacts.className = 'px-3 py-1 bg-slate-800 text-white font-semibold rounded-lg border border-slate-700 transition flex items-center gap-1.5';
-        btnRules.className = 'px-3 py-1 bg-transparent text-slate-400 hover:text-slate-200 font-medium rounded-lg transition flex items-center gap-1.5';
+      } else if (tab === 'facts') {
+        btnFacts.className = 'px-2.5 py-1 bg-slate-800 text-white font-semibold rounded-lg border border-slate-700 transition flex items-center gap-1.5 shrink-0';
         cFacts.classList.remove('hidden');
-        cRules.classList.add('hidden');
+      } else if (tab === 'trace') {
+        btnTrace.className = 'px-2.5 py-1 bg-slate-800 text-amber-300 font-semibold rounded-lg border border-slate-700 transition flex items-center gap-1.5 shrink-0';
+        cTrace.classList.remove('hidden');
       }
+    }
+
+    function renderTraceView(trace) {
+      const phasesList = document.getElementById('audit-trace-phases-list');
+      const durationLabel = document.getElementById('trace-exec-duration');
+      if (!phasesList) return;
+
+      if (!trace || !trace.phases) {
+        if (durationLabel) durationLabel.innerText = 'Log: Padrão';
+        phasesList.innerHTML = `
+          <div class="p-3 bg-slate-950 border border-slate-800 rounded-xl text-slate-400 text-xs">
+            <p class="font-bold text-slate-300 mb-1">Processamento Registrado</p>
+            <p class="text-[11px]">Faça um novo upload para visualizar o trace forense detalhado milissegundo a milissegundo aqui.</p>
+          </div>
+        `;
+        return;
+      }
+
+      if (durationLabel) durationLabel.innerText = `Duração: ${trace.total_duration_ms || 0} ms (${trace.total_events || 0} eventos)`;
+      phasesList.innerHTML = '';
+
+      const phaseNames = {
+        'FASE_1_INGESTAO_OCR': { title: '1. Ingestão & OCR em Cascata', icon: 'fa-file-pdf' },
+        'FASE_2_SEGMENTACAO_PECAS': { title: '2. Segmentação de Peças', icon: 'fa-layer-group' },
+        'FASE_3_EXTRACAO_FATOS': { title: '3. Extração de Variáveis', icon: 'fa-magnifying-glass-chart' },
+        'FASE_4_CLASSIFICACAO_TEMA': { title: '4. Classificação do Tema', icon: 'fa-bullseye' },
+        'FASE_5_AVALIACAO_REGRAS': { title: '5. Avaliação de Regras & Vedações', icon: 'fa-scale-balanced' },
+        'FASE_6_VEREDITO_FINAL': { title: '6. Veredito Final', icon: 'fa-flag-checkered' }
+      };
+
+      for (const [pKey, pVal] of Object.entries(trace.phases || {})) {
+        const meta = phaseNames[pKey] || { title: pKey, icon: 'fa-circle-notch' };
+        const statusBadge = pVal.status === 'COMPLETED' 
+          ? '<span class="bg-emerald-500/20 text-emerald-400 px-2 py-0.5 rounded text-[9px] font-bold">OK</span>'
+          : (pVal.status === 'ERROR' ? '<span class="bg-rose-500/20 text-rose-400 px-2 py-0.5 rounded text-[9px] font-bold">ERRO</span>' : '<span class="bg-slate-800 text-slate-400 px-2 py-0.5 rounded text-[9px]">PENDENTE</span>');
+
+        const pCard = document.createElement('div');
+        pCard.className = 'bg-slate-950 border border-slate-800 rounded-xl overflow-hidden';
+        
+        let logsHtml = (pVal.logs || []).map(l => {
+          let lvlColor = 'text-slate-300';
+          if (l.level === 'SUCCESS') lvlColor = 'text-emerald-400 font-semibold';
+          if (l.level === 'WARNING') lvlColor = 'text-amber-400 font-semibold';
+          if (l.level === 'ERROR') lvlColor = 'text-rose-400 font-bold';
+
+          return `
+            <div class="text-[10px] leading-relaxed border-b border-slate-900/60 pb-1 pt-1">
+              <span class="text-slate-500 font-mono">[+${l.elapsed_ms}ms]</span>
+              <span class="${lvlColor}">${l.message}</span>
+            </div>
+          `;
+        }).join('');
+
+        pCard.innerHTML = `
+          <div class="p-2.5 bg-slate-900/90 flex justify-between items-center cursor-pointer border-b border-slate-800 select-none" onclick="this.nextElementSibling.classList.toggle('hidden')">
+            <div class="flex items-center gap-2">
+              <i class="fa-solid ${meta.icon} text-emerald-400 text-xs"></i>
+              <span class="font-bold text-slate-200 text-xs">${meta.title}</span>
+            </div>
+            <div class="flex items-center gap-2">
+              ${statusBadge}
+              <i class="fa-solid fa-chevron-down text-[10px] text-slate-500"></i>
+            </div>
+          </div>
+          <div class="p-2.5 space-y-1 bg-slate-950/80 max-h-48 overflow-y-auto font-mono">
+            ${logsHtml || '<p class="text-slate-500 text-[10px]">Sem logs nesta fase.</p>'}
+          </div>
+        `;
+        phasesList.appendChild(pCard);
+      }
+    }
+
+    function copyTraceJSON() {
+      if (!currentProcessData || !currentProcessData.execution_trace) {
+        showToast('Aviso', 'Nenhum trace JSON disponível para este processo.', 'warning');
+        return;
+      }
+      navigator.clipboard.writeText(JSON.stringify(currentProcessData.execution_trace, null, 2));
+      showToast('Sucesso', 'Trace JSON copiado para a área de transferência!', 'success');
+    }
+
+    function downloadProcessLog() {
+      if (!currentProcessData || !currentProcessData.process_id) return;
+      window.open(`/processes/${currentProcessData.process_id}/log-text`, '_blank');
     }
 
     async function inspectProcess(processId) {
@@ -936,7 +1053,10 @@
         </div>
       `;
 
-      // 4. Renderiza a primeira página no canvas
+      // 4. Renderiza Log Forense / Trace da Análise
+      renderTraceView(data.execution_trace);
+
+      // 5. Renderiza a primeira página no canvas
       updateAuditPageCanvas();
     }
 

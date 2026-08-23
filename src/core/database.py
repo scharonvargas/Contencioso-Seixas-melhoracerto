@@ -24,6 +24,7 @@ def init_db():
     with engine.connect() as conn:
         for col_def in [
             "ALTER TABLE evaluations ADD COLUMN rules_results JSON",
+            "ALTER TABLE evaluations ADD COLUMN execution_trace JSON",
             "ALTER TABLE document_pages ADD COLUMN document_name VARCHAR(255)",
             "ALTER TABLE document_pages ADD COLUMN page_in_document INTEGER",
             "ALTER TABLE document_pages ADD COLUMN segment_type VARCHAR(64)",

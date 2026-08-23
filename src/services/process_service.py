@@ -62,12 +62,17 @@ class ProcessExecutionService:
         documents_summary = []
         global_page_num = 0
 
+        from src.core.trace_logger import ProcessTraceLogger
+        trace = ProcessTraceLogger(tenant_id=tenant_id, process_id=process_id)
+        trace.log("FASE_1_INGESTAO_OCR", f"Iniciando ingestão de {len(pdf_files)} arquivo(s) PDF para o processo {process_id}.")
+
         for doc_idx, file_item in enumerate(pdf_files):
             pdf_bytes = file_item["bytes"]
             filename = file_item.get("filename", f"documento_{doc_idx + 1}.pdf")
 
             # 1. Salva cada PDF no storage
             storage_path = storage_service.save_process_pdf(tenant_id, process_id, pdf_bytes, filename)
+            doc_size_kb = len(pdf_bytes) / 1024
 
             # 2. Ingestão e OCR de cada página do documento
             doc = fitz.open(stream=pdf_bytes, filetype="pdf")
@@ -77,6 +82,7 @@ class ProcessExecutionService:
                 "filename": filename,
                 "pages_count": doc_page_count
             })
+            trace.log("FASE_1_INGESTAO_OCR", f"Arquivo [{doc_idx + 1}/{len(pdf_files)}] '{filename}' carregado ({doc_size_kb:.1f} KB, {doc_page_count} páginas).")
 
             for page_in_doc_idx, page in enumerate(doc):
                 global_page_num += 1
@@ -89,6 +95,12 @@ class ProcessExecutionService:
                 seg_type = DocumentSegmenter.classify_page(res.get("raw_text", ""))
                 res["segment_type"] = seg_type.value if hasattr(seg_type, "value") else str(seg_type)
                 processed_pages.append(res)
+
+                trace.log(
+                    "FASE_1_INGESTAO_OCR",
+                    f"Pág {global_page_num} ({filename} p.{page_in_doc}): OCR {res['tier']} (Confiança: {res['mean_confidence']:.2f}, {len(res.get('raw_text', ''))} caracteres extraídos).",
+                    details={"tier": res["tier"], "quality_score": res["mean_confidence"], "segment": res["segment_type"]}
+                )
 
                 # Persiste os dados e texto completo de cada página no banco
                 page_record = DocumentPage(
@@ -108,11 +120,18 @@ class ProcessExecutionService:
                 self.db.add(page_record)
 
         total_pages = len(processed_pages)
+        trace.complete_phase("FASE_1_INGESTAO_OCR", "COMPLETED", {"total_pages": total_pages, "total_files": len(pdf_files)})
 
         # 3. Segmentação Unificada de Documentos
+        trace.log("FASE_2_SEGMENTACAO_PECAS", f"Segmentando {total_pages} páginas em peças processuais...")
         segments = DocumentSegmenter.segment_process_pages(processed_pages)
+        seg_counts = {}
+        for p in processed_pages:
+            st = p.get("segment_type", "OUTROS")
+            seg_counts[st] = seg_counts.get(st, 0) + 1
+        trace.complete_phase("FASE_2_SEGMENTACAO_PECAS", "COMPLETED", {"segments_distribution": seg_counts})
 
-        # 4. Recupera a Norma ACTIVE no banco (ou a mais recente cadastrada)
+        # 4. Recupera a Norma ACTIVE no banco
         active_policy_version = (
             self.db.query(PolicyVersion)
             .filter(PolicyVersion.tenant_id == tenant_id, PolicyVersion.status == "ACTIVE")
@@ -136,10 +155,13 @@ class ProcessExecutionService:
             )
 
         if not active_policy_version:
+            trace.log("FASE_4_CLASSIFICACAO_TEMA", "Erro crítico: Nenhuma norma ativa cadastrada.", level="ERROR")
             raise ValueError(f"Nenhuma norma ou manual de acordos ativo cadastrado no sistema.")
 
+        trace.log("FASE_4_CLASSIFICACAO_TEMA", f"Norma Ativa Carregada: {active_policy_version.version} (ID: {active_policy_version.id}).")
+
         # 5. Extração e Cruzamento Profundo de Fatos entre todos os PDFs baseada na norma ativa
-        case_facts = self._extract_facts(processed_pages, tenant_id, process_id, structured_rules=active_policy_version.structured_rules)
+        case_facts = self._extract_facts(processed_pages, tenant_id, process_id, structured_rules=active_policy_version.structured_rules, trace=trace)
 
         # 5.1 Persiste fatos estruturados e evidências no banco de dados para rastreabilidade forense
         theme_fact_id = generate_uuid()
@@ -221,10 +243,37 @@ class ProcessExecutionService:
                         }
 
         # 6. Avaliação Determinística (JSON-Logic Rule Engine)
+        trace.log("FASE_5_AVALIACAO_REGRAS", f"Iniciando avaliação determinística no motor JSON-Logic contra {len(active_policy_version.structured_rules.get('rules', []))} regras da norma...")
         rule_engine = DeterministicRuleEngine(active_policy_version.structured_rules)
         decision_result = rule_engine.evaluate(process_id=process_id, case_fact_data=case_facts)
 
+        for rr in decision_result.rule_results:
+            lvl = "SUCCESS" if rr.status == "PASS" else ("ERROR" if rr.status == "FAIL" else "WARNING")
+            trace.log(
+                "FASE_5_AVALIACAO_REGRAS",
+                f"Regra [{rr.rule_code}] '{rr.title}' -> {rr.status}" + (f" | Motivo: {rr.failure_reason}" if rr.failure_reason else ""),
+                level=lvl,
+                details={"rule_code": rr.rule_code, "status": rr.status, "failure_reason": rr.failure_reason}
+            )
+
+        trace.complete_phase("FASE_5_AVALIACAO_REGRAS", "COMPLETED", {
+            "total_rules": len(decision_result.rule_results),
+            "passed": sum(1 for r in decision_result.rule_results if r.status == "PASS"),
+            "failed": sum(1 for r in decision_result.rule_results if r.status == "FAIL"),
+            "unknown": sum(1 for r in decision_result.rule_results if r.status == "UNKNOWN")
+        })
+
         # 7. Persiste a Avaliação e Decisão Final
+        trace.log("FASE_6_VEREDITO_FINAL", f"Veredito Final Consolidado: {decision_result.overall_verdict} — {decision_result.summary}")
+        trace.complete_phase("FASE_6_VEREDITO_FINAL", "COMPLETED", {
+            "verdict": decision_result.overall_verdict,
+            "summary": decision_result.summary
+        })
+
+        # Salva o arquivo de log forense em disco
+        trace_json_path = trace.save_to_disk()
+        trace_dict = trace.to_dict()
+
         evaluation_record = Evaluation(
             id=generate_uuid(),
             tenant_id=tenant_id,
@@ -236,7 +285,8 @@ class ProcessExecutionService:
             rules_failed=sum(1 for r in decision_result.rule_results if r.status == "FAIL"),
             rules_unknown=sum(1 for r in decision_result.rule_results if r.status == "UNKNOWN"),
             decision_summary=decision_result.summary,
-            rules_results=[r.model_dump() for r in decision_result.rule_results]
+            rules_results=[r.model_dump() for r in decision_result.rule_results],
+            execution_trace=trace_dict
         )
         self.db.add(evaluation_record)
 
@@ -277,16 +327,20 @@ class ProcessExecutionService:
             "rules": [r.model_dump() for r in decision_result.rule_results],
             "conditional_clauses": decision_result.conditional_clauses,
             "saving_analysis": decision_result.saving_analysis,
-            "segregated_amounts": decision_result.segregated_amounts
+            "segregated_amounts": decision_result.segregated_amounts,
+            "execution_trace": trace_dict
         }
 
-    def _extract_facts(self, pages: list, tenant_id: str, process_id: str, structured_rules: Optional[dict] = None) -> dict:
+    def _extract_facts(self, pages: list, tenant_id: str, process_id: str, structured_rules: Optional[dict] = None, trace: Optional[Any] = None) -> dict:
         """
         Extrai valores monetários, diagnósticos, comprovantes, negativas e fatos de cada página do processo,
         avaliando tópicos e vedações de forma 100% dinâmica a partir do PDF da norma ativa.
         """
         full_text = " \n ".join([p.get("raw_text") or "" for p in pages])
         full_text_lower = full_text.lower()
+
+        if trace:
+            trace.log("FASE_3_EXTRACAO_FATOS", f"Iniciando varredura e extração de variáveis em {len(pages)} página(s)...")
 
         # 1. Extração robusta de valor pleiteado na petição inicial, decisões e comprovantes
         requested_amount = 0.0
@@ -352,6 +406,19 @@ class ProcessExecutionService:
         cid_match = re.search(r'\b([A-Z]\d{2}(?:\.\d{1,2})?)\b', full_text)
         cid_found = cid_match.group(1) if cid_match else None
 
+        if trace:
+            trace.log("FASE_3_EXTRACAO_FATOS", f"Valor da Causa Identificado: R$ {requested_amount:,.2f} (Material: R$ {material_amount:,.2f} | Moral: R$ {moral_amount:,.2f}).")
+            trace.log("FASE_3_EXTRACAO_FATOS", f"Fase Processual Detectada: {procedural_stage} (Petição Inicial: {is_initial_petition} | Sentença/Acórdão: {has_operative_sentence}).")
+            trace.log("FASE_3_EXTRACAO_FATOS", f"Diagnóstico / CID-10: {cid_found or 'Não identificado expressamente'} | Pedido de A.T. Escolar: {has_school_aide}.")
+            trace.complete_phase("FASE_3_EXTRACAO_FATOS", "COMPLETED", {
+                "requested_amount": requested_amount,
+                "material_amount": material_amount,
+                "moral_amount": moral_amount,
+                "procedural_stage": procedural_stage,
+                "cid_10": cid_found,
+                "has_school_aide": has_school_aide
+            })
+
         # 2. Identificação do Tema da Ação a partir do conteúdo dos autos com ranking de frequência e relevância
         identified_theme = "Geral"
         applicable_topic_num = 1
@@ -361,6 +428,8 @@ class ProcessExecutionService:
         norm_full_text = BrazilianDomainValidator.normalize_text_for_matching(full_text_lower)
 
         if structured_rules and "topics" in structured_rules:
+            if trace:
+                trace.log("FASE_4_CLASSIFICACAO_TEMA", f"Calculando afinidade léxica contra os {len(structured_rules['topics'])} temas da norma ativa...")
             for t in structured_rules["topics"]:
                 t_num = t.get("topic_number", 1)
                 t_name = t.get("topic_name", "")
@@ -404,12 +473,18 @@ class ProcessExecutionService:
                     if re.search(r'\b(?:demora na autorizacao|atraso na autorizacao|tempo habil)\b', norm_full_text):
                         score += 200
 
+                if score > 0 and trace:
+                    trace.log("FASE_4_CLASSIFICACAO_TEMA", f"Score Tema {t_num:02d} ({t_name[:35]}...): {score} pontos.")
+
                 if score > best_score:
                     best_score = score
                     best_topic = t
             if best_topic and best_score > 0:
                 identified_theme = f"Tema {best_topic.get('topic_number', 1):02d}: {best_topic.get('topic_name')}"
                 applicable_topic_num = best_topic.get("topic_number", 1)
+                if trace:
+                    trace.log("FASE_4_CLASSIFICACAO_TEMA", f"Tema Vencedor: '{identified_theme}' com score de afinidade {best_score}.", level="SUCCESS")
+                    trace.complete_phase("FASE_4_CLASSIFICACAO_TEMA", "COMPLETED", {"winner_theme": identified_theme, "topic_number": applicable_topic_num, "score": best_score})
         else:
             if any(k in norm_full_text for k in ["aba", "denver", "prompt", "pecs", "terapia especial", "espectro autista"]):
                 identified_theme = "Tema 01: Terapias Especiais"
@@ -465,6 +540,8 @@ class ProcessExecutionService:
                     ]):
                         topics_facts[f"topic_{t_num:02d}"]["has_prohibition"] = True
                         topics_facts[f"topic_{t_num:02d}"]["requirements_met"] = False
+                        if trace:
+                            trace.log("FASE_5_AVALIACAO_REGRAS", f"VEDAÇÃO DA NORMA ACIONADA: Tema {t_num:02d} veda acordos em fase pré-sentença.", level="WARNING")
                         break
 
                 # Avaliação de Vedações Específicas: verifica se o processo incide em termos vedados do manual
@@ -480,6 +557,8 @@ class ProcessExecutionService:
                         ]):
                             topics_facts[f"topic_{t_num:02d}"]["has_prohibition"] = True
                             topics_facts[f"topic_{t_num:02d}"]["requirements_met"] = False
+                            if trace:
+                                trace.log("FASE_5_AVALIACAO_REGRAS", f"VEDAÇÃO DA NORMA ACIONADA: Pedido de A.T. / Acompanhamento em Ambiente Escolar vedado na norma ativa.", level="WARNING")
                             break
 
                     # 2. Vedação de Prestador Particular / Fora da Rede Credenciada
@@ -491,6 +570,8 @@ class ProcessExecutionService:
                         ]):
                             topics_facts[f"topic_{t_num:02d}"]["has_prohibition"] = True
                             topics_facts[f"topic_{t_num:02d}"]["requirements_met"] = False
+                            if trace:
+                                trace.log("FASE_5_AVALIACAO_REGRAS", f"VEDAÇÃO DA NORMA ACIONADA: Tratamento pleiteado fora da rede credenciada / em prestador eventual.", level="WARNING")
                             break
 
                     # 3. Vedação de Reembolso Integral
@@ -498,6 +579,8 @@ class ProcessExecutionService:
                         if any(k in norm_full_text for k in ["reembolso integral", "restituicao integral de 100%", "100% de reembolso"]):
                             topics_facts[f"topic_{t_num:02d}"]["has_prohibition"] = True
                             topics_facts[f"topic_{t_num:02d}"]["requirements_met"] = False
+                            if trace:
+                                trace.log("FASE_5_AVALIACAO_REGRAS", f"VEDAÇÃO DA NORMA ACIONADA: Pedido de Reembolso Integral 100% vedado na norma ativa.", level="WARNING")
                             break
 
                     # 4. Extrai termos específicos entre parênteses ou termos técnicos chave
@@ -523,6 +606,8 @@ class ProcessExecutionService:
                         if len(norm_term) >= 3 and norm_term in norm_full_text:
                             topics_facts[f"topic_{t_num:02d}"]["has_prohibition"] = True
                             topics_facts[f"topic_{t_num:02d}"]["requirements_met"] = False
+                            if trace:
+                                trace.log("FASE_5_AVALIACAO_REGRAS", f"VEDAÇÃO DA NORMA ACIONADA: Hipótese vedada '{term}' identificada nos autos.", level="WARNING")
                             break
 
         facts = {
