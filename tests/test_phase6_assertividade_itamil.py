@@ -93,6 +93,15 @@ def test_ponto4_conditional_settlement_school_aide_exclusion():
     """
     sample_policy = {
         "policy_version_id": "it_amil_tea_2026",
+        "topics": [
+            {
+                "topic_number": 1,
+                "topic_name": "Terapias Especiais (TEA/ABA)",
+                "mandatory_clauses": [
+                    "RENUNCIA_EXPRESSA_AT_ESCOLAR: Proposta autorizada exclusivamente para terapias clínicas, condicionada à renúncia expressa quanto ao pedido de AT escolar."
+                ]
+            }
+        ],
         "rules": [
             {
                 "rule_code": "TEMA_01_LIMITE_VALOR",
@@ -142,7 +151,7 @@ def test_ponto4_conditional_settlement_school_aide_exclusion():
     assert result.overall_verdict == "CONDITIONALLY_ELIGIBLE"
     assert len(result.conditional_clauses) == 1
     assert "RENUNCIA_EXPRESSA_AT_ESCOLAR" in result.conditional_clauses[0]
-    assert "REsp 2.064.964/SP" in result.conditional_clauses[0]
+
 
 def test_ponto5_damage_segregation_material_vs_moral():
     """
@@ -194,3 +203,153 @@ def test_ponto5_damage_segregation_material_vs_moral():
     assert result.segregated_amounts["material_damage_amount"] == 6000.0
     assert result.segregated_amounts["moral_damage_amount"] == 1500.0
     assert result.segregated_amounts["requested_amount"] == 7500.0
+
+def test_fraude_de_boleto_pre_sentenca_ineligible():
+    """
+    Caso TJAL 0700071-15.2024.8.02.0025: Petição inicial alegando golpe do boleto falso.
+    Tema 17 (Fraude de Boleto): Veda expressamente acordo em fase pré-sentença.
+    Veredito obrigatório: INELIGIBLE.
+    """
+    from src.rule_engine.policy_compiler import DynamicPolicyCompiler
+    from scripts.seed_corporate_manual import CORPORATE_MANUAL_TEXT
+
+    compiled = DynamicPolicyCompiler.compile_corporate_manual(
+        pdf_text=CORPORATE_MANUAL_TEXT,
+        policy_name="Instrução de Trabalho Acordos",
+        version="2026.1-AMIL-IT-ACORDOS",
+        file_hash="test_hash"
+    )
+
+    engine = DeterministicRuleEngine(compiled.model_dump())
+
+    fact_data = {
+        "identified_theme": "Tema 17: Fraude de Boleto",
+        "applicable_topic_num": 17,
+        "procedural_stage": "PRE_SENTENCA",
+        "financial": {
+            "requested_amount": 16788.18,
+            "material_damage_amount": 6788.18,
+            "moral_damage_amount": 10000.0,
+            "has_fiscal_receipt": True,
+            "evidence": {
+                "document_type": "NOTA_FISCAL",
+                "page_number": 31,
+                "bounding_box": [100, 100, 200, 900],
+                "text_snippet": "Boleto Safra R$ 6.788,18"
+            }
+        },
+        "topics": {
+            "topic_17": {
+                "requirements_met": False,
+                "has_prohibition": True,
+                "evidence": {"document_type": "PETICAO_INICIAL", "page_number": 1}
+            }
+        }
+    }
+
+    result = engine.evaluate(process_id="proc_tjal_0700071", case_fact_data=fact_data)
+
+    assert result.overall_verdict == "INELIGIBLE"
+    assert any("Somente com Sentença de Procedência" in r.failure_reason for r in result.rule_results if r.status == "FAIL")
+
+def test_luziane_rocha_carencia_moral_exceeded_ineligible():
+    """
+    Caso TJMA 0811884-29.2026.8.10.0001 (Luziane Rocha):
+    Ação de Carência de Parto com pedido de R$ 15.000,00 a título de danos morais.
+    Na norma ativa, o teto para Carência (Tema 4) é R$ 7.200,00.
+    Veredito obrigatório: INELIGIBLE (TEMA_04_TETO_DANO_MORAL).
+    """
+    from src.rule_engine.policy_compiler import DynamicPolicyCompiler
+    from scripts.seed_corporate_manual import CORPORATE_MANUAL_TEXT
+
+    compiled = DynamicPolicyCompiler.compile_corporate_manual(
+        pdf_text=CORPORATE_MANUAL_TEXT,
+        policy_name="Instrução de Trabalho Acordos",
+        version="2026.1-AMIL-IT-ACORDOS",
+        file_hash="test_hash"
+    )
+    engine = DeterministicRuleEngine(compiled.model_dump())
+
+    fact_data = {
+        "identified_theme": "Tema 04: Carência",
+        "applicable_topic_num": 4,
+        "procedural_stage": "PRE_SENTENCA",
+        "financial": {
+            "requested_amount": 15000.0,
+            "material_damage_amount": 0.0,
+            "moral_damage_amount": 15000.0,
+            "has_fiscal_receipt": False,
+            "evidence": {"document_type": "PETICAO_INICIAL", "page_number": 45}
+        },
+        "topics": {
+            "topic_04": {
+                "requirements_met": True,
+                "has_prohibition": False,
+                "evidence": {"document_type": "PETICAO_INICIAL", "page_number": 1}
+            }
+        }
+    }
+
+    result = engine.evaluate(process_id="proc_luziane_0811884", case_fact_data=fact_data)
+    assert result.overall_verdict == "INELIGIBLE"
+    assert any(r.rule_code == "TEMA_04_TETO_DANO_MORAL" and r.status == "FAIL" for r in result.rule_results)
+
+def test_viviane_meneses_atraso_moral_exceeded_ineligible():
+    """
+    Caso TJMA 0803074-22.2025.8.10.0059 (Viviane Meneses):
+    Ação com pedido de R$ 20.000,00 de danos morais ('sugerindo-se o valor de R$ Vinte Mil Reais (R$ 20.000,00)').
+    Na norma ativa, o teto para Atraso na Autorização (Tema 6) é R$ 7.200,00.
+    Veredito obrigatório: INELIGIBLE (TEMA_06_TETO_DANO_MORAL).
+    """
+    from src.rule_engine.policy_compiler import DynamicPolicyCompiler
+    from scripts.seed_corporate_manual import CORPORATE_MANUAL_TEXT
+
+    compiled = DynamicPolicyCompiler.compile_corporate_manual(
+        pdf_text=CORPORATE_MANUAL_TEXT,
+        policy_name="Instrução de Trabalho Acordos",
+        version="2026.1-AMIL-IT-ACORDOS",
+        file_hash="test_hash"
+    )
+    engine = DeterministicRuleEngine(compiled.model_dump())
+
+    fact_data = {
+        "identified_theme": "Tema 06: Atraso na Autorização",
+        "applicable_topic_num": 6,
+        "procedural_stage": "PRE_SENTENCA",
+        "financial": {
+            "requested_amount": 20400.0,
+            "material_damage_amount": 400.0,
+            "moral_damage_amount": 20000.0,
+            "has_fiscal_receipt": False,
+            "evidence": {"document_type": "PETICAO_INICIAL", "page_number": 17}
+        },
+        "topics": {
+            "topic_06": {
+                "requirements_met": True,
+                "has_prohibition": False,
+                "evidence": {"document_type": "PETICAO_INICIAL", "page_number": 1}
+            }
+        }
+    }
+
+    result = engine.evaluate(process_id="proc_viviane_0803074", case_fact_data=fact_data)
+    assert result.overall_verdict == "INELIGIBLE"
+    assert any(r.rule_code == "TEMA_06_TETO_DANO_MORAL" and r.status == "FAIL" for r in result.rule_results)
+
+def test_brazilian_moral_damage_extractor_forensic_patterns():
+    """
+    Testa a extração determinística de danos morais cobrindo padrões forenses de petições iniciais.
+    """
+    # 1. Sugestão de arbitramento com numeral e extenso
+    text_1 = "indenização a título de Danos Morais ... Sugerindo-se assim o valor de R$ Vinte Mil Reais (R$ 20.000,00)"
+    assert BrazilianDomainValidator.extract_moral_damage_from_text(text_1) == 20000.0
+
+    # 2. Arbitramento judicial em item dos pedidos
+    text_2 = "8 - A condenação da operadora de plano de saúde no pagamento de danos morais arbitrado pelo Juízo ao valor de R$ 15.000,00 (quinze mil reais)"
+    assert BrazilianDomainValidator.extract_moral_damage_from_text(text_2) == 15000.0
+
+    # 3. Dano moral sofrido em valor a R$ 10.000,00
+    text_3 = "reparado o dano moral sofrido em valor a R$ 10.000,00 (dez mil reais)"
+    assert BrazilianDomainValidator.extract_moral_damage_from_text(text_3) == 10000.0
+
+

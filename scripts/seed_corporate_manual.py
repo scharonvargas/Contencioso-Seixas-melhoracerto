@@ -307,26 +307,17 @@ def seed_corporate_policy_from_pdf():
             db.add(tenant)
             db.commit()
 
-        # Desativa outras versões
-        active_versions = db.query(PolicyVersion).filter(PolicyVersion.tenant_id == tenant.id).all()
-        for v in active_versions:
-            v.status = "SUPERSEDED"
+        # Desativa todas as versões de teste / legadas em qualquer tenant
+        all_active = db.query(PolicyVersion).all()
+        for v in all_active:
+            if v.version != compiled.version:
+                v.status = "SUPERSEDED"
 
-        policy = db.query(Policy).filter(Policy.tenant_id == tenant.id).first()
-        if not policy:
-            policy = Policy(
-                id=generate_uuid(),
-                tenant_id=tenant.id,
-                name="Instrução de Trabalho Acordos — Contencioso Cível de Massa"
-            )
-            db.add(policy)
-            db.commit()
-
-        existing_v = db.query(PolicyVersion).filter(
-            PolicyVersion.tenant_id == tenant.id,
-            PolicyVersion.policy_id == policy.id,
-            PolicyVersion.version == compiled.version
-        ).first()
+        tenants_to_seed = [tenant]
+        for extra_t_id in ["tenant_saude_001", "tenant_001"]:
+            t_extra = db.query(Tenant).filter(Tenant.id == extra_t_id).first()
+            if t_extra and t_extra not in tenants_to_seed:
+                tenants_to_seed.append(t_extra)
 
         structured_dict = {
             "policy_version_id": compiled.version,
@@ -337,25 +328,41 @@ def seed_corporate_policy_from_pdf():
             "rules": compiled.all_rules
         }
 
-        if existing_v:
-            existing_v.structured_rules = structured_dict
-            existing_v.file_hash_sha256 = file_hash
-            existing_v.status = "ACTIVE"
-            p_version = existing_v
-        else:
-            new_v_id = generate_uuid()
-            p_version = PolicyVersion(
-                id=new_v_id,
-                tenant_id=tenant.id,
-                policy_id=policy.id,
-                version=compiled.version,
-                status="ACTIVE",
-                file_hash_sha256=file_hash,
-                pdf_storage_path=str(pdf_path),
-                structured_rules=structured_dict
-            )
-            db.add(p_version)
-        db.commit()
+        for t_target in tenants_to_seed:
+            policy = db.query(Policy).filter(Policy.tenant_id == t_target.id).first()
+            if not policy:
+                policy = Policy(
+                    id=generate_uuid(),
+                    tenant_id=t_target.id,
+                    name="Instrução de Trabalho Acordos — Contencioso Cível de Massa"
+                )
+                db.add(policy)
+                db.commit()
+
+            existing_v = db.query(PolicyVersion).filter(
+                PolicyVersion.tenant_id == t_target.id,
+                PolicyVersion.version == compiled.version
+            ).first()
+
+            if existing_v:
+                existing_v.structured_rules = structured_dict
+                existing_v.file_hash_sha256 = file_hash
+                existing_v.status = "ACTIVE"
+                p_version = existing_v
+            else:
+                new_v_id = generate_uuid()
+                p_version = PolicyVersion(
+                    id=new_v_id,
+                    tenant_id=t_target.id,
+                    policy_id=policy.id,
+                    version=compiled.version,
+                    status="ACTIVE",
+                    file_hash_sha256=file_hash,
+                    pdf_storage_path=str(pdf_path),
+                    structured_rules=structured_dict
+                )
+                db.add(p_version)
+            db.commit()
 
         print("\n" + "=" * 80)
         print("NORMA CORPORATIVA ATIVA CADASTRADA COM SUCESSO NO BANCO!")

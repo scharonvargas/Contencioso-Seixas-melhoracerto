@@ -3,18 +3,30 @@ import numpy as np
 from typing import Dict, Any, List
 from src.ingestion.quality_assessor import PageQualityAssessor
 from src.ocr.opencv_preprocessor import OpenCVDocumentPreprocessor
+from src.ocr.google_vision_client import GoogleVisionOCRClient
+from src.ocr.openrouter_vision_client import OpenRouterVisionOCRClient
 
 class OCRCascadeEngine:
     """
     Motor de OCR em Cascata de 4 Níveis:
-    Tier 0: PyMuPDF (Nativo, <10ms)
-    Tier 1: Docling / PaddleOCR (Local CPU/GPU, ~800ms)
-    Tier 2: OpenCV Preprocessing + Re-OCR
-    Tier 3: Fallback VLM (Gemini 2.0 Flash / GPT-4o-mini, sob demanda)
+    Tier 0: PyMuPDF (Nativo Vetorial, <10ms, Custo R$ 0,00)
+    Tier 1: OpenCV Preprocessor (Deskew, normalização de contraste para scans)
+    Tier 2: Visão Multimodal & OCR Inteligente (OpenRouter Vision / Google Cloud Vision)
+    Tier 3: Fallback VLM / HITL (Revisão Humana quando confiança for insuficiente)
     """
 
-    def __init__(self, vlm_client=None):
+    def __init__(self, vlm_client=None, vision_client=None):
         self.vlm_client = vlm_client
+        if vision_client:
+            self.vision_client = vision_client
+        else:
+            openrouter_client = OpenRouterVisionOCRClient()
+            google_client = GoogleVisionOCRClient()
+            # Prioriza OpenRouter se configurado, ou Google Vision
+            if openrouter_client.is_available():
+                self.vision_client = openrouter_client
+            else:
+                self.vision_client = google_client
 
     def process_page(self, page: fitz.Page, page_number: int) -> Dict[str, Any]:
         # 1. Tier 0: Avaliação de Texto Nativo
@@ -29,27 +41,54 @@ class OCRCascadeEngine:
                 "raw_text": page.get_text("text"),
                 "words_data": words_data,
                 "mean_confidence": 1.0,
-                "quality_metrics": quality
+                "quality_metrics": quality,
+                "requires_hitl": False
             }
 
-        # 2. Renderização da Imagem da Página para OCR quando texto nativo for nulo
+        # 2. Renderização da Imagem da Página para OCR quando texto nativo for nulo ou scan
         pix = page.get_pixmap(dpi=200)
         img_bytes = pix.tobytes("png")
 
-        # 3. Fallback de OCR Real
+        # 3. Tier 1: Pré-processamento OpenCV (Deskew / Contraste)
+        processed_bytes = OpenCVDocumentPreprocessor.process_degraded_page(img_bytes)
+
+        # 4. Tier 2: Visão Multimodal / OCR Inteligente (OpenRouter Vision / Google Cloud Vision)
+        if self.vision_client and self.vision_client.is_available():
+            vision_res = self.vision_client.process_image_bytes(
+                processed_bytes,
+                width=pix.width,
+                height=pix.height
+            )
+            if vision_res and len(vision_res.get("raw_text", "").strip()) > 0:
+                raw_text = vision_res["raw_text"]
+                mean_conf = vision_res.get("mean_confidence", 0.95)
+                return {
+                    "page_number": page_number,
+                    "tier": "TIER_2_MULTIMODAL_VISION",
+                    "engine": vision_res.get("engine", "Multimodal Vision OCR"),
+                    "raw_text": raw_text,
+                    "words_data": vision_res.get("words_data", []),
+                    "mean_confidence": mean_conf,
+                    "quality_metrics": quality,
+                    "requires_hitl": mean_conf < 0.70
+                }
+
+        # 5. Fallback quando nenhum provedor de visão estiver disponível
         raw_text = page.get_text("text").strip()
         words_data = self._extract_native_bboxes(page)
 
+        has_text = len(raw_text) > 0
         return {
             "page_number": page_number,
-            "tier": "TIER_0_NATIVE" if len(raw_text) > 0 else "TIER_1_LOCAL_OCR",
+            "tier": "TIER_0_NATIVE" if has_text else "TIER_1_UNPROCESSED_SCANNED",
             "engine": "PyMuPDF",
-            "raw_text": raw_text or "[Página Digitalizada / Imagem sem camada de texto nativo]",
+            "raw_text": raw_text if has_text else "[Página Digitalizada / Ilegível sem OCR]",
             "words_data": words_data,
-            "mean_confidence": 1.0 if len(raw_text) > 0 else 0.80,
+            "mean_confidence": 1.0 if has_text else 0.0,
             "quality_metrics": quality,
-            "requires_hitl": len(raw_text) == 0
+            "requires_hitl": not has_text
         }
+
 
     def _extract_native_bboxes(self, page: fitz.Page) -> List[Dict[str, Any]]:
         words = page.get_text("words")

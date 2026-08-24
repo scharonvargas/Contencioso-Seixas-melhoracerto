@@ -38,8 +38,25 @@ def db_session_fixture():
         PolicyVersion.version == "2026.1"
     ).first()
 
+    test_rules_payload = {
+        "policy_version_id": "2026.1",
+        "rules": [
+            {
+                "rule_code": "RULE_TEST_DESEMBOLSO",
+                "title": "Nota Fiscal Obrigatória",
+                "mandatory": True,
+                "condition": {"==": [{"var": "financial.has_fiscal_receipt"}, True]},
+                "required_evidence_fields": ["financial"],
+                "failure_message_template": "Ausência de Nota Fiscal."
+            }
+        ]
+    }
+
+    from datetime import datetime, timezone
     if p_ver:
         p_ver.status = "ACTIVE"
+        p_ver.activated_at = datetime.now(timezone.utc)
+        p_ver.structured_rules = test_rules_payload
         db.commit()
     else:
         p_ver = PolicyVersion(
@@ -48,24 +65,19 @@ def db_session_fixture():
             policy_id=policy.id,
             version="2026.1",
             status="ACTIVE",
+            activated_at=datetime.now(timezone.utc),
             file_hash_sha256="fake_sha",
             pdf_storage_path="fake_path.pdf",
-            structured_rules={
-                "policy_version_id": "2026.1",
-                "rules": [
-                    {
-                        "rule_code": "RULE_TEST_DESEMBOLSO",
-                        "title": "Nota Fiscal Obrigatória",
-                        "mandatory": True,
-                        "condition": {"==": [{"var": "financial.has_fiscal_receipt"}, True]},
-                        "required_evidence_fields": ["financial"],
-                        "failure_message_template": "Ausência de Nota Fiscal."
-                    }
-                ]
-            }
+            structured_rules=test_rules_payload
         )
         db.add(p_ver)
         db.commit()
+
+    db.query(PolicyVersion).filter(
+        PolicyVersion.tenant_id == tenant.id,
+        PolicyVersion.id != p_ver.id
+    ).update({"status": "INACTIVE"})
+    db.commit()
 
     yield db
     db.close()

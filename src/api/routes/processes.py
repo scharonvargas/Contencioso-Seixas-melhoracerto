@@ -27,13 +27,16 @@ class ProcessDetailResponse(BaseModel):
 
 @router.get("", response_model=List[ProcessDetailResponse])
 @router.get("/", response_model=List[ProcessDetailResponse])
-async def list_processes():
+async def list_processes(tenant_id: Optional[str] = None):
     """
-    Lista todos os processos judiciais reais cadastrados e avaliados no banco de dados.
+    Lista todos os processos judiciais reais cadastrados e avaliados no banco de dados para o tenant.
     """
     db = SessionLocal()
     try:
-        processes = db.query(Process).order_by(Process.created_at.desc()).all()
+        query = db.query(Process)
+        if tenant_id:
+            query = query.filter(Process.tenant_id == tenant_id)
+        processes = query.order_by(Process.created_at.desc()).all()
         results = []
         for p in processes:
             eval_record = db.query(Evaluation).filter(Evaluation.process_id == p.id).first()
@@ -57,6 +60,7 @@ async def list_processes():
         return results
     finally:
         db.close()
+
 
 @router.get("/{process_id}")
 async def get_process_details(process_id: str):
@@ -153,13 +157,15 @@ async def upload_judicial_process(
     file: Optional[UploadFile] = File(default=None),
     cnj_number: Optional[str] = Form(default=None),
     beneficiary_name: Optional[str] = Form(default="Beneficiário dos Autos"),
-    operator_name: Optional[str] = Form(default="Grupo Amil")
+    operator_name: Optional[str] = Form(default="Operadora de Saúde"),
+    tenant_id: Optional[str] = Form(default=None)
 ):
     """
     Recebe um ou múltiplos arquivos PDF reais que compõem o processo judicial,
     processa todas as páginas no motor OCR em cascata, cruza evidências entre as peças
     (Petição Inicial, Laudos Médicos, Notas Fiscais, Negativas) e emite o veredito determinístico.
     """
+    import pathlib
     all_uploads = []
     if files:
         all_uploads.extend(files)
@@ -173,14 +179,17 @@ async def upload_judicial_process(
     for f in all_uploads:
         if not f.filename:
             continue
-        if not f.filename.lower().endswith(".pdf"):
-            raise HTTPException(status_code=400, detail=f"O arquivo '{f.filename}' não é um PDF válido.")
+        safe_name = pathlib.Path(f.filename).name
+        if not safe_name.lower().endswith(".pdf"):
+            raise HTTPException(status_code=400, detail=f"O arquivo '{safe_name}' não é um PDF válido.")
         pdf_bytes = await f.read()
         if not pdf_bytes or len(pdf_bytes) == 0:
-            raise HTTPException(status_code=400, detail=f"O arquivo '{f.filename}' está vazio ou corrompido.")
+            raise HTTPException(status_code=400, detail=f"O arquivo '{safe_name}' está vazio ou corrompido.")
+        if not pdf_bytes.startswith(b"%PDF-"):
+            raise HTTPException(status_code=400, detail=f"O arquivo '{safe_name}' não possui cabeçalho binário PDF válido.")
         pdf_files_payload.append({
             "bytes": pdf_bytes,
-            "filename": f.filename
+            "filename": safe_name
         })
 
     if not pdf_files_payload:
@@ -189,23 +198,23 @@ async def upload_judicial_process(
     db = SessionLocal()
     try:
         tenant = db.query(Tenant).filter(Tenant.slug == "operadora-saude-padrao").first()
-        tenant_id = tenant.id if tenant else "default_tenant"
+        effective_tenant_id = tenant_id or (tenant.id if tenant else "default_tenant")
 
         proc_id = generate_uuid()
         effective_cnj = cnj_number if (cnj_number and len(cnj_number) > 5) else f"000{generate_uuid()[:4]}-50.2025.8.26.0100"
 
         proc = db.query(Process).filter(
-            Process.tenant_id == tenant_id,
+            Process.tenant_id == effective_tenant_id,
             Process.cnj_number == effective_cnj
         ).first()
 
         if not proc:
             proc = Process(
                 id=proc_id,
-                tenant_id=tenant_id,
+                tenant_id=effective_tenant_id,
                 cnj_number=effective_cnj,
                 beneficiary_name=beneficiary_name or "Beneficiário dos Autos",
-                operator_name=operator_name or "Grupo Amil",
+                operator_name=operator_name or "Operadora de Saúde",
                 status="PROCESSING"
             )
             db.add(proc)
@@ -218,7 +227,7 @@ async def upload_judicial_process(
         # Executa esteira completa multi-documento
         service = ProcessExecutionService(db=db)
         result = service.process_and_evaluate_multi(
-            tenant_id=tenant_id,
+            tenant_id=effective_tenant_id,
             process_id=proc_id,
             pdf_files=pdf_files_payload
         )
@@ -228,7 +237,7 @@ async def upload_judicial_process(
             "process_id": proc_id,
             "cnj_number": effective_cnj,
             "beneficiary_name": beneficiary_name or "Beneficiário dos Autos",
-            "operator_name": operator_name or "Grupo Amil",
+            "operator_name": operator_name or "Operadora de Saúde",
             "documents_count": result.get("documents_count", len(pdf_files_payload)),
             "documents_summary": result.get("documents_summary", []),
             "total_pages": result["total_pages"],
@@ -240,3 +249,4 @@ async def upload_judicial_process(
         }
     finally:
         db.close()
+

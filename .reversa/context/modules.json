@@ -1,0 +1,29 @@
+{
+  "module_name": "process_analysis",
+  "analyzed_at": "2026-08-24T10:55:00Z",
+  "status": "COMPLETED",
+  "files": [
+    "src/services/process_service.py",
+    "src/ocr/cascade_engine.py",
+    "src/segmentation/segmenter.py",
+    "src/extraction/llm_client.py",
+    "src/extraction/evidence_grounding.py",
+    "src/rule_engine/deterministic_engine.py",
+    "src/rule_engine/policy_compiler.py",
+    "src/validators/brazilian_validators.py"
+  ],
+  "entities": [
+    "Process",
+    "Evaluation",
+    "DocumentPage",
+    "ExtractedFact",
+    "Evidence",
+    "PolicyVersion"
+  ],
+  "critical_rules": [
+    "ZERO_HARDCODED_RULES",
+    "EVIDENCE_FIRST",
+    "TRIADE_BOOLEANA_UNKNOWN_NOT_FALSE",
+    "PRE_SENTENCE_PROHIBITION_LOCK"
+  ]
+}

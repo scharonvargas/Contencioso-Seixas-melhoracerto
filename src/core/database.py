@@ -20,22 +20,7 @@ from sqlalchemy import text
 
 def init_db():
     Base.metadata.create_all(bind=engine)
-    # Garante migração de colunas adicionadas em SQLite
-    with engine.connect() as conn:
-        for col_def in [
-            "ALTER TABLE evaluations ADD COLUMN rules_results JSON",
-            "ALTER TABLE evaluations ADD COLUMN execution_trace JSON",
-            "ALTER TABLE document_pages ADD COLUMN document_name VARCHAR(255)",
-            "ALTER TABLE document_pages ADD COLUMN page_in_document INTEGER",
-            "ALTER TABLE document_pages ADD COLUMN segment_type VARCHAR(64)",
-            "ALTER TABLE document_pages ADD COLUMN raw_text TEXT",
-            "ALTER TABLE document_pages ADD COLUMN words_data JSON"
-        ]:
-            try:
-                conn.execute(text(col_def))
-                conn.commit()
-            except Exception:
-                pass # Coluna já existe
+
 
 def get_db():
     db = SessionLocal()

@@ -1,0 +1,12 @@
+{
+  "output_folder": "_reversa_sdd",
+  "doc_level": "completo",
+  "checkpoints": {
+    "archaeologist": {
+      "modules_analyzed": [
+        "process_analysis"
+      ],
+      "last_updated": "2026-08-24T10:55:00Z"
+    }
+  }
+}

@@ -239,8 +239,33 @@ def test_process_execution_service_multi_pdf():
     init_db()
     db = SessionLocal()
     try:
-        tenant = db.query(Tenant).first()
-        tenant_id = tenant.id if tenant else "default_tenant"
+        from src.models.entities import Policy, PolicyVersion
+        tenant = db.query(Tenant).filter(Tenant.slug == "operadora-saude-padrao").first()
+        if not tenant:
+            tenant = Tenant(id=generate_uuid(), name="Tenant E2E", slug="operadora-saude-padrao")
+            db.add(tenant)
+            db.commit()
+        tenant_id = tenant.id
+
+        # Garante norma ativa para o tenant
+        active_pol = db.query(PolicyVersion).filter(PolicyVersion.tenant_id == tenant_id, PolicyVersion.status == "ACTIVE").first()
+        if not active_pol:
+            pol = db.query(Policy).filter(Policy.tenant_id == tenant_id).first()
+            if not pol:
+                pol = Policy(id=generate_uuid(), tenant_id=tenant_id, name="Norma Padrão")
+                db.add(pol)
+                db.commit()
+            active_pol = PolicyVersion(
+                id=generate_uuid(),
+                tenant_id=tenant_id,
+                policy_id=pol.id,
+                version="2026.1",
+                status="ACTIVE",
+                structured_rules={"policy_version_id": "2026.1", "rules": [{"rule_code": "TEST_R1", "condition": {"==": [1, 1]}}]}
+            )
+            db.add(active_pol)
+            db.commit()
+
         proc_id = generate_uuid()
 
         # Doc 1: Petição Inicial
@@ -258,6 +283,7 @@ def test_process_execution_service_multi_pdf():
         doc2.close()
 
         service = ProcessExecutionService(db=db)
+
         result = service.process_and_evaluate_multi(
             tenant_id=tenant_id,
             process_id=proc_id,

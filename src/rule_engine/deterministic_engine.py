@@ -31,7 +31,10 @@ class DeterministicRuleEngine:
     def __init__(self, structured_policy: dict):
         self.structured_policy = structured_policy or {}
         self.policy_version_id = self.structured_policy.get("policy_version_id", "default_policy")
-        self.rules = self.structured_policy.get("rules", [])
+        raw_rules = self.structured_policy.get("rules") or self.structured_policy.get("all_rules") or []
+        if not raw_rules and "topics" in self.structured_policy:
+            raw_rules = [r for t in self.structured_policy.get("topics", []) for r in t.get("rules", [])]
+        self.rules = raw_rules
 
     def evaluate(self, process_id: str, case_fact_data: dict) -> DecisionEngineResult:
         rule_results: List[RuleEvaluationResult] = []
@@ -39,12 +42,44 @@ class DeterministicRuleEngine:
         has_unknown = False
         conditional_clauses: List[str] = []
 
+        # TRAVA ZERO RULES: Política sem regras NUNCA pode resultar em ELIGIBLE
+        if not self.rules or len(self.rules) == 0:
+            return DecisionEngineResult(
+                process_id=process_id,
+                policy_version_id=self.policy_version_id,
+                overall_verdict="TECHNICAL_FAILURE",
+                rule_results=[],
+                summary="Falha técnica: Nenhuma regra operacional compilada na norma ativa. Impossível avaliar elegibilidade.",
+                conditional_clauses=[],
+                saving_analysis=None,
+                segregated_amounts={
+                    "requested_amount": case_fact_data.get("financial", {}).get("requested_amount", 0.0),
+                    "material_damage_amount": case_fact_data.get("financial", {}).get("material_damage_amount", 0.0),
+                    "moral_damage_amount": case_fact_data.get("financial", {}).get("moral_damage_amount", 0.0),
+                    "sucumbence_amount": case_fact_data.get("financial", {}).get("sucumbence_amount", 0.0)
+                }
+            )
+
         # 1. Enriquecimento Determinístico de Fatos Clínicos e Financeiros
         enriched_facts = self._enrich_facts_deterministically(case_fact_data)
         flat_facts = self._flatten_fact_values(enriched_facts)
         applicable_topic_num = enriched_facts.get("applicable_topic_num")
 
         # 2. Avaliação de Regras da Norma Ativa com as 6 Travas Arquiteturais
+        evaluated_topic_rules = 0
+        has_topic_rules = any(re.match(r'TEMA_(\d{1,2})_', r.get("rule_code", "")) for r in self.rules)
+
+        # Se a política possui regras por tema e nenhum tema foi identificado:
+        if has_topic_rules and applicable_topic_num is None:
+            rule_results.append(RuleEvaluationResult(
+                rule_code="CLASSIFICACAO_TEMA_INDEFINIDA",
+                title="Classificação de Tema da Norma Ativa",
+                status="UNKNOWN",
+                failure_reason="Nenhum tema correspondente da norma ativa foi identificado nos autos com afinidade suficiente para aplicação de regras específicas.",
+                evidence_ids=[]
+            ))
+            has_unknown = True
+
         for rule in self.rules:
             rule_code = rule.get("rule_code", "UNKNOWN_RULE")
             title = rule.get("title", rule_code)
@@ -53,27 +88,35 @@ class DeterministicRuleEngine:
             is_mandatory = rule.get("mandatory", True)
             is_blocking = rule.get("blocking", True)
 
-            # Se for regra de tema específico (TEMA_XX_), avalia apenas se for o tema do processo
+            # Se for regra de tema específico (TEMA_XX_), avalia estritamente apenas se for o tema do processo
             tema_match = re.match(r'TEMA_(\d{1,2})_', rule_code)
-            if tema_match and applicable_topic_num is not None:
+            if tema_match:
+                if applicable_topic_num is None:
+                    # Não avalia regras de tópicos individuais se o tema não foi identificado
+                    continue
                 rule_topic_num = int(tema_match.group(1))
                 if rule_topic_num != applicable_topic_num:
                     continue
+                evaluated_topic_rules += 1
             
             # TRAVA 1: PASS sem evidência idônea comprovada é INVÁLIDO -> Vira UNKNOWN
             missing_evidence = False
             ev_ids = []
-            for req_field in required_evidences:
-                evidence_obj = self._extract_nested_value(enriched_facts, f"{req_field}.evidence")
-                if not evidence_obj:
-                    val = self._extract_nested_value(enriched_facts, req_field)
-                    if isinstance(val, dict) and val.get("evidence"):
-                        evidence_obj = val.get("evidence")
-                if not evidence_obj or not isinstance(evidence_obj, dict) or not evidence_obj.get("page_number"):
-                    missing_evidence = True
-                    break
-                else:
-                    ev_ids.append(f"{evidence_obj.get('document_type', 'DOC')}_PAG_{evidence_obj.get('page_number')}")
+            if required_evidences:
+                for req_field in required_evidences:
+                    # Checagens booleanas agregadas não exigem objeto de evidência física
+                    if req_field.startswith("topics.topic_"):
+                        continue
+                    evidence_obj = self._extract_nested_value(enriched_facts, f"{req_field}.evidence")
+                    if not evidence_obj:
+                        val = self._extract_nested_value(enriched_facts, req_field)
+                        if isinstance(val, dict) and val.get("evidence"):
+                            evidence_obj = val.get("evidence")
+                    if not evidence_obj or not isinstance(evidence_obj, dict) or not evidence_obj.get("page_number"):
+                        missing_evidence = True
+                        break
+                    else:
+                        ev_ids.append(f"{evidence_obj.get('document_type', 'DOC')}_PAG_{evidence_obj.get('page_number')}")
 
             if missing_evidence and required_evidences:
                 on_unknown_effect = rule.get("on_unknown", "UNKNOWN")
@@ -137,24 +180,16 @@ class DeterministicRuleEngine:
                 operator_share=op_share
             )
 
-        # 4. Cláusulas Obrigatórias e Condicionantes da Norma Ativa
+        # 4. Cláusulas Obrigatórias e Condicionantes da Norma Ativa (Exclusivamente da Norma Compilada)
         is_conditionally_eligible = False
         if not has_critical_failure and not has_unknown:
             for t in self.structured_policy.get("topics", []):
                 if t.get("topic_number") == applicable_topic_num:
                     for mc in t.get("mandatory_clauses", []):
-                        conditional_clauses.append(mc)
-                        is_conditionally_eligible = True
+                        if mc not in conditional_clauses:
+                            conditional_clauses.append(mc)
+                            is_conditionally_eligible = True
 
-            has_school_aide = enriched_facts.get("treatment", {}).get("has_school_aide_request", False)
-            if has_school_aide and not is_conditionally_eligible:
-                conditional_clauses.append(
-                    "RENUNCIA_EXPRESSA_AT_ESCOLAR: Proposta autorizada exclusivamente para as terapias clínicas em rede credenciada "
-                    "(teto normativo), condicionada à expressa e irretratável renúncia da parte autora quanto ao pedido de "
-                    "Acompanhamento Terapêutico (AT) em ambiente escolar / mediação escolar, nos termos da jurisprudência consolidada "
-                    "do STJ (REsp 2.064.964/SP e AgInt no REsp 2.122.472/SP)."
-                )
-                is_conditionally_eligible = True
 
         # 5. Consolidação do Veredito Final (TRAVA 2: ELIGIBLE com requisito pendente é ESTRITAMENTE BLOQUEADO)
         if has_critical_failure:
@@ -200,7 +235,8 @@ class DeterministicRuleEngine:
         treatment = enriched.get("treatment", {})
         if isinstance(treatment, dict):
             # Validação determinística de Urgência
-            snippet = treatment.get("evidence", {}).get("text_snippet", "")
+            ev = treatment.get("evidence")
+            snippet = ev.get("text_snippet", "") if isinstance(ev, dict) else ""
             if snippet:
                 urgency_res = BrazilianDomainValidator.match_clinical_urgency_expression(snippet)
                 if urgency_res["is_urgent"]:
@@ -212,6 +248,7 @@ class DeterministicRuleEngine:
                 if tea_res["is_valid"]:
                     treatment["has_valid_medical_prescription"] = True
                     treatment["tea_methods_detected"] = tea_res["detected_methods"]
+
 
         financial = enriched.get("financial", {})
         if isinstance(financial, dict):

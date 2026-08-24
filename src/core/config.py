@@ -28,6 +28,8 @@ class Settings(BaseSettings):
     GEMINI_API_KEY: Optional[str] = None
     OPENAI_API_KEY: Optional[str] = None
     ANTHROPIC_API_KEY: Optional[str] = None
+    OPENROUTER_API_KEY: Optional[str] = None
+    LLM_MODEL: str = "openai/gpt-4o-mini"
     
     # Thresholds Operacionais
     NATIVE_CHAR_COUNT_MIN: int = 30

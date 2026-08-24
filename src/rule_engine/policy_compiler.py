@@ -96,7 +96,7 @@ class CompiledPolicy(BaseModel):
                 ))
         else:
             paragraphs = [p.strip() for p in pdf_text.split("\n\n") if len(p.strip()) > 40]
-            for idx, p in enumerate(paragraphs[:10]):
+            for idx, p in enumerate(paragraphs):
                 rule_code = f"NORMA_ITEM_{idx+1:03d}"
                 first_line = p.split("\n")[0][:80]
                 rules.append(DynamicRule(
@@ -117,6 +117,30 @@ class CompiledPolicy(BaseModel):
             rules=rules
         )
 
+CANONICAL_TOPIC_NAMES = {
+    1: 'Terapias Especiais (TEA / ABA)',
+    2: 'Home Care (Internação Domiciliar)',
+    3: 'Medicamento (Antineoplásico / Fora Rol)',
+    4: 'Carência (Urgência e Emergência)',
+    5: 'Rol de Procedimentos e DUT (ADI 7265)',
+    6: 'Atraso na Autorização',
+    7: 'Pool de Cobertura (PET-SCAN / OPME / TAVI)',
+    8: 'Rede de Atendimento (Indisponibilidade)',
+    9: 'Internação Psiquiátrica',
+    10: 'OPME e Junta Médica (Bomba de Insulina / Órtese)',
+    11: 'Reajuste (Faixa Etária / Sinistralidade)',
+    12: 'Cancelamento PME e Empresarial (Aviso Prévio / Multa)',
+    13: 'Demais Cancelamentos (Inadimplência / Falha Notificação)',
+    14: 'Rescisão Unilateral de Planos Coletivos Por Adesão',
+    15: 'Cancelamento de Contrato Por Baixa do CNPJ',
+    16: 'Movimentação Cadastral (Inclusão / Exclusão de Beneficiário)',
+    17: 'Fraude de Boleto (Boleto Falso)',
+    18: 'Reembolso (Prestador Particular)',
+    19: 'Negativação do Nome (Sustação de Protesto / Dano Moral)',
+    20: 'Documentos Obrigatórios (Exibição de Documentos)',
+    21: 'Mensalidade (Cobrança e Reprocessamento de Faturas)'
+}
+
 class DynamicPolicyCompiler:
     """
     Compila o PDF de Instrução de Trabalho / Manual de Acordos em regras estruturadas
@@ -128,8 +152,16 @@ class DynamicPolicyCompiler:
         doc = fitz.open(stream=pdf_bytes, filetype="pdf")
         pages_text = []
         for p in doc:
-            pages_text.append(p.get_text("text"))
+            txt = p.get_text("text")
+            if not txt or len(txt.strip()) == 0:
+                # Fallback para OCR caso a política seja digitalizada/escaneada
+                from src.ocr.cascade_engine import OCRCascadeEngine
+                ocr = OCRCascadeEngine()
+                res = ocr.process_page(p, page_number=p.number + 1)
+                txt = res.get("raw_text", "")
+            pages_text.append(txt)
         return "\n\n".join(pages_text)
+
 
     @classmethod
     def compile_from_pdf_text(
@@ -166,21 +198,135 @@ class DynamicPolicyCompiler:
                 if len(line.strip()) > 8
             ]
         else:
-            general_rules = cls._extract_bullet_points(cleaned_text, r'Regras Gerais(?:[\s\w-]+)?:\s*(.*?)(?=(?:Atributos|Regras especiais|$))')
+            general_rules = cls._extract_clean_items(cleaned_text, r'Regras Gerais(?:[\s\w-]+)?:\s*', r'(?:Atributos|Regras especiais|Rotinas|$)')
 
         topics: List[DynamicTopicRule] = []
         all_rules: List[Dict[str, Any]] = []
 
-        # 1. Tenta extração via marcadores com bullets (•) - padrão dos manuais corporativos Amil / Operadoras
-        bullet_matches = list(re.finditer(r'(?:^|\n)\s*[•]\s*([^\n]+)', cleaned_text))
-        
-        if len(bullet_matches) >= 3:
+        # 1. ESTRATÉGIA PRIMÁRIA: Tópicos Numerados Estruturados (1 a 21)
+        # Suporta formatos com '1. Terapias Especiais:', '10. OPME e Junta Médica', '1.\nRequisitos:', etc.
+        anchor_pattern = re.compile(
+            r'(?:^|\n)\s*(\d{1,2})\.\s*(?:([^\n]{2,120}))?',
+            re.MULTILINE
+        )
+        matches = list(anchor_pattern.finditer(cleaned_text))
+        valid_anchors = []
+        seen_numbers = set()
+
+        for m in matches:
+            num = int(m.group(1))
+            if 1 <= num <= 21 and num not in seen_numbers:
+                raw_title = (m.group(2) or "").strip()
+                # Descarta numerações de metadados / rodapés
+                if any(k in raw_title.lower() for k in [
+                    'data da elaboração', 'última revisão', 'elaboração:', 'revisores:', 
+                    'área responsável', 'todas os casos elegíveis'
+                ]):
+                    continue
+                seen_numbers.add(num)
+                valid_anchors.append({
+                    'number': num,
+                    'raw_title': raw_title,
+                    'start': m.start(),
+                    'end': m.end()
+                })
+
+        valid_anchors.sort(key=lambda x: x['start'])
+
+        if len(valid_anchors) >= 2:
+            for i, a in enumerate(valid_anchors):
+                topic_num = a['number']
+                raw_t = a['raw_title']
+                start_pos = a['start']
+
+                if i + 1 < len(valid_anchors):
+                    end_pos = valid_anchors[i + 1]['start']
+                else:
+                    end_pos = len(cleaned_text)
+
+                section = cleaned_text[start_pos:end_pos].strip()
+
+                # Limpa e sanitiza o título do tema
+                clean_title = re.sub(r'[:\s]+$', '', raw_t).strip()
+                if not clean_title or len(clean_title) < 3 or clean_title.lower().startswith('requisitos') or clean_title.lower().startswith('parâmetros') or len(clean_title.split()) > 10:
+                    topic_title = CANONICAL_TOPIC_NAMES.get(topic_num, f"Tema {topic_num}")
+                else:
+                    topic_title = clean_title
+
+                is_non_assistential = any(
+                    k in (section + " " + topic_title).lower()
+                    for k in ["reajuste", "cancelamento", "movimentação", "inativo", "boleto", "fraude", "protesto", "mensalidade", "cadastro", "documento", "rescisão", "sustação", "pme"]
+                )
+                category = "NÃO ASSISTENCIAL" if is_non_assistential else "ASSISTENCIAL"
+
+                stop_reqs = r'(?:Par[aâ]metros\s+do\s+Acordo|Acordos\s+P[oó]s|N[aã]o\s+permitid[oa]|Exce[çc][oõ]es|N[aã]o\s+faremos|CL[AÁ]USULA|P[oó]s\s+senten[çc]a|OBS|Atributos|$)'
+                pre_sentence = cls._extract_clean_items(
+                    section,
+                    r'(?:Requisitos|Faremos\s+acordos?|Acordos\s+pr[eé][\s-]*(?:senten[çc]a|condena[çc][aão-z]+))[^:\n]*:\s*',
+                    stop_reqs
+                )
+
+                params = cls._extract_clean_items(
+                    section,
+                    r'Par[aâ]metros\s+do\s+Acordo[^:\n]*:\s*',
+                    r'(?:Acordos\s+P[oó]s|P[oó]s\s+senten[çc]a|N[aã]o\s+permitid[oa]|Exce[çc][oõ]es|N[aã]o\s+faremos|CL[AÁ]USULA|OBS|Atributos|$)'
+                )
+
+                post_sentence = cls._extract_clean_items(
+                    section,
+                    r'(?:Acordos\s+P[oó]s[\s-]*(?:senten[çc]a|condena[çc][aão-z]+|ac[oó]rd[aã]o|inst[aâ]ncia[s]?)?|P[oó]s[\s-]*(?:senten[çc]a|condena[çc][aão-z]+))[^:\n]*:\s*',
+                    r'(?:N[aã]o\s+permitid[oa]|Exce[çc][oõ]es|N[aã]o\s+faremos|CL[AÁ]USULA|Par[aâ]metros|OBS|Atributos|$)'
+                )
+
+                prohibitions = cls._extract_clean_items(
+                    section,
+                    r'(?:N[aã]o\s+permitid[oa]|Exce[çc][oõ]es|N[aã]o\s+faremos\s+acordo[s]?|N[aã]o\s+indicad[oa])[^:\n]*:\s*',
+                    r'(?:Acordos\s+P[oó]s|Par[aâ]metros|Requisitos|CL[AÁ]USULA|OBS|Atributos|$)'
+                )
+
+                clauses = cls._extract_clean_items(
+                    section,
+                    r'CL[AÁ]USULA\s+OBRIGAT[OÓ]RIA[^:\n]*:\s*',
+                    r'(?:Acordos\s+P[oó]s|Par[aâ]metros|Requisitos|N[aã]o\s+permitid[oa]|OBS|Atributos|$)'
+                )
+
+                # Detecta vedações inline
+                if not prohibitions and re.search(r'N[aã]o\s+faremos\s+acordo\s+em\s+casos?\s+pr[eé]', section, re.IGNORECASE):
+                    prohibitions.append("Não faremos acordo em casos pré-sentença.")
+
+                inline_prohibs = re.findall(r'([^\n]+N[aã]o\s+fazemos\s+em\s+nenhuma\s+hip[oó]tese[^\n]+)', section, re.IGNORECASE)
+                if inline_prohibs:
+                    prohibitions.extend([ip.strip() for ip in inline_prohibs])
+
+                for r_item in pre_sentence:
+                    if re.search(r'n[aã]o\s+fazer\s+acordo|somente\s+com\s+senten[çc]a|vedad[ao]', r_item, re.IGNORECASE):
+                        if r_item not in prohibitions:
+                            prohibitions.append(r_item)
+
+                combined_params = pre_sentence + params + post_sentence
+                topic_logic_rules = cls._build_topic_logic(topic_num, topic_title, pre_sentence, combined_params, prohibitions)
+                all_rules.extend(topic_logic_rules)
+
+                topics.append(DynamicTopicRule(
+                    topic_number=topic_num,
+                    topic_name=topic_title,
+                    category=category,
+                    requirements=pre_sentence,
+                    agreement_parameters=params,
+                    post_sentence_rules=post_sentence,
+                    prohibitions=prohibitions,
+                    mandatory_clauses=clauses,
+                    rules=topic_logic_rules
+                ))
+
+        # 2. ESTRATÉGIA SECUNDÁRIA: Marcadores com bullets (•)
+        elif len(bullet_matches := list(re.finditer(r'(?:^|\n)\s*[•]\s*([^\n]+)', cleaned_text))) >= 3:
             for idx, m in enumerate(bullet_matches, 1):
                 start_pos = m.start()
                 end_pos = bullet_matches[idx].start() if idx < len(bullet_matches) else len(cleaned_text)
                 raw_title = m.group(1).strip()
                 clean_title = re.sub(r'\s*\(.*?\)$', '', raw_title).strip()
-                topic_title = clean_title if (clean_title and len(clean_title) >= 2) else f"Tema {idx}"
+                topic_title = clean_title if (clean_title and len(clean_title) >= 2) else CANONICAL_TOPIC_NAMES.get(idx, f"Tema {idx}")
                 section = cleaned_text[start_pos:end_pos].strip()
 
                 is_non_assistential = any(
@@ -190,7 +336,6 @@ class DynamicPolicyCompiler:
                 category = "NÃO ASSISTENCIAL" if is_non_assistential else "ASSISTENCIAL"
 
                 stop_headings = r'(?:Acordos\s+p[oó]s|Exce[çc][oõ]es|N[aã]o\s+faremos|N[aã]o\s+permitido|CL[AÁ]USULA|Obs:|$)'
-
                 pre_sentence = cls._extract_clean_items(
                     section,
                     r'(?:Acordos\s+pr[eé][\s-]*(?:senten[çc]a|condena[çc][aão-z]+)|Requisitos|Faremos\s+acordos\s+nas\s+seguintes\s+hip[oó]teses):\s*',
@@ -210,6 +355,11 @@ class DynamicPolicyCompiler:
                 if inline_prohibs:
                     prohibitions.extend([ip.strip() for ip in inline_prohibs])
 
+                for r_item in pre_sentence:
+                    if re.search(r'n[aã]o\s+fazer\s+acordo|somente\s+com\s+senten[çc]a|vedad[ao]', r_item, re.IGNORECASE):
+                        if r_item not in prohibitions:
+                            prohibitions.append(r_item)
+
                 post_sentence = cls._extract_clean_items(
                     section,
                     r'Acordos\s+p[oó]s[\s-]*(?:senten[çc]a|condena[çc][aão-z]+|inst[aâ]ncia[s]?)?(?:[\s\w-]+)?:\s*',
@@ -217,13 +367,12 @@ class DynamicPolicyCompiler:
                 )
 
                 params = pre_sentence + post_sentence
-
                 topic_logic_rules = cls._build_topic_logic(idx, topic_title, pre_sentence, params, prohibitions)
                 all_rules.extend(topic_logic_rules)
 
                 topics.append(DynamicTopicRule(
                     topic_number=idx,
-                    topic_name=raw_title,
+                    topic_name=topic_title,
                     category=category,
                     requirements=pre_sentence,
                     agreement_parameters=params,
@@ -232,53 +381,6 @@ class DynamicPolicyCompiler:
                     mandatory_clauses=[],
                     rules=topic_logic_rules
                 ))
-        else:
-            # 2. Tenta extração via tópicos numerados estruturados (1. Terapias Especiais:, 2. Home Care:, etc.)
-            numbered_topic_pattern = re.compile(
-                r'(?:^|\n)\s*(\d{1,2})\.\s+([A-Za-zÀ-ÖØ-öø-ÿ\s\(\)/,\-]{3,80}):\s*\n(.*?)(?=(?:(?:\n\s*\d{1,2}\.\s+[A-Za-zÀ-ÖØ-öø-ÿ\s\(\)/,\-]{3,80}:)|(?:\n\s*Rotinas e Atualização)|(?:\n\s*Atributos do Documento)|$))',
-                re.DOTALL
-            )
-            numbered_matches = list(numbered_topic_pattern.finditer(cleaned_text))
-
-            if len(numbered_matches) >= 2:
-                seen_topics = set()
-                for m in numbered_matches:
-                    topic_num = int(m.group(1))
-                    if topic_num in seen_topics:
-                        continue
-                    seen_topics.add(topic_num)
-
-                    raw_title = (m.group(2) or "").strip()
-                    topic_title = raw_title if (raw_title and len(raw_title) >= 3 and not raw_title.lower().startswith("requisitos")) else f"Tema {topic_num}"
-
-                    content = (m.group(3) or "").strip()
-                    reqs = cls._extract_bullet_points(content, r'Requisitos:(.*?)(?=(?:Parâmetros do Acordo:|Acordos Pós|Não permitido|CLÁUSULA|$))')
-                    params = cls._extract_bullet_points(content, r'Parâmetros do Acordo:(.*?)(?=(?:Acordos Pós|Não permitido|Requisitos:|CLÁUSULA|$))')
-                    post_sentence = cls._extract_bullet_points(content, r'Acordos Pós(?:[\s\w-]+)?:\s*(.*?)(?=(?:Não permitido|Parâmetros|Requisitos:|CLÁUSULA|$))')
-                    prohibitions = cls._extract_bullet_points(content, r'Não permitido(?:[\s\w-]+)?:\s*(.*?)(?=(?:Acordos Pós|Parâmetros|Requisitos:|CLÁUSULA|$))')
-                    clauses = cls._extract_bullet_points(content, r'CLÁUSULA OBRIGATÓRIA(?:[\s\w-]+)?:\s*(.*?)(?=(?:Acordos Pós|Parâmetros|Requisitos:|Não permitido|$))')
-
-                    is_non_assistential = any(
-                        k in (content + " " + topic_title).lower()
-                        for k in ["reajuste", "cancelamento", "movimentação", "inativo", "boleto", "fraude", "protesto", "mensalidade", "cadastro", "documento", "rescisão"]
-                    )
-                    category = "NÃO ASSISTENCIAL" if is_non_assistential else "ASSISTENCIAL"
-
-                    topic_logic_rules = cls._build_topic_logic(topic_num, topic_title, reqs, params, prohibitions)
-                    all_rules.extend(topic_logic_rules)
-
-                    topics.append(DynamicTopicRule(
-                        topic_number=topic_num,
-                        topic_name=topic_title,
-                        category=category,
-                        requirements=reqs,
-                        agreement_parameters=params,
-                        post_sentence_rules=post_sentence,
-                        prohibitions=prohibitions,
-                        mandatory_clauses=clauses,
-                        rules=topic_logic_rules
-                    ))
-
 
         return CompiledCorporatePolicy(
             policy_name=policy_name,
@@ -304,14 +406,15 @@ class DynamicPolicyCompiler:
         lines = raw.split('\n')
         items = []
         curr = []
+        bullet_regex = re.compile(r'^(?:(?:\d+[\.\)])|[•\-*§➤o\u27a4\u2022\u25b6\u25ba\u2794>])\s*')
         for line in lines:
             l = line.strip()
             if not l or l.lower().startswith("informações internas"):
                 continue
-            if re.match(r'^(?:\d+[\.\)]|[•\-*])\s*', l):
+            if bullet_regex.match(l):
                 if curr:
                     items.append(" ".join(curr))
-                curr = [re.sub(r'^(?:\d+[\.\)]|[•\-*])\s*', '', l).strip()]
+                curr = [bullet_regex.sub('', l).strip()]
             else:
                 curr.append(l)
         if curr:
@@ -325,10 +428,10 @@ class DynamicPolicyCompiler:
             return []
         
         section_text = match.group(1).strip()
-        # Divide por marcadores (>, -, •, *, ou novas linhas significativas)
         items = []
+        bullet_regex = re.compile(r'^[>\-•*§➤o\u27a4\u2022\u25b6\u25ba\u2794\d\.\)\s]+')
         for line in section_text.split("\n"):
-            cleaned = re.sub(r'^[>\-•*§\d\.)\s]+', '', line).strip()
+            cleaned = bullet_regex.sub('', line).strip()
             if len(cleaned) > 5 and not cleaned.lower().startswith("informações internas"):
                 items.append(cleaned)
         return items
@@ -419,25 +522,27 @@ class DynamicPolicyCompiler:
                 "failure_message_template": f"Ausência de comprovante de recusa prévia da operadora para {topic_name}."
             })
 
-        # 3. Regra de Vedações Expressas do Tema
+        # 3. Regra de Vedações Expressas do Tema (Avaliação determinística da ausência de vedações)
         if prohibitions:
             rules.append({
                 "rule_code": f"TEMA_{topic_num:02d}_VEDACOES_EXPRESSAS",
                 "title": f"Ausência de Hipóteses Vedadas ({topic_name})",
                 "mandatory": True,
                 "condition": {"==": [{"var": f"topics.topic_{topic_num:02d}.has_prohibition"}, False]},
-                "required_evidence_fields": [f"topics.topic_{topic_num:02d}"],
+                "required_evidence_fields": [],
                 "failure_message_template": f"Processo incide em hipótese expressamente vedada pelo manual: {'; '.join(prohibitions[:2])}."
             })
 
         # 4. Regra de Requisitos Positivos Gerais do Tema
+        failure_req_desc = f": {'; '.join(requirements[:2])}" if requirements else ""
         rules.append({
             "rule_code": f"TEMA_{topic_num:02d}_REQUISITOS_CONFORMIDADE",
             "title": f"Cumprimento dos Requisitos ({topic_name})",
             "mandatory": True,
             "condition": {"==": [{"var": f"topics.topic_{topic_num:02d}.requirements_met"}, True]},
-            "required_evidence_fields": [f"topics.topic_{topic_num:02d}"],
-            "failure_message_template": f"Não atendimento aos requisitos obrigatórios do tema {topic_name}."
+            "required_evidence_fields": [],
+            "failure_message_template": f"Não atendimento aos requisitos obrigatórios do tema {topic_name}{failure_req_desc}."
         })
 
         return rules
+

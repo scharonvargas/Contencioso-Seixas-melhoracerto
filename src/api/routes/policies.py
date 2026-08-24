@@ -22,26 +22,37 @@ class ActivatePolicyRequest(BaseModel):
 @router.get("/active")
 async def get_active_policy(tenant_id: Optional[str] = None):
     """
-    Retorna a única versão da norma interna vigente (status = 'ACTIVE') cadastrada.
+    Retorna a única versão da norma interna vigente (status = 'ACTIVE') cadastrada para o tenant.
     """
     db = SessionLocal()
     try:
+        t_id = tenant_id or "tenant_saude_001"
+        tenant = db.query(Tenant).filter(Tenant.slug == "operadora-saude-padrao").first()
+        if not tenant_id and tenant:
+            t_id = tenant.id
+
         active_ver = (
             db.query(PolicyVersion)
-            .filter(PolicyVersion.status == "ACTIVE")
+            .filter(PolicyVersion.tenant_id == t_id, PolicyVersion.status == "ACTIVE")
             .order_by(PolicyVersion.activated_at.desc(), PolicyVersion.created_at.desc())
             .first()
         )
 
         if not active_ver:
-            p_ver = db.query(PolicyVersion).order_by(PolicyVersion.created_at.desc()).first()
-            if p_ver:
-                p_ver.status = "ACTIVE"
-                db.commit()
-                active_ver = p_ver
+            # Se não houver ativa para este tenant específico, busca primeira com status ACTIVE deste tenant
+            active_ver = (
+                db.query(PolicyVersion)
+                .filter(PolicyVersion.tenant_id == t_id)
+                .order_by(PolicyVersion.created_at.desc())
+                .first()
+            )
+            if active_ver and active_ver.status == "ACTIVE":
+                pass
+            elif not active_ver:
+                return {"status": "NO_ACTIVE_POLICY", "message": f"Nenhuma norma ativa cadastrada para o tenant '{t_id}'."}
 
-        if not active_ver:
-            return {"status": "NO_ACTIVE_POLICY", "message": "Nenhuma norma ativa cadastrada."}
+        if not active_ver or active_ver.status != "ACTIVE":
+            return {"status": "NO_ACTIVE_POLICY", "message": f"Nenhuma norma ativa cadastrada para o tenant '{t_id}'."}
 
         structured = active_ver.structured_rules or {}
         rules_list = structured.get("all_rules") or structured.get("rules", [])
@@ -61,6 +72,7 @@ async def get_active_policy(tenant_id: Optional[str] = None):
         }
     finally:
         db.close()
+
 
 class CreateDraftPolicyRequest(BaseModel):
     policy_name: str = "Manual de Acordos"
@@ -145,12 +157,17 @@ async def upload_policy_pdf(
     if not file or not file.filename:
         raise HTTPException(status_code=400, detail="Nenhum arquivo PDF selecionado.")
 
-    if not file.filename.lower().endswith(".pdf"):
+    import pathlib
+    safe_filename = pathlib.Path(file.filename).name
+    if not safe_filename.lower().endswith(".pdf"):
         raise HTTPException(status_code=400, detail="Apenas arquivos no formato PDF são permitidos.")
 
     pdf_bytes = await file.read()
     if not pdf_bytes or len(pdf_bytes) == 0:
         raise HTTPException(status_code=400, detail="Arquivo PDF vazio ou corrompido.")
+
+    if not pdf_bytes.startswith(b"%PDF-"):
+        raise HTTPException(status_code=400, detail="Arquivo inválido: Magic Bytes do cabeçalho PDF não identificados.")
 
     try:
         file_hash = hashlib.sha256(pdf_bytes).hexdigest()
@@ -201,10 +218,10 @@ async def upload_policy_pdf(
                 db.add(policy)
                 db.commit()
 
-            # Desativa globalmente todas as outras versões para garantir que esta nova seja a única ativa
-            db.query(PolicyVersion).update({"status": "INACTIVE"})
+            # Desativa SOMENTE as outras versões deste mesmo tenant de forma atômica
+            db.query(PolicyVersion).filter(PolicyVersion.tenant_id == t_id).update({"status": "INACTIVE"})
 
-            # Busca se já existe uma versão com este nome
+            # Busca se já existe uma versão com este nome para o mesmo tenant
             p_version = db.query(PolicyVersion).filter(
                 PolicyVersion.tenant_id == t_id,
                 PolicyVersion.version == effective_version
@@ -248,6 +265,7 @@ async def upload_policy_pdf(
             }
         finally:
             db.close()
+
 
     except Exception as e:
         raise HTTPException(status_code=400, detail=f"Falha ao processar e compilar PDF do Manual: {str(e)}")

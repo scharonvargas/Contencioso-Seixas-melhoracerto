@@ -13,6 +13,7 @@ from src.ingestion.quality_assessor import PageQualityAssessor
 from src.ocr.cascade_engine import OCRCascadeEngine
 from src.segmentation.segmenter import DocumentSegmenter
 from src.extraction.evidence_grounding import EvidenceGroundingValidator
+from src.extraction.llm_client import OpenRouterExtractionClient
 from src.rule_engine.deterministic_engine import DeterministicRuleEngine
 from src.validators.brazilian_validators import BrazilianDomainValidator
 from src.core.storage import storage_service
@@ -131,32 +132,17 @@ class ProcessExecutionService:
             seg_counts[st] = seg_counts.get(st, 0) + 1
         trace.complete_phase("FASE_2_SEGMENTACAO_PECAS", "COMPLETED", {"segments_distribution": seg_counts})
 
-        # 4. Recupera a Norma ACTIVE no banco
+        # 4. Recupera a Norma ACTIVE exclusivamente para este tenant no banco
         active_policy_version = (
             self.db.query(PolicyVersion)
             .filter(PolicyVersion.tenant_id == tenant_id, PolicyVersion.status == "ACTIVE")
-            .order_by(PolicyVersion.created_at.desc())
+            .order_by(PolicyVersion.activated_at.desc(), PolicyVersion.created_at.desc())
             .first()
         )
 
         if not active_policy_version:
-            active_policy_version = (
-                self.db.query(PolicyVersion)
-                .filter(PolicyVersion.status == "ACTIVE")
-                .order_by(PolicyVersion.created_at.desc())
-                .first()
-            )
-
-        if not active_policy_version:
-            active_policy_version = (
-                self.db.query(PolicyVersion)
-                .order_by(PolicyVersion.created_at.desc())
-                .first()
-            )
-
-        if not active_policy_version:
-            trace.log("FASE_4_CLASSIFICACAO_TEMA", "Erro crítico: Nenhuma norma ativa cadastrada.", level="ERROR")
-            raise ValueError(f"Nenhuma norma ou manual de acordos ativo cadastrado no sistema.")
+            trace.log("FASE_4_CLASSIFICACAO_TEMA", f"Erro crítico: Nenhuma norma ativa cadastrada para o tenant '{tenant_id}'.", level="ERROR")
+            raise ValueError(f"Nenhuma norma ou manual de acordos ativo cadastrado para o tenant '{tenant_id}'.")
 
         trace.log("FASE_4_CLASSIFICACAO_TEMA", f"Norma Ativa Carregada: {active_policy_version.version} (ID: {active_policy_version.id}).")
 
@@ -171,7 +157,7 @@ class ProcessExecutionService:
             process_id=process_id,
             fact_category="ADMINISTRATIVE",
             fact_key="identified_theme",
-            fact_value={"theme": case_facts.get("identified_theme", "Geral"), "applicable_topic_num": case_facts.get("applicable_topic_num", 1)},
+            fact_value={"theme": case_facts.get("identified_theme", "Geral"), "applicable_topic_num": case_facts.get("applicable_topic_num")},
             normalized_value=str(case_facts.get("identified_theme", "Geral")),
             extraction_confidence=1.0
         ))
@@ -212,35 +198,24 @@ class ProcessExecutionService:
             extraction_confidence=1.0
         ))
 
-        # Adiciona evidências vinculadas
+        # Adiciona evidências vinculadas reais
         for fact_item_id, fact_info in [
             (fin_fact_id, case_facts.get("financial", {})),
             (treat_fact_id, case_facts.get("treatment", {})),
             (admin_fact_id, case_facts.get("administrative_denial", {}))
         ]:
             ev_data = fact_info.get("evidence")
-            if ev_data and isinstance(ev_data, dict) and "page_number" in ev_data:
+            if ev_data and isinstance(ev_data, dict) and ev_data.get("page_number"):
                 self.db.add(Evidence(
                     id=generate_uuid(),
                     tenant_id=tenant_id,
                     fact_id=fact_item_id,
-                    page_number=ev_data.get("page_number", 1),
-                    bounding_box=ev_data.get("bounding_box", [0.1, 0.1, 0.9, 0.9]),
-                    exact_text_snippet=ev_data.get("exact_text_snippet", "") or "Evidência extraída",
+                    page_number=ev_data["page_number"],
+                    bounding_box=ev_data.get("bounding_box", [0.0, 0.0, 1.0, 1.0]),
+                    exact_text_snippet=ev_data.get("exact_text_snippet", "") or ev_data.get("text_snippet", ""),
                     ocr_engine_used=ev_data.get("ocr_engine_used", "TIER_0_NATIVE"),
                     confidence_score=ev_data.get("confidence_score", 1.0)
                 ))
-
-        # Injeta dinamicamente fatos para satisfazer eventuais campos específicos exigidos pela norma
-        for rule in active_policy_version.structured_rules.get("rules", []):
-            for req_field in rule.get("required_evidence_fields", []):
-                if req_field.startswith("facts."):
-                    key = req_field.replace("facts.", "")
-                    if key not in case_facts:
-                        case_facts[key] = {
-                            "comprovado": True,
-                            "evidence": {"document_type": "AUTOS_PROCESSUAIS", "page_number": 1}
-                        }
 
         # 6. Avaliação Determinística (JSON-Logic Rule Engine)
         trace.log("FASE_5_AVALIACAO_REGRAS", f"Iniciando avaliação determinística no motor JSON-Logic contra {len(active_policy_version.structured_rules.get('rules', []))} regras da norma...")
@@ -290,15 +265,37 @@ class ProcessExecutionService:
         )
         self.db.add(evaluation_record)
 
+        # Se exigir revisão humana ou falha técnica, cria registro persistente em HumanReview
+        if decision_result.overall_verdict in ["REQUIRES_HUMAN_REVIEW", "TECHNICAL_FAILURE"]:
+            from src.models.entities import HumanReview
+            reason_str = "MISSING_EVIDENCE"
+            if decision_result.overall_verdict == "TECHNICAL_FAILURE":
+                reason_str = "TECHNICAL_FAILURE"
+            elif any(r.status == "UNKNOWN" and "Evidência documental" in (r.failure_reason or "") for r in decision_result.rule_results):
+                reason_str = "MISSING_EVIDENCE"
+            elif any(r.status == "UNKNOWN" for r in decision_result.rule_results):
+                reason_str = "RULE_EVALUATION_UNKNOWN"
+
+            human_review = HumanReview(
+                id=generate_uuid(),
+                tenant_id=tenant_id,
+                process_id=process_id,
+                evaluation_id=evaluation_record.id,
+                status="OPEN",
+                review_reason=reason_str
+            )
+            self.db.add(human_review)
+
         # Atualiza status do Processo
         process_record = self.db.query(Process).filter(Process.id == process_id).first()
         if process_record:
             process_record.status = (
-                "EVALUATED" if decision_result.overall_verdict not in ["REQUIRES_HUMAN_REVIEW"] else "REQUIRES_HUMAN_REVIEW"
+                "EVALUATED" if decision_result.overall_verdict not in ["REQUIRES_HUMAN_REVIEW", "TECHNICAL_FAILURE"] else "REQUIRES_HUMAN_REVIEW"
             )
             process_record.total_pages = total_pages
 
         self.db.commit()
+
 
         # Monta lista de páginas com dados para retorno
         pages_summary = []
@@ -342,136 +339,144 @@ class ProcessExecutionService:
         if trace:
             trace.log("FASE_3_EXTRACAO_FATOS", f"Iniciando varredura e extração de variáveis em {len(pages)} página(s)...")
 
-        # 1. Extração robusta de valor pleiteado na petição inicial, decisões e comprovantes
-        requested_amount = 0.0
-        amount_matches = re.findall(
-            r'(?:dá-se\s+à\s+causa\s+o\s+valor\s+de|valor\s+da\s+causa|valor\s+da\s+ação|condenação|indenização|danos?\s+morais?\s*(?:no\s+valor\s+de)?|reembolso\s+de|valor\s+total|total\s+dos\s+serviços)\s*[:=]*\s*(?:no\s+valor\s+de)?\s*R\$\s*([\d.,]+)',
-            full_text,
-            re.IGNORECASE
-        )
-        if amount_matches:
-            for match in amount_matches:
-                parsed = BrazilianDomainValidator.parse_brazilian_currency(match)
-                if parsed and parsed > 0:
-                    requested_amount = parsed
-                    break
+        # Tenta extração via LLM (OpenRouter) se configurada
+        llm_client = OpenRouterExtractionClient()
+        llm_facts = None
+        if llm_client.is_configured():
+            try:
+                if trace:
+                    trace.log("FASE_3_EXTRACAO_FATOS", f"Enviando processo para análise e extração estruturada via LLM ({llm_client.model})...")
+                policy_summary = ""
+                if structured_rules and "topics" in structured_rules:
+                    policy_summary = "\n".join([f"- Tema {t.get('topic_number')}: {t.get('topic_name')}" for t in structured_rules["topics"]])
+                llm_facts = llm_client.extract_facts(process_text=full_text, policy_summary=policy_summary)
+            except Exception as e:
+                if trace:
+                    trace.log("FASE_3_EXTRACAO_FATOS", f"Aviso: Falha na extração LLM, acionando fallback determinístico: {str(e)}", level="WARNING")
+
+        if llm_facts:
+            # Popula variáveis a partir do retorno da IA
+            fin = llm_facts.get("financial", {})
+            treat = llm_facts.get("treatment", {})
+            adm = llm_facts.get("administrative_denial", {})
+
+            requested_amount = fin.get("requested_amount", 0.0)
+            moral_amount = fin.get("moral_damage_amount", 0.0)
+            material_amount = fin.get("material_damage_amount", requested_amount if moral_amount == 0 else max(0.0, requested_amount - moral_amount))
+            procedural_stage = llm_facts.get("procedural_stage", "PRE_SENTENCA")
+            has_school_aide = treat.get("has_school_aide_request", False)
+            cid_found = treat.get("cid_10")
+            identified_theme = llm_facts.get("identified_theme", "Geral")
+            applicable_topic_num = llm_facts.get("applicable_topic_num", 1)
+
+            if trace:
+                trace.log("FASE_3_EXTRACAO_FATOS", f"Extração LLM concluída. Valor: R$ {requested_amount:,.2f} | Fase: {procedural_stage} | CID: {cid_found or 'N/A'} | Tema: {identified_theme}", level="SUCCESS")
+                trace.complete_phase("FASE_3_EXTRACAO_FATOS", "COMPLETED", {
+                    "requested_amount": requested_amount,
+                    "material_amount": material_amount,
+                    "moral_amount": moral_amount,
+                    "procedural_stage": procedural_stage,
+                    "cid_10": cid_found,
+                    "has_school_aide": has_school_aide,
+                    "extractor": "OPENROUTER_LLM"
+                })
         else:
-            general_amounts = re.findall(r'R\$\s*([\d.,]+)', full_text)
-            if general_amounts:
-                for gm in general_amounts:
-                    parsed = BrazilianDomainValidator.parse_brazilian_currency(gm)
+            # 1. Fallback Determinístico: Extração robusta de valor pleiteado na petição inicial, decisões e comprovantes
+            requested_amount = 0.0
+            amount_matches = re.findall(
+                r'(?:dá-se\s+à\s+causa\s+o\s+valor\s+de|valor\s+da\s+causa|valor\s+da\s+ação|condenação|indenização|danos?\s+morais?\s*(?:no\s+valor\s+de)?|reembolso\s+de|valor\s+total|total\s+dos\s+serviços)\s*[:=]*\s*(?:no\s+valor\s+de)?\s*R\$\s*([\d.,]+)',
+                full_text,
+                re.IGNORECASE
+            )
+            if amount_matches:
+                for match in amount_matches:
+                    parsed = BrazilianDomainValidator.parse_brazilian_currency(match)
                     if parsed and parsed > 0:
                         requested_amount = parsed
                         break
+            else:
+                general_amounts = re.findall(r'R\$\s*([\d.,]+)', full_text)
+                if general_amounts:
+                    for gm in general_amounts:
+                        parsed = BrazilianDomainValidator.parse_brazilian_currency(gm)
+                        if parsed and parsed > 0:
+                            requested_amount = parsed
+                            break
 
-        # 1.1 Extração de Rubricas Segregadas (Dano Material vs Dano Moral vs Sucumbência)
-        moral_amount = 0.0
-        moral_matches = re.findall(r'danos?\s+morais?\s*(?:no\s+valor\s+de)?\s*[:=]*\s*R\$\s*([\d.,]+)', full_text, re.IGNORECASE)
-        if moral_matches:
-            for mm in moral_matches:
-                p = BrazilianDomainValidator.parse_brazilian_currency(mm)
-                if p and p > 0:
-                    moral_amount = p
+            # 1.1 Extração de Rubricas Segregadas (Dano Material vs Dano Moral vs Sucumbência)
+            moral_amount = BrazilianDomainValidator.extract_moral_damage_from_text(full_text, requested_amount=requested_amount)
+            material_amount = max(0.0, requested_amount - moral_amount) if moral_amount > 0 else requested_amount
+
+            # 1.2 Detecção Precisa de Fase Processual (Petição Inicial vs Sentença/Acórdão)
+            first_pages_text = " \n ".join([(p.get("raw_text") or "").lower() for p in pages[:3]])
+            last_pages_text = " \n ".join([(p.get("raw_text") or "").lower() for p in pages[-5:]])
+
+            is_initial_petition = any(k in first_pages_text for k in [
+                "petição inicial", "peticao inicial", "excelentíssimo senhor doutor", "excelentissimo senhor doutor",
+                "ação indenizatória", "acao indenizatoria", "ação ordinária", "acao ordinaria", "procedimento de juizado", "dos fatos"
+            ])
+            has_operative_sentence = any(k in last_pages_text for k in [
+                "julgo procedente", "julgo improcedente", "julgo extinto", "acordam os desembargadores", "dispositivo da sentença", "dispositivo da sentenca"
+            ])
+
+            if is_initial_petition and not has_operative_sentence:
+                procedural_stage = "PRE_SENTENCA"
+            elif any(k in full_text_lower for k in ["transitado em julgado", "acórdão", "acordao", "turma recursal", "recurso inominado", "fase recursal"]) or has_operative_sentence:
+                procedural_stage = "POS_SENTENCA_RECURSAL"
+            else:
+                procedural_stage = "PRE_SENTENCA"
+
+            # 1.3 Detecção Precoce de Pedido de A.T. Escolar / Mediação Escolar / Terapias
+            has_school_aide = any(k in full_text_lower for k in [
+                "at escolar", "acompanhamento terapeutico escolar", "acompanhante terapeutico escolar",
+                "mediacao escolar", "mediador escolar", "acompanhamento em ambiente escolar", "aba em ambiente escolar",
+                "terapia aba em ambiente escolar", "ambiente escolar"
+            ])
+
+            # 1.4 Extração de CID-10 se presente
+            cid_match = re.search(r'\b([A-Z]\d{2}(?:\.\d{1,2})?)\b', full_text)
+            cid_found = cid_match.group(1) if cid_match else None
+
+            if trace:
+                trace.log("FASE_3_EXTRACAO_FATOS", f"Valor da Causa Identificado: R$ {requested_amount:,.2f} (Material: R$ {material_amount:,.2f} | Moral: R$ {moral_amount:,.2f}).")
+                trace.log("FASE_3_EXTRACAO_FATOS", f"Fase Processual Detectada: {procedural_stage} (Petição Inicial: {is_initial_petition} | Sentença/Acórdão: {has_operative_sentence}).")
+                trace.log("FASE_3_EXTRACAO_FATOS", f"Diagnóstico / CID-10: {cid_found or 'Não identificado expressamente'} | Pedido de A.T. Escolar: {has_school_aide}.")
+                trace.complete_phase("FASE_3_EXTRACAO_FATOS", "COMPLETED", {
+                    "requested_amount": requested_amount,
+                    "material_amount": material_amount,
+                    "moral_amount": moral_amount,
+                    "procedural_stage": procedural_stage,
+                    "cid_10": cid_found,
+                    "has_school_aide": has_school_aide,
+                    "extractor": "REGEX_FALLBACK"
+                })
+
+        # 2. Classificação Dinâmica do Tema Baseada Exclusivamente no PDF da Norma Ativa
+        identified_theme = None
+        applicable_topic_num = None
+        norm_full_text = BrazilianDomainValidator.normalize_text_for_matching(full_text)
+
+        # 2.1 Se o LLM já classificou e o tema existe na norma ativa, adota diretamente
+        if llm_facts and llm_facts.get("applicable_topic_num"):
+            candidate_num = llm_facts.get("applicable_topic_num")
+            active_topics_list = structured_rules.get("topics", []) if structured_rules else []
+            for t in active_topics_list:
+                if t.get("topic_number") == candidate_num:
+                    applicable_topic_num = candidate_num
+                    identified_theme = f"Tema {t.get('topic_number', 1):02d}: {t.get('topic_name')}"
+                    if trace:
+                        trace.log("FASE_4_CLASSIFICACAO_TEMA", f"Tema identificado via IA e confirmado na Norma Ativa: '{identified_theme}'.", level="SUCCESS")
+                        trace.complete_phase("FASE_4_CLASSIFICACAO_TEMA", "COMPLETED", {"winner_theme": identified_theme, "topic_number": applicable_topic_num, "method": "LLM_CONFIRMED"})
                     break
 
-        material_amount = requested_amount if moral_amount == 0 else max(0.0, requested_amount - moral_amount)
-
-        # 1.2 Detecção Precisa de Fase Processual (Petição Inicial vs Sentença/Acórdão)
-        first_pages_text = " \n ".join([(p.get("raw_text") or "").lower() for p in pages[:3]])
-        last_pages_text = " \n ".join([(p.get("raw_text") or "").lower() for p in pages[-5:]])
-
-        is_initial_petition = any(k in first_pages_text for k in [
-            "petição inicial", "peticao inicial", "excelentíssimo senhor doutor", "excelentissimo senhor doutor",
-            "ação indenizatória", "acao indenizatoria", "ação ordinária", "acao ordinaria", "procedimento de juizado", "dos fatos"
-        ])
-        has_operative_sentence = any(k in last_pages_text for k in [
-            "julgo procedente", "julgo improcedente", "julgo extinto", "acordam os desembargadores", "dispositivo da sentença", "dispositivo da sentenca"
-        ])
-
-        if is_initial_petition and not has_operative_sentence:
-            procedural_stage = "PRE_SENTENCA"
-        elif any(k in full_text_lower for k in ["transitado em julgado", "acórdão", "acordao", "turma recursal", "recurso inominado", "fase recursal"]) or has_operative_sentence:
-            procedural_stage = "POS_SENTENCA_RECURSAL"
-        else:
-            procedural_stage = "PRE_SENTENCA"
-
-        # 1.3 Detecção Precoce de Pedido de A.T. Escolar / Mediação Escolar / Terapias
-        has_school_aide = any(k in full_text_lower for k in [
-            "at escolar", "acompanhamento terapeutico escolar", "acompanhante terapeutico escolar",
-            "mediacao escolar", "mediador escolar", "acompanhamento em ambiente escolar", "aba em ambiente escolar",
-            "terapia aba em ambiente escolar", "ambiente escolar"
-        ])
-
-        # 1.4 Extração de CID-10 se presente
-        cid_match = re.search(r'\b([A-Z]\d{2}(?:\.\d{1,2})?)\b', full_text)
-        cid_found = cid_match.group(1) if cid_match else None
-
-        if trace:
-            trace.log("FASE_3_EXTRACAO_FATOS", f"Valor da Causa Identificado: R$ {requested_amount:,.2f} (Material: R$ {material_amount:,.2f} | Moral: R$ {moral_amount:,.2f}).")
-            trace.log("FASE_3_EXTRACAO_FATOS", f"Fase Processual Detectada: {procedural_stage} (Petição Inicial: {is_initial_petition} | Sentença/Acórdão: {has_operative_sentence}).")
-            trace.log("FASE_3_EXTRACAO_FATOS", f"Diagnóstico / CID-10: {cid_found or 'Não identificado expressamente'} | Pedido de A.T. Escolar: {has_school_aide}.")
-            trace.complete_phase("FASE_3_EXTRACAO_FATOS", "COMPLETED", {
-                "requested_amount": requested_amount,
-                "material_amount": material_amount,
-                "moral_amount": moral_amount,
-                "procedural_stage": procedural_stage,
-                "cid_10": cid_found,
-                "has_school_aide": has_school_aide
-            })
-
-        # 2. Identificação do Tema da Ação a partir do conteúdo dos autos com ranking de frequência e relevância
-        identified_theme = "Geral"
-        applicable_topic_num = 1
-
-        best_topic = None
-        best_score = 0
-        norm_full_text = BrazilianDomainValidator.normalize_text_for_matching(full_text_lower)
-
-        if structured_rules and "topics" in structured_rules:
-            if trace:
-                trace.log("FASE_4_CLASSIFICACAO_TEMA", f"Calculando afinidade léxica contra os {len(structured_rules['topics'])} temas da norma ativa...")
+        # 2.2 Motor Determinístico de Afinidade por Tema (Varre 100% dos tópicos da norma ativa)
+        if not identified_theme and structured_rules and "topics" in structured_rules:
+            best_topic = None
+            best_score = 0
             for t in structured_rules["topics"]:
-                t_num = t.get("topic_number", 1)
+                t_num = t.get("topic_number")
                 t_name = t.get("topic_name", "")
-                norm_t_name = BrazilianDomainValidator.normalize_text_for_matching(t_name)
-                
-                # Extrai palavras chave do título principal excluindo parênteses explicativos
-                clean_main_title = re.sub(r'\(.*?\)', '', norm_t_name).strip()
-                clean_keywords = [w for w in re.findall(r'[a-z]{4,}', clean_main_title) if w not in ["tema", "para", "com", "sem", "sobre", "acordo", "acordos", "entre", "outros", "demais"]]
-                
-                score = 0
-                if clean_keywords:
-                    matched_words = [kw for kw in clean_keywords if kw in norm_full_text]
-                    if matched_words:
-                        score = len(matched_words) * 30
-                        for kw in matched_words:
-                            cnt = min(norm_full_text.count(kw), 15)
-                            score += cnt * len(kw)
-
-                        if len(clean_main_title) > 5 and clean_main_title in norm_full_text:
-                            score += 100
-
-                # Bônus léxicos especializados por tema com fronteiras de palavra exatas
-                if any(k in norm_t_name for k in ["terapia", "especial"]):
-                    if re.search(r'\b(?:aba|denver|prompt|pecs|espectro autista|autismo|f84|terapia especial|acompanhamento terapeutico)\b', norm_full_text):
-                        score += 350
-                if any(k in norm_t_name for k in ["carencia"]):
-                    if re.search(r'\b(?:carencia|prazo de carencia)\b', norm_full_text):
-                        score += 250
-                if any(k in norm_t_name for k in ["fraude", "boleto"]):
-                    if re.search(r'\b(?:boleto falso|golpe do boleto|fraude de boleto|fatura falsa)\b', norm_full_text):
-                        score += 300
-                if any(k in norm_t_name for k in ["medicamento"]):
-                    if re.search(r'\b(?:antineoplasico|farmaco|medicamento importado|anvisa)\b', norm_full_text):
-                        score += 200
-                if any(k in norm_t_name for k in ["reembolso"]):
-                    if any(k in norm_full_text for k in ["reembolso", "restituicao", "desembolso", "nota fiscal", "recibo"]):
-                        score += 350
-                    if re.search(r'\b(?:reembolso|restituicao|despesas medicas)\b', norm_full_text):
-                        score += 150
-                if any(k in norm_t_name for k in ["autorizacao", "atraso"]):
-                    if re.search(r'\b(?:demora na autorizacao|atraso na autorizacao|tempo habil)\b', norm_full_text):
-                        score += 200
+                score = BrazilianDomainValidator.score_topic_affinity(norm_full_text, t)
 
                 if score > 0 and trace:
                     trace.log("FASE_4_CLASSIFICACAO_TEMA", f"Score Tema {t_num:02d} ({t_name[:35]}...): {score} pontos.")
@@ -479,28 +484,22 @@ class ProcessExecutionService:
                 if score > best_score:
                     best_score = score
                     best_topic = t
+
             if best_topic and best_score > 0:
                 identified_theme = f"Tema {best_topic.get('topic_number', 1):02d}: {best_topic.get('topic_name')}"
-                applicable_topic_num = best_topic.get("topic_number", 1)
+                applicable_topic_num = best_topic.get("topic_number")
                 if trace:
                     trace.log("FASE_4_CLASSIFICACAO_TEMA", f"Tema Vencedor: '{identified_theme}' com score de afinidade {best_score}.", level="SUCCESS")
-                    trace.complete_phase("FASE_4_CLASSIFICACAO_TEMA", "COMPLETED", {"winner_theme": identified_theme, "topic_number": applicable_topic_num, "score": best_score})
-        else:
-            if any(k in norm_full_text for k in ["aba", "denver", "prompt", "pecs", "terapia especial", "espectro autista"]):
-                identified_theme = "Tema 01: Terapias Especiais"
-                applicable_topic_num = 1
-            elif any(k in norm_full_text for k in ["carencia"]):
-                identified_theme = "Tema 04: Carência"
-                applicable_topic_num = 4
-            elif any(k in norm_full_text for k in ["home care", "internacao domiciliar", "assistencia domiciliar"]):
-                identified_theme = "Tema 02: Home Care"
-                applicable_topic_num = 2
-            elif any(k in norm_full_text for k in ["medicamento", "antineoplasico", "farmaco", "remedio"]):
-                identified_theme = "Tema 03: Medicamentos"
-                applicable_topic_num = 3
-            elif any(k in norm_full_text for k in ["reembolso", "despesas medicas", "nota fiscal", "recibo"]):
-                identified_theme = "Tema 18: Reembolso"
-                applicable_topic_num = 18
+                    trace.complete_phase("FASE_4_CLASSIFICACAO_TEMA", "COMPLETED", {"winner_theme": identified_theme, "topic_number": applicable_topic_num, "score": best_score, "method": "DETERMINISTIC_AFFINITY"})
+            else:
+                identified_theme = "THEME_UNKNOWN (Requer Revisão Humana)"
+                applicable_topic_num = None
+                if trace:
+                    trace.log("FASE_4_CLASSIFICACAO_TEMA", "Aviso: Nenhum tema da norma ativa identificado com afinidade suficiente. Classificado como THEME_UNKNOWN.", level="WARNING")
+                    trace.complete_phase("FASE_4_CLASSIFICACAO_TEMA", "COMPLETED", {"winner_theme": identified_theme, "topic_number": None, "score": 0})
+        elif not identified_theme:
+            identified_theme = "THEME_UNKNOWN"
+            applicable_topic_num = None
 
         # 3. Inicialização e Avaliação Dinâmica de Vedações do PDF da Norma Ativa
         topics_facts = {}
@@ -512,17 +511,17 @@ class ProcessExecutionService:
                     topics_facts[f"topic_{t_num:02d}"] = {
                         "requirements_met": True,
                         "has_prohibition": False,
-                        "evidence": {"document_type": "PETICAO_INICIAL", "page_number": 1}
+                        "evidence": None
                     }
         else:
             topics_facts["topic_01"] = {
                 "requirements_met": True,
                 "has_prohibition": False,
-                "evidence": {"document_type": "PETICAO_INICIAL", "page_number": 1}
+                "evidence": None
             }
 
         # Avaliação de Vedações e Requisitos de Fase exclusivamente a partir dos textos extraídos do PDF da Norma
-        if structured_rules and "topics" in structured_rules:
+        if structured_rules and "topics" in structured_rules and applicable_topic_num is not None:
             for t in structured_rules["topics"]:
                 t_num = t.get("topic_number")
                 if t_num != applicable_topic_num:
@@ -536,7 +535,8 @@ class ProcessExecutionService:
                     combined_rules_text = " ".join([BrazilianDomainValidator.normalize_text_for_matching(x) for x in reqs + prohibitions])
                     if any(k in combined_rules_text for k in [
                         "somente com sentenca", "nao fazer acordo pre sentenca", "nao faremos acordo em casos pre-sentenca",
-                        "nao faremos acordo pre sentenca", "somente em casos com sentenca"
+                        "nao faremos acordo pre sentenca", "somente em casos com sentenca", "nao fazer acordo pre-sentenca",
+                        "nao permitido acordo pre-sentenca", "nao permitido acordo pre sentenca"
                     ]):
                         topics_facts[f"topic_{t_num:02d}"]["has_prohibition"] = True
                         topics_facts[f"topic_{t_num:02d}"]["requirements_met"] = False
@@ -622,33 +622,61 @@ class ProcessExecutionService:
                 "sucumbence_amount": 0.0,
                 "has_fiscal_receipt": False,
                 "receipts_found": [],
-                "evidence": {"document_type": "PETICAO_INICIAL", "page_number": 1}
+                "evidence": None
             },
             "treatment": {
-                "treatment_type": "TERAPIA_ESPECIAL" if "aba" in full_text_lower else "ASSISTENCIAL",
+                "treatment_type": "TERAPIA_ESPECIAL" if any(k in full_text_lower for k in ["aba", "denver", "f84", "tea", "autismo"]) else "ASSISTENCIAL",
                 "cid_10": cid_found,
                 "has_medical_report": False,
+                "has_valid_medical_prescription": False,
+                "tea_methods_detected": [],
                 "has_school_aide_request": has_school_aide,
-                "evidence": {"document_type": "LAUDO_MEDICO", "page_number": 1}
+                "evidence": None
             },
             "administrative_denial": {
                 "has_administrative_denial": False,
-                "evidence": {"document_type": "NEGATIVA_OPERADORA", "page_number": 1}
+                "evidence": None
             },
             "topics": topics_facts,
             "dossier_pages_count": len(pages)
         }
 
-        # 6. Varredura profunda em cada página individual para associar evidências exatas
+        # 6. Varredura e Cruzamento Multi-Documental Profundo em todas as páginas
+        initial_petition_evidence = None
+
         for p in pages:
             raw_text = p.get("raw_text") or ""
             raw_lower = raw_text.lower()
             page_num = p.get("page_number", 1)
+            doc_name = p.get("document_name", "")
 
-            # Detecção de Nota Fiscal / Recibo / Comprovante
-            if any(k in raw_lower for k in ["nota fiscal", "danfe", "nfs-e", "recibo", "comprovante de pagamento", "quitado"]):
+            # 6.1 Detecção de Petição Inicial para ancoragem de pedidos
+            if not initial_petition_evidence and any(k in raw_lower for k in ["petição inicial", "peticao inicial", "dos pedidos", "valor da causa", "dá-se à causa"]):
                 valid, ev = EvidenceGroundingValidator.validate_and_create_evidence(
-                    extracted_snippet="Nota Fiscal" if "nota fiscal" in raw_lower else "Recibo",
+                    extracted_snippet="Petição Inicial" if "petição inicial" in raw_lower or "peticao inicial" in raw_lower else "Valor da Causa",
+                    page_raw_text=raw_text,
+                    words_data=p.get("words_data", []),
+                    document_type="PETICAO_INICIAL",
+                    page_number=page_num
+                )
+                if valid:
+                    initial_petition_evidence = ev
+
+            # 6.2 Detecção de Comprovantes / Notas Fiscais / Recibos / PIX / Desembolso
+            fiscal_keywords = [
+                "nota fiscal", "danfe", "nfs-e", "nf-e", "recibo", "comprovante de pagamento",
+                "comprovante de transferencia", "comprovante pix", "extrato", "fatura",
+                "boleto quitado", "autenticacao mecanica", "recibo de pagamento"
+            ]
+            if any(k in raw_lower for k in fiscal_keywords):
+                snippet_candidate = "Nota Fiscal"
+                for fk in ["nota fiscal", "danfe", "recibo", "comprovante de pagamento", "comprovante pix", "fatura"]:
+                    if fk in raw_lower:
+                        snippet_candidate = fk.title()
+                        break
+
+                valid, ev = EvidenceGroundingValidator.validate_and_create_evidence(
+                    extracted_snippet=snippet_candidate,
                     page_raw_text=raw_text,
                     words_data=p.get("words_data", []),
                     document_type="NOTA_FISCAL",
@@ -659,14 +687,27 @@ class ProcessExecutionService:
                     facts["financial"]["evidence"] = ev
                     facts["financial"]["receipts_found"].append({
                         "page_number": page_num,
-                        "document_name": p.get("document_name", ""),
+                        "document_name": doc_name,
                         "snippet": raw_text[:120].strip()
                     })
 
-            # Detecção de Laudo / Relatório Médico
-            if any(k in raw_lower for k in ["relatório médico", "relatorio medico", "laudo médico", "laudo medico", "atesto", "cid", "terapia"]):
+            # 6.3 Detecção de Laudo / Relatório Médico / Prescrição / Atestado
+            medical_keywords = [
+                "laudo medico", "laudo médico", "relatorio medico", "relatório médico",
+                "prescricao medica", "prescrição médica", "receituario", "receituário",
+                "atestado medico", "atestado médico", "parecer medico", "parecer médico",
+                "declaracao medica", "declaração médica", "laudo neurologico", "laudo neurológico",
+                "laudo psiquiatrico", "laudo psiquiátrico", "crm", "medico assistente", "médico assistente"
+            ]
+            if any(k in raw_lower for k in medical_keywords):
+                snippet_candidate = "Laudo"
+                for mk in ["relatório médico", "relatorio medico", "prescrição médica", "prescricao medica", "receituário", "receituario", "atestado médico", "atestado medico", "laudo"]:
+                    if mk in raw_lower:
+                        snippet_candidate = mk.title()
+                        break
+
                 valid, ev = EvidenceGroundingValidator.validate_and_create_evidence(
-                    extracted_snippet="Relatório Médico" if "relatório médico" in raw_lower else "Laudo",
+                    extracted_snippet=snippet_candidate,
                     page_raw_text=raw_text,
                     words_data=p.get("words_data", []),
                     document_type="LAUDO_MEDICO",
@@ -676,10 +717,28 @@ class ProcessExecutionService:
                     facts["treatment"]["has_medical_report"] = True
                     facts["treatment"]["evidence"] = ev
 
-            # Detecção de Negativa / Indeferimento Administrativo
-            if any(k in raw_lower for k in ["negativa", "indeferimento", "protocolo", "não autorizada", "nao autorizada", "recusa"]):
+                # Valida 2 eixos para TEA/ABA se aplicável
+                tea_val = BrazilianDomainValidator.validate_tea_medical_evidence(raw_text)
+                if tea_val["is_valid"]:
+                    facts["treatment"]["has_valid_medical_prescription"] = True
+                    facts["treatment"]["tea_methods_detected"] = tea_val["detected_methods"]
+
+            # 6.4 Detecção de Negativa / Indeferimento / Protocolo da Operadora
+            denial_keywords = [
+                "negativa", "indeferimento", "indeferido", "nao autorizada", "não autorizada",
+                "recusa", "solicitação não atendida", "solicitacao nao atendida", "resposta a solicitacao",
+                "resposta à solicitação", "canal de atendimento", "carta resposta", "protocolo",
+                "glosa", "fora do rol", "ausencia de cobertura", "ausência de cobertura"
+            ]
+            if any(k in raw_lower for k in denial_keywords):
+                snippet_candidate = "negativa"
+                for dk in ["negativa", "indeferimento", "recusa", "não autorizada", "nao autorizada", "carta resposta", "protocolo"]:
+                    if dk in raw_lower:
+                        snippet_candidate = dk
+                        break
+
                 valid, ev = EvidenceGroundingValidator.validate_and_create_evidence(
-                    extracted_snippet="negativa" if "negativa" in raw_lower else "indeferimento",
+                    extracted_snippet=snippet_candidate,
                     page_raw_text=raw_text,
                     words_data=p.get("words_data", []),
                     document_type="NEGATIVA_OPERADORA",
@@ -689,4 +748,19 @@ class ProcessExecutionService:
                     facts["administrative_denial"]["has_administrative_denial"] = True
                     facts["administrative_denial"]["evidence"] = ev
 
+        # 6.5 Se não houver recibo/nota fiscal isolada, ancora a evidência financeira na Petição Inicial
+        if not facts["financial"]["evidence"] and initial_petition_evidence:
+            facts["financial"]["evidence"] = initial_petition_evidence
+        elif not facts["financial"]["evidence"] and len(pages) > 0:
+            valid, ev = EvidenceGroundingValidator.validate_and_create_evidence(
+                extracted_snippet="R$",
+                page_raw_text=pages[0].get("raw_text") or "",
+                words_data=pages[0].get("words_data", []),
+                document_type="PETICAO_INICIAL",
+                page_number=1
+            )
+            if valid:
+                facts["financial"]["evidence"] = ev
+
         return facts
+

@@ -30,23 +30,38 @@ class EvidenceGroundingValidator:
         confidence = 1.0
 
         if not is_exact:
-            # 2. Checagem Fuzzy Tolerante com difflib (Standard Library)
-            # Encontra o melhor bloco correspondente
-            matcher = SequenceMatcher(None, clean_snippet.lower(), clean_page_text.lower())
-            match = matcher.find_longest_match(0, len(clean_snippet), 0, len(clean_page_text))
+            snippet_words = [w for w in clean_snippet.lower().split() if len(w) >= 3]
+            page_text_lower = clean_page_text.lower()
             
-            if match.size == 0:
+            # Se nenhuma palavra chave do snippet existe na página, descarta imediatamente (O(1))
+            if snippet_words and not any(w in page_text_lower for w in snippet_words):
+                return False, None
+
+            # 2. Checagem Fuzzy Tolerante em janelas de texto relevantes
+            best_ratio = 0.0
+            for w in snippet_words:
+                start_idx = 0
+                while True:
+                    idx = page_text_lower.find(w, start_idx)
+                    if idx == -1:
+                        break
+                    win_start = max(0, idx - 100)
+                    win_end = min(len(page_text_lower), idx + len(clean_snippet) + 100)
+                    window_text = page_text_lower[win_start:win_end]
+                    
+                    matcher = SequenceMatcher(None, clean_snippet.lower(), window_text)
+                    match = matcher.find_longest_match(0, len(clean_snippet), 0, len(window_text))
+                    if match.size > 0:
+                        matched_sub = window_text[match.b : match.b + match.size]
+                        r = SequenceMatcher(None, clean_snippet.lower(), matched_sub).ratio()
+                        if r > best_ratio:
+                            best_ratio = r
+                    start_idx = idx + len(w)
+
+            if best_ratio < min_similarity_ratio:
                 return False, None
                 
-            matched_sub = clean_page_text.lower()[match.b : match.b + match.size]
-            ratio = SequenceMatcher(None, clean_snippet.lower(), matched_sub).ratio()
-            
-            # Se o tamanho do trecho coincidente for muito inferior ao snippet ou ratio < threshold
-            if (match.size / max(len(clean_snippet), 1) < min_similarity_ratio) and ratio < min_similarity_ratio:
-                # Alucinação Rejeitada: Trecho não existe no documento
-                return False, None
-                
-            confidence = round(ratio, 3)
+            confidence = round(best_ratio, 3)
 
         # 3. Localização Espacial e Cálculo da Bounding Box [ymin, xmin, ymax, xmax]
         bbox = EvidenceGroundingValidator._compute_bbox(clean_snippet, words_data)

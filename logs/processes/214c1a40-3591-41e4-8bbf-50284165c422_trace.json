@@ -1,0 +1,1282 @@
+{
+  "process_id": "214c1a40-3591-41e4-8bbf-50284165c422",
+  "cnj_number": "N/A",
+  "tenant_id": "9e3e1572-3295-4442-aadc-01621f1ae479",
+  "start_time": "2026-08-24 16:15:19",
+  "total_duration_ms": 7859,
+  "total_events": 53,
+  "phases": {
+    "FASE_1_INGESTAO_OCR": {
+      "status": "COMPLETED",
+      "logs": [
+        {
+          "timestamp": "2026-08-24 19:15:19.972",
+          "elapsed_ms": 0,
+          "phase": "FASE_1_INGESTAO_OCR",
+          "level": "INFO",
+          "message": "Iniciando ingestão de 1 arquivo(s) PDF para o processo 214c1a40-3591-41e4-8bbf-50284165c422.",
+          "details": {}
+        },
+        {
+          "timestamp": "2026-08-24 19:15:19.975",
+          "elapsed_ms": 3,
+          "phase": "FASE_1_INGESTAO_OCR",
+          "level": "INFO",
+          "message": "Arquivo [1/1] '1261994347397242024254096921_3234__51124133423.pdf' carregado (4091.8 KB, 35 páginas).",
+          "details": {}
+        },
+        {
+          "timestamp": "2026-08-24 19:15:19.985",
+          "elapsed_ms": 13,
+          "phase": "FASE_1_INGESTAO_OCR",
+          "level": "INFO",
+          "message": "Pág 1 (1261994347397242024254096921_3234__51124133423.pdf p.1): OCR TIER_0_NATIVE (Confiança: 1.00, 1680 caracteres extraídos).",
+          "details": {
+            "tier": "TIER_0_NATIVE",
+            "quality_score": 1.0,
+            "segment": "PETICAO_INICIAL"
+          }
+        },
+        {
+          "timestamp": "2026-08-24 19:15:19.993",
+          "elapsed_ms": 21,
+          "phase": "FASE_1_INGESTAO_OCR",
+          "level": "INFO",
+          "message": "Pág 2 (1261994347397242024254096921_3234__51124133423.pdf p.2): OCR TIER_0_NATIVE (Confiança: 1.00, 2102 caracteres extraídos).",
+          "details": {
+            "tier": "TIER_0_NATIVE",
+            "quality_score": 1.0,
+            "segment": "RECIBO_PAGAMENTO"
+          }
+        },
+        {
+          "timestamp": "2026-08-24 19:15:19.996",
+          "elapsed_ms": 24,
+          "phase": "FASE_1_INGESTAO_OCR",
+          "level": "INFO",
+          "message": "Pág 3 (1261994347397242024254096921_3234__51124133423.pdf p.3): OCR TIER_0_NATIVE (Confiança: 1.00, 585 caracteres extraídos).",
+          "details": {
+            "tier": "TIER_0_NATIVE",
+            "quality_score": 1.0,
+            "segment": "OUTROS"
+          }
+        },
+        {
+          "timestamp": "2026-08-24 19:15:19.999",
+          "elapsed_ms": 27,
+          "phase": "FASE_1_INGESTAO_OCR",
+          "level": "INFO",
+          "message": "Pág 4 (1261994347397242024254096921_3234__51124133423.pdf p.4): OCR TIER_0_NATIVE (Confiança: 1.00, 778 caracteres extraídos).",
+          "details": {
+            "tier": "TIER_0_NATIVE",
+            "quality_score": 1.0,
+            "segment": "OUTROS"
+          }
+        },
+        {
+          "timestamp": "2026-08-24 19:15:20.006",
+          "elapsed_ms": 34,
+          "phase": "FASE_1_INGESTAO_OCR",
+          "level": "INFO",
+          "message": "Pág 5 (1261994347397242024254096921_3234__51124133423.pdf p.5): OCR TIER_0_NATIVE (Confiança: 1.00, 1824 caracteres extraídos).",
+          "details": {
+            "tier": "TIER_0_NATIVE",
+            "quality_score": 1.0,
+            "segment": "OUTROS"
+          }
+        },
+        {
+          "timestamp": "2026-08-24 19:15:20.015",
+          "elapsed_ms": 42,
+          "phase": "FASE_1_INGESTAO_OCR",
+          "level": "INFO",
+          "message": "Pág 6 (1261994347397242024254096921_3234__51124133423.pdf p.6): OCR TIER_0_NATIVE (Confiança: 1.00, 1960 caracteres extraídos).",
+          "details": {
+            "tier": "TIER_0_NATIVE",
+            "quality_score": 1.0,
+            "segment": "PETICAO_INICIAL"
+          }
+        },
+        {
+          "timestamp": "2026-08-24 19:15:20.024",
+          "elapsed_ms": 52,
+          "phase": "FASE_1_INGESTAO_OCR",
+          "level": "INFO",
+          "message": "Pág 7 (1261994347397242024254096921_3234__51124133423.pdf p.7): OCR TIER_0_NATIVE (Confiança: 1.00, 1983 caracteres extraídos).",
+          "details": {
+            "tier": "TIER_0_NATIVE",
+            "quality_score": 1.0,
+            "segment": "OUTROS"
+          }
+        },
+        {
+          "timestamp": "2026-08-24 19:15:20.034",
+          "elapsed_ms": 62,
+          "phase": "FASE_1_INGESTAO_OCR",
+          "level": "INFO",
+          "message": "Pág 8 (1261994347397242024254096921_3234__51124133423.pdf p.8): OCR TIER_0_NATIVE (Confiança: 1.00, 1820 caracteres extraídos).",
+          "details": {
+            "tier": "TIER_0_NATIVE",
+            "quality_score": 1.0,
+            "segment": "OUTROS"
+          }
+        },
+        {
+          "timestamp": "2026-08-24 19:15:20.042",
+          "elapsed_ms": 70,
+          "phase": "FASE_1_INGESTAO_OCR",
+          "level": "INFO",
+          "message": "Pág 9 (1261994347397242024254096921_3234__51124133423.pdf p.9): OCR TIER_0_NATIVE (Confiança: 1.00, 1760 caracteres extraídos).",
+          "details": {
+            "tier": "TIER_0_NATIVE",
+            "quality_score": 1.0,
+            "segment": "OUTROS"
+          }
+        },
+        {
+          "timestamp": "2026-08-24 19:15:20.051",
+          "elapsed_ms": 79,
+          "phase": "FASE_1_INGESTAO_OCR",
+          "level": "INFO",
+          "message": "Pág 10 (1261994347397242024254096921_3234__51124133423.pdf p.10): OCR TIER_0_NATIVE (Confiança: 1.00, 1693 caracteres extraídos).",
+          "details": {
+            "tier": "TIER_0_NATIVE",
+            "quality_score": 1.0,
+            "segment": "OUTROS"
+          }
+        },
+        {
+          "timestamp": "2026-08-24 19:15:20.064",
+          "elapsed_ms": 92,
+          "phase": "FASE_1_INGESTAO_OCR",
+          "level": "INFO",
+          "message": "Pág 11 (1261994347397242024254096921_3234__51124133423.pdf p.11): OCR TIER_0_NATIVE (Confiança: 1.00, 1844 caracteres extraídos).",
+          "details": {
+            "tier": "TIER_0_NATIVE",
+            "quality_score": 1.0,
+            "segment": "OUTROS"
+          }
+        },
+        {
+          "timestamp": "2026-08-24 19:15:20.073",
+          "elapsed_ms": 100,
+          "phase": "FASE_1_INGESTAO_OCR",
+          "level": "INFO",
+          "message": "Pág 12 (1261994347397242024254096921_3234__51124133423.pdf p.12): OCR TIER_0_NATIVE (Confiança: 1.00, 1732 caracteres extraídos).",
+          "details": {
+            "tier": "TIER_0_NATIVE",
+            "quality_score": 1.0,
+            "segment": "OUTROS"
+          }
+        },
+        {
+          "timestamp": "2026-08-24 19:15:20.082",
+          "elapsed_ms": 110,
+          "phase": "FASE_1_INGESTAO_OCR",
+          "level": "INFO",
+          "message": "Pág 13 (1261994347397242024254096921_3234__51124133423.pdf p.13): OCR TIER_0_NATIVE (Confiança: 1.00, 1789 caracteres extraídos).",
+          "details": {
+            "tier": "TIER_0_NATIVE",
+            "quality_score": 1.0,
+            "segment": "PETICAO_INICIAL"
+          }
+        },
+        {
+          "timestamp": "2026-08-24 19:15:20.089",
+          "elapsed_ms": 117,
+          "phase": "FASE_1_INGESTAO_OCR",
+          "level": "INFO",
+          "message": "Pág 14 (1261994347397242024254096921_3234__51124133423.pdf p.14): OCR TIER_0_NATIVE (Confiança: 1.00, 1496 caracteres extraídos).",
+          "details": {
+            "tier": "TIER_0_NATIVE",
+            "quality_score": 1.0,
+            "segment": "OUTROS"
+          }
+        },
+        {
+          "timestamp": "2026-08-24 19:15:20.092",
+          "elapsed_ms": 120,
+          "phase": "FASE_1_INGESTAO_OCR",
+          "level": "INFO",
+          "message": "Pág 15 (1261994347397242024254096921_3234__51124133423.pdf p.15): OCR TIER_0_NATIVE (Confiança: 1.00, 388 caracteres extraídos).",
+          "details": {
+            "tier": "TIER_0_NATIVE",
+            "quality_score": 1.0,
+            "segment": "OUTROS"
+          }
+        },
+        {
+          "timestamp": "2026-08-24 19:15:20.095",
+          "elapsed_ms": 122,
+          "phase": "FASE_1_INGESTAO_OCR",
+          "level": "INFO",
+          "message": "Pág 16 (1261994347397242024254096921_3234__51124133423.pdf p.16): OCR TIER_0_NATIVE (Confiança: 1.00, 878 caracteres extraídos).",
+          "details": {
+            "tier": "TIER_0_NATIVE",
+            "quality_score": 1.0,
+            "segment": "OUTROS"
+          }
+        },
+        {
+          "timestamp": "2026-08-24 19:15:20.098",
+          "elapsed_ms": 125,
+          "phase": "FASE_1_INGESTAO_OCR",
+          "level": "INFO",
+          "message": "Pág 17 (1261994347397242024254096921_3234__51124133423.pdf p.17): OCR TIER_0_NATIVE (Confiança: 1.00, 878 caracteres extraídos).",
+          "details": {
+            "tier": "TIER_0_NATIVE",
+            "quality_score": 1.0,
+            "segment": "OUTROS"
+          }
+        },
+        {
+          "timestamp": "2026-08-24 19:15:20.104",
+          "elapsed_ms": 131,
+          "phase": "FASE_1_INGESTAO_OCR",
+          "level": "INFO",
+          "message": "Pág 18 (1261994347397242024254096921_3234__51124133423.pdf p.18): OCR TIER_0_NATIVE (Confiança: 1.00, 1554 caracteres extraídos).",
+          "details": {
+            "tier": "TIER_0_NATIVE",
+            "quality_score": 1.0,
+            "segment": "OUTROS"
+          }
+        },
+        {
+          "timestamp": "2026-08-24 19:15:20.589",
+          "elapsed_ms": 617,
+          "phase": "FASE_1_INGESTAO_OCR",
+          "level": "INFO",
+          "message": "Pág 19 (1261994347397242024254096921_3234__51124133423.pdf p.19): OCR TIER_1_UNPROCESSED_SCANNED (Confiança: 0.00, 40 caracteres extraídos).",
+          "details": {
+            "tier": "TIER_1_UNPROCESSED_SCANNED",
+            "quality_score": 0.0,
+            "segment": "OUTROS"
+          }
+        },
+        {
+          "timestamp": "2026-08-24 19:15:20.590",
+          "elapsed_ms": 618,
+          "phase": "FASE_1_INGESTAO_OCR",
+          "level": "INFO",
+          "message": "Pág 20 (1261994347397242024254096921_3234__51124133423.pdf p.20): OCR TIER_0_NATIVE (Confiança: 1.00, 388 caracteres extraídos).",
+          "details": {
+            "tier": "TIER_0_NATIVE",
+            "quality_score": 1.0,
+            "segment": "OUTROS"
+          }
+        },
+        {
+          "timestamp": "2026-08-24 19:15:20.592",
+          "elapsed_ms": 620,
+          "phase": "FASE_1_INGESTAO_OCR",
+          "level": "INFO",
+          "message": "Pág 21 (1261994347397242024254096921_3234__51124133423.pdf p.21): OCR TIER_0_NATIVE (Confiança: 1.00, 388 caracteres extraídos).",
+          "details": {
+            "tier": "TIER_0_NATIVE",
+            "quality_score": 1.0,
+            "segment": "OUTROS"
+          }
+        },
+        {
+          "timestamp": "2026-08-24 19:15:20.593",
+          "elapsed_ms": 621,
+          "phase": "FASE_1_INGESTAO_OCR",
+          "level": "INFO",
+          "message": "Pág 22 (1261994347397242024254096921_3234__51124133423.pdf p.22): OCR TIER_0_NATIVE (Confiança: 1.00, 388 caracteres extraídos).",
+          "details": {
+            "tier": "TIER_0_NATIVE",
+            "quality_score": 1.0,
+            "segment": "OUTROS"
+          }
+        },
+        {
+          "timestamp": "2026-08-24 19:15:20.595",
+          "elapsed_ms": 623,
+          "phase": "FASE_1_INGESTAO_OCR",
+          "level": "INFO",
+          "message": "Pág 23 (1261994347397242024254096921_3234__51124133423.pdf p.23): OCR TIER_0_NATIVE (Confiança: 1.00, 388 caracteres extraídos).",
+          "details": {
+            "tier": "TIER_0_NATIVE",
+            "quality_score": 1.0,
+            "segment": "OUTROS"
+          }
+        },
+        {
+          "timestamp": "2026-08-24 19:15:20.595",
+          "elapsed_ms": 623,
+          "phase": "FASE_1_INGESTAO_OCR",
+          "level": "INFO",
+          "message": "Pág 24 (1261994347397242024254096921_3234__51124133423.pdf p.24): OCR TIER_0_NATIVE (Confiança: 1.00, 388 caracteres extraídos).",
+          "details": {
+            "tier": "TIER_0_NATIVE",
+            "quality_score": 1.0,
+            "segment": "OUTROS"
+          }
+        },
+        {
+          "timestamp": "2026-08-24 19:15:20.596",
+          "elapsed_ms": 624,
+          "phase": "FASE_1_INGESTAO_OCR",
+          "level": "INFO",
+          "message": "Pág 25 (1261994347397242024254096921_3234__51124133423.pdf p.25): OCR TIER_0_NATIVE (Confiança: 1.00, 388 caracteres extraídos).",
+          "details": {
+            "tier": "TIER_0_NATIVE",
+            "quality_score": 1.0,
+            "segment": "OUTROS"
+          }
+        },
+        {
+          "timestamp": "2026-08-24 19:15:20.598",
+          "elapsed_ms": 626,
+          "phase": "FASE_1_INGESTAO_OCR",
+          "level": "INFO",
+          "message": "Pág 26 (1261994347397242024254096921_3234__51124133423.pdf p.26): OCR TIER_0_NATIVE (Confiança: 1.00, 388 caracteres extraídos).",
+          "details": {
+            "tier": "TIER_0_NATIVE",
+            "quality_score": 1.0,
+            "segment": "OUTROS"
+          }
+        },
+        {
+          "timestamp": "2026-08-24 19:15:20.600",
+          "elapsed_ms": 627,
+          "phase": "FASE_1_INGESTAO_OCR",
+          "level": "INFO",
+          "message": "Pág 27 (1261994347397242024254096921_3234__51124133423.pdf p.27): OCR TIER_0_NATIVE (Confiança: 1.00, 388 caracteres extraídos).",
+          "details": {
+            "tier": "TIER_0_NATIVE",
+            "quality_score": 1.0,
+            "segment": "OUTROS"
+          }
+        },
+        {
+          "timestamp": "2026-08-24 19:15:20.602",
+          "elapsed_ms": 629,
+          "phase": "FASE_1_INGESTAO_OCR",
+          "level": "INFO",
+          "message": "Pág 28 (1261994347397242024254096921_3234__51124133423.pdf p.28): OCR TIER_0_NATIVE (Confiança: 1.00, 388 caracteres extraídos).",
+          "details": {
+            "tier": "TIER_0_NATIVE",
+            "quality_score": 1.0,
+            "segment": "OUTROS"
+          }
+        },
+        {
+          "timestamp": "2026-08-24 19:15:20.603",
+          "elapsed_ms": 631,
+          "phase": "FASE_1_INGESTAO_OCR",
+          "level": "INFO",
+          "message": "Pág 29 (1261994347397242024254096921_3234__51124133423.pdf p.29): OCR TIER_0_NATIVE (Confiança: 1.00, 388 caracteres extraídos).",
+          "details": {
+            "tier": "TIER_0_NATIVE",
+            "quality_score": 1.0,
+            "segment": "OUTROS"
+          }
+        },
+        {
+          "timestamp": "2026-08-24 19:15:20.605",
+          "elapsed_ms": 633,
+          "phase": "FASE_1_INGESTAO_OCR",
+          "level": "INFO",
+          "message": "Pág 30 (1261994347397242024254096921_3234__51124133423.pdf p.30): OCR TIER_0_NATIVE (Confiança: 1.00, 443 caracteres extraídos).",
+          "details": {
+            "tier": "TIER_0_NATIVE",
+            "quality_score": 1.0,
+            "segment": "OUTROS"
+          }
+        },
+        {
+          "timestamp": "2026-08-24 19:15:20.606",
+          "elapsed_ms": 634,
+          "phase": "FASE_1_INGESTAO_OCR",
+          "level": "INFO",
+          "message": "Pág 31 (1261994347397242024254096921_3234__51124133423.pdf p.31): OCR TIER_0_NATIVE (Confiança: 1.00, 388 caracteres extraídos).",
+          "details": {
+            "tier": "TIER_0_NATIVE",
+            "quality_score": 1.0,
+            "segment": "OUTROS"
+          }
+        },
+        {
+          "timestamp": "2026-08-24 19:15:20.608",
+          "elapsed_ms": 636,
+          "phase": "FASE_1_INGESTAO_OCR",
+          "level": "INFO",
+          "message": "Pág 32 (1261994347397242024254096921_3234__51124133423.pdf p.32): OCR TIER_0_NATIVE (Confiança: 1.00, 388 caracteres extraídos).",
+          "details": {
+            "tier": "TIER_0_NATIVE",
+            "quality_score": 1.0,
+            "segment": "OUTROS"
+          }
+        },
+        {
+          "timestamp": "2026-08-24 19:15:20.610",
+          "elapsed_ms": 638,
+          "phase": "FASE_1_INGESTAO_OCR",
+          "level": "INFO",
+          "message": "Pág 33 (1261994347397242024254096921_3234__51124133423.pdf p.33): OCR TIER_0_NATIVE (Confiança: 1.00, 447 caracteres extraídos).",
+          "details": {
+            "tier": "TIER_0_NATIVE",
+            "quality_score": 1.0,
+            "segment": "OUTROS"
+          }
+        },
+        {
+          "timestamp": "2026-08-24 19:15:20.622",
+          "elapsed_ms": 650,
+          "phase": "FASE_1_INGESTAO_OCR",
+          "level": "INFO",
+          "message": "Pág 34 (1261994347397242024254096921_3234__51124133423.pdf p.34): OCR TIER_0_NATIVE (Confiança: 1.00, 2901 caracteres extraídos).",
+          "details": {
+            "tier": "TIER_0_NATIVE",
+            "quality_score": 1.0,
+            "segment": "NOTA_FISCAL"
+          }
+        },
+        {
+          "timestamp": "2026-08-24 19:15:20.627",
+          "elapsed_ms": 654,
+          "phase": "FASE_1_INGESTAO_OCR",
+          "level": "INFO",
+          "message": "Pág 35 (1261994347397242024254096921_3234__51124133423.pdf p.35): OCR TIER_0_NATIVE (Confiança: 1.00, 924 caracteres extraídos).",
+          "details": {
+            "tier": "TIER_0_NATIVE",
+            "quality_score": 1.0,
+            "segment": "OUTROS"
+          }
+        },
+        {
+          "timestamp": "2026-08-24 19:15:20.628",
+          "elapsed_ms": 656,
+          "phase": "FASE_1_INGESTAO_OCR",
+          "level": "SUCCESS",
+          "message": "Fase finalizada com status: COMPLETED",
+          "details": {
+            "total_pages": 35,
+            "total_files": 1
+          }
+        }
+      ],
+      "metrics": {
+        "total_pages": 35,
+        "total_files": 1
+      }
+    },
+    "FASE_2_SEGMENTACAO_PECAS": {
+      "status": "COMPLETED",
+      "logs": [
+        {
+          "timestamp": "2026-08-24 19:15:20.628",
+          "elapsed_ms": 656,
+          "phase": "FASE_2_SEGMENTACAO_PECAS",
+          "level": "INFO",
+          "message": "Segmentando 35 páginas em peças processuais...",
+          "details": {}
+        },
+        {
+          "timestamp": "2026-08-24 19:15:20.628",
+          "elapsed_ms": 656,
+          "phase": "FASE_2_SEGMENTACAO_PECAS",
+          "level": "SUCCESS",
+          "message": "Fase finalizada com status: COMPLETED",
+          "details": {
+            "segments_distribution": {
+              "PETICAO_INICIAL": 3,
+              "RECIBO_PAGAMENTO": 1,
+              "OUTROS": 30,
+              "NOTA_FISCAL": 1
+            }
+          }
+        }
+      ],
+      "metrics": {
+        "segments_distribution": {
+          "PETICAO_INICIAL": 3,
+          "RECIBO_PAGAMENTO": 1,
+          "OUTROS": 30,
+          "NOTA_FISCAL": 1
+        }
+      }
+    },
+    "FASE_3_EXTRACAO_FATOS": {
+      "status": "COMPLETED",
+      "logs": [
+        {
+          "timestamp": "2026-08-24 19:15:20.630",
+          "elapsed_ms": 658,
+          "phase": "FASE_3_EXTRACAO_FATOS",
+          "level": "INFO",
+          "message": "Iniciando varredura e extração de variáveis em 35 página(s)...",
+          "details": {}
+        },
+        {
+          "timestamp": "2026-08-24 19:15:20.630",
+          "elapsed_ms": 658,
+          "phase": "FASE_3_EXTRACAO_FATOS",
+          "level": "INFO",
+          "message": "Enviando processo para análise e extração estruturada via LLM (openai/gpt-4o-mini)...",
+          "details": {}
+        },
+        {
+          "timestamp": "2026-08-24 19:15:27.820",
+          "elapsed_ms": 7848,
+          "phase": "FASE_3_EXTRACAO_FATOS",
+          "level": "SUCCESS",
+          "message": "Extração LLM concluída. Valor: R$ 16,788.18 | Fase: PRE_SENTENCA | CID: N/A | Tema: Tema 1",
+          "details": {}
+        },
+        {
+          "timestamp": "2026-08-24 19:15:27.820",
+          "elapsed_ms": 7848,
+          "phase": "FASE_3_EXTRACAO_FATOS",
+          "level": "SUCCESS",
+          "message": "Fase finalizada com status: COMPLETED",
+          "details": {
+            "requested_amount": 16788.18,
+            "material_amount": 6788.18,
+            "moral_amount": 10000.0,
+            "procedural_stage": "PRE_SENTENCA",
+            "cid_10": null,
+            "has_school_aide": false,
+            "extractor": "OPENROUTER_LLM"
+          }
+        }
+      ],
+      "metrics": {
+        "requested_amount": 16788.18,
+        "material_amount": 6788.18,
+        "moral_amount": 10000.0,
+        "procedural_stage": "PRE_SENTENCA",
+        "cid_10": null,
+        "has_school_aide": false,
+        "extractor": "OPENROUTER_LLM"
+      }
+    },
+    "FASE_4_CLASSIFICACAO_TEMA": {
+      "status": "COMPLETED",
+      "logs": [
+        {
+          "timestamp": "2026-08-24 19:15:20.630",
+          "elapsed_ms": 658,
+          "phase": "FASE_4_CLASSIFICACAO_TEMA",
+          "level": "INFO",
+          "message": "Norma Ativa Carregada: V-54D0FC (ID: a40e5e3b-23ec-4cee-9fb4-dd050f5e0d95).",
+          "details": {}
+        },
+        {
+          "timestamp": "2026-08-24 19:15:27.825",
+          "elapsed_ms": 7853,
+          "phase": "FASE_4_CLASSIFICACAO_TEMA",
+          "level": "SUCCESS",
+          "message": "Tema identificado via IA e confirmado na Norma Ativa: 'Tema 01: Tema 1'.",
+          "details": {}
+        },
+        {
+          "timestamp": "2026-08-24 19:15:27.825",
+          "elapsed_ms": 7853,
+          "phase": "FASE_4_CLASSIFICACAO_TEMA",
+          "level": "SUCCESS",
+          "message": "Fase finalizada com status: COMPLETED",
+          "details": {
+            "winner_theme": "Tema 01: Tema 1",
+            "topic_number": 1,
+            "method": "LLM_CONFIRMED"
+          }
+        }
+      ],
+      "metrics": {
+        "winner_theme": "Tema 01: Tema 1",
+        "topic_number": 1,
+        "method": "LLM_CONFIRMED"
+      }
+    },
+    "FASE_5_AVALIACAO_REGRAS": {
+      "status": "COMPLETED",
+      "logs": [
+        {
+          "timestamp": "2026-08-24 19:15:27.830",
+          "elapsed_ms": 7857,
+          "phase": "FASE_5_AVALIACAO_REGRAS",
+          "level": "INFO",
+          "message": "Iniciando avaliação determinística no motor JSON-Logic contra 40 regras da norma...",
+          "details": {}
+        },
+        {
+          "timestamp": "2026-08-24 19:15:27.830",
+          "elapsed_ms": 7857,
+          "phase": "FASE_5_AVALIACAO_REGRAS",
+          "level": "ERROR",
+          "message": "Regra [TEMA_01_TETO_DANO_MORAL] 'Teto de Indenização / Dano Moral (Tema 1)' -> FAIL | Motivo: Pedido de indenização / dano moral excede o teto de R$ 7,200.00 estipulado na norma ativa para Tema 1.",
+          "details": {
+            "rule_code": "TEMA_01_TETO_DANO_MORAL",
+            "status": "FAIL",
+            "failure_reason": "Pedido de indenização / dano moral excede o teto de R$ 7,200.00 estipulado na norma ativa para Tema 1."
+          }
+        },
+        {
+          "timestamp": "2026-08-24 19:15:27.830",
+          "elapsed_ms": 7857,
+          "phase": "FASE_5_AVALIACAO_REGRAS",
+          "level": "SUCCESS",
+          "message": "Regra [TEMA_01_REQUISITOS_CONFORMIDADE] 'Cumprimento dos Requisitos (Tema 1)' -> PASS",
+          "details": {
+            "rule_code": "TEMA_01_REQUISITOS_CONFORMIDADE",
+            "status": "PASS",
+            "failure_reason": null
+          }
+        },
+        {
+          "timestamp": "2026-08-24 19:15:27.830",
+          "elapsed_ms": 7857,
+          "phase": "FASE_5_AVALIACAO_REGRAS",
+          "level": "SUCCESS",
+          "message": "Fase finalizada com status: COMPLETED",
+          "details": {
+            "total_rules": 2,
+            "passed": 1,
+            "failed": 1,
+            "unknown": 0
+          }
+        }
+      ],
+      "metrics": {
+        "total_rules": 2,
+        "passed": 1,
+        "failed": 1,
+        "unknown": 0
+      }
+    },
+    "FASE_6_VEREDITO_FINAL": {
+      "status": "COMPLETED",
+      "logs": [
+        {
+          "timestamp": "2026-08-24 19:15:27.830",
+          "elapsed_ms": 7857,
+          "phase": "FASE_6_VEREDITO_FINAL",
+          "level": "INFO",
+          "message": "Veredito Final Consolidado: INELIGIBLE — Processo não elegível para acordo. Não atende aos critérios: Teto de Indenização / Dano Moral (Tema 1).",
+          "details": {}
+        },
+        {
+          "timestamp": "2026-08-24 19:15:27.830",
+          "elapsed_ms": 7857,
+          "phase": "FASE_6_VEREDITO_FINAL",
+          "level": "SUCCESS",
+          "message": "Fase finalizada com status: COMPLETED",
+          "details": {
+            "verdict": "INELIGIBLE",
+            "summary": "Processo não elegível para acordo. Não atende aos critérios: Teto de Indenização / Dano Moral (Tema 1)."
+          }
+        }
+      ],
+      "metrics": {
+        "verdict": "INELIGIBLE",
+        "summary": "Processo não elegível para acordo. Não atende aos critérios: Teto de Indenização / Dano Moral (Tema 1)."
+      }
+    }
+  },
+  "timeline": [
+    {
+      "timestamp": "2026-08-24 19:15:19.972",
+      "elapsed_ms": 0,
+      "phase": "FASE_1_INGESTAO_OCR",
+      "level": "INFO",
+      "message": "Iniciando ingestão de 1 arquivo(s) PDF para o processo 214c1a40-3591-41e4-8bbf-50284165c422.",
+      "details": {}
+    },
+    {
+      "timestamp": "2026-08-24 19:15:19.975",
+      "elapsed_ms": 3,
+      "phase": "FASE_1_INGESTAO_OCR",
+      "level": "INFO",
+      "message": "Arquivo [1/1] '1261994347397242024254096921_3234__51124133423.pdf' carregado (4091.8 KB, 35 páginas).",
+      "details": {}
+    },
+    {
+      "timestamp": "2026-08-24 19:15:19.985",
+      "elapsed_ms": 13,
+      "phase": "FASE_1_INGESTAO_OCR",
+      "level": "INFO",
+      "message": "Pág 1 (1261994347397242024254096921_3234__51124133423.pdf p.1): OCR TIER_0_NATIVE (Confiança: 1.00, 1680 caracteres extraídos).",
+      "details": {
+        "tier": "TIER_0_NATIVE",
+        "quality_score": 1.0,
+        "segment": "PETICAO_INICIAL"
+      }
+    },
+    {
+      "timestamp": "2026-08-24 19:15:19.993",
+      "elapsed_ms": 21,
+      "phase": "FASE_1_INGESTAO_OCR",
+      "level": "INFO",
+      "message": "Pág 2 (1261994347397242024254096921_3234__51124133423.pdf p.2): OCR TIER_0_NATIVE (Confiança: 1.00, 2102 caracteres extraídos).",
+      "details": {
+        "tier": "TIER_0_NATIVE",
+        "quality_score": 1.0,
+        "segment": "RECIBO_PAGAMENTO"
+      }
+    },
+    {
+      "timestamp": "2026-08-24 19:15:19.996",
+      "elapsed_ms": 24,
+      "phase": "FASE_1_INGESTAO_OCR",
+      "level": "INFO",
+      "message": "Pág 3 (1261994347397242024254096921_3234__51124133423.pdf p.3): OCR TIER_0_NATIVE (Confiança: 1.00, 585 caracteres extraídos).",
+      "details": {
+        "tier": "TIER_0_NATIVE",
+        "quality_score": 1.0,
+        "segment": "OUTROS"
+      }
+    },
+    {
+      "timestamp": "2026-08-24 19:15:19.999",
+      "elapsed_ms": 27,
+      "phase": "FASE_1_INGESTAO_OCR",
+      "level": "INFO",
+      "message": "Pág 4 (1261994347397242024254096921_3234__51124133423.pdf p.4): OCR TIER_0_NATIVE (Confiança: 1.00, 778 caracteres extraídos).",
+      "details": {
+        "tier": "TIER_0_NATIVE",
+        "quality_score": 1.0,
+        "segment": "OUTROS"
+      }
+    },
+    {
+      "timestamp": "2026-08-24 19:15:20.006",
+      "elapsed_ms": 34,
+      "phase": "FASE_1_INGESTAO_OCR",
+      "level": "INFO",
+      "message": "Pág 5 (1261994347397242024254096921_3234__51124133423.pdf p.5): OCR TIER_0_NATIVE (Confiança: 1.00, 1824 caracteres extraídos).",
+      "details": {
+        "tier": "TIER_0_NATIVE",
+        "quality_score": 1.0,
+        "segment": "OUTROS"
+      }
+    },
+    {
+      "timestamp": "2026-08-24 19:15:20.015",
+      "elapsed_ms": 42,
+      "phase": "FASE_1_INGESTAO_OCR",
+      "level": "INFO",
+      "message": "Pág 6 (1261994347397242024254096921_3234__51124133423.pdf p.6): OCR TIER_0_NATIVE (Confiança: 1.00, 1960 caracteres extraídos).",
+      "details": {
+        "tier": "TIER_0_NATIVE",
+        "quality_score": 1.0,
+        "segment": "PETICAO_INICIAL"
+      }
+    },
+    {
+      "timestamp": "2026-08-24 19:15:20.024",
+      "elapsed_ms": 52,
+      "phase": "FASE_1_INGESTAO_OCR",
+      "level": "INFO",
+      "message": "Pág 7 (1261994347397242024254096921_3234__51124133423.pdf p.7): OCR TIER_0_NATIVE (Confiança: 1.00, 1983 caracteres extraídos).",
+      "details": {
+        "tier": "TIER_0_NATIVE",
+        "quality_score": 1.0,
+        "segment": "OUTROS"
+      }
+    },
+    {
+      "timestamp": "2026-08-24 19:15:20.034",
+      "elapsed_ms": 62,
+      "phase": "FASE_1_INGESTAO_OCR",
+      "level": "INFO",
+      "message": "Pág 8 (1261994347397242024254096921_3234__51124133423.pdf p.8): OCR TIER_0_NATIVE (Confiança: 1.00, 1820 caracteres extraídos).",
+      "details": {
+        "tier": "TIER_0_NATIVE",
+        "quality_score": 1.0,
+        "segment": "OUTROS"
+      }
+    },
+    {
+      "timestamp": "2026-08-24 19:15:20.042",
+      "elapsed_ms": 70,
+      "phase": "FASE_1_INGESTAO_OCR",
+      "level": "INFO",
+      "message": "Pág 9 (1261994347397242024254096921_3234__51124133423.pdf p.9): OCR TIER_0_NATIVE (Confiança: 1.00, 1760 caracteres extraídos).",
+      "details": {
+        "tier": "TIER_0_NATIVE",
+        "quality_score": 1.0,
+        "segment": "OUTROS"
+      }
+    },
+    {
+      "timestamp": "2026-08-24 19:15:20.051",
+      "elapsed_ms": 79,
+      "phase": "FASE_1_INGESTAO_OCR",
+      "level": "INFO",
+      "message": "Pág 10 (1261994347397242024254096921_3234__51124133423.pdf p.10): OCR TIER_0_NATIVE (Confiança: 1.00, 1693 caracteres extraídos).",
+      "details": {
+        "tier": "TIER_0_NATIVE",
+        "quality_score": 1.0,
+        "segment": "OUTROS"
+      }
+    },
+    {
+      "timestamp": "2026-08-24 19:15:20.064",
+      "elapsed_ms": 92,
+      "phase": "FASE_1_INGESTAO_OCR",
+      "level": "INFO",
+      "message": "Pág 11 (1261994347397242024254096921_3234__51124133423.pdf p.11): OCR TIER_0_NATIVE (Confiança: 1.00, 1844 caracteres extraídos).",
+      "details": {
+        "tier": "TIER_0_NATIVE",
+        "quality_score": 1.0,
+        "segment": "OUTROS"
+      }
+    },
+    {
+      "timestamp": "2026-08-24 19:15:20.073",
+      "elapsed_ms": 100,
+      "phase": "FASE_1_INGESTAO_OCR",
+      "level": "INFO",
+      "message": "Pág 12 (1261994347397242024254096921_3234__51124133423.pdf p.12): OCR TIER_0_NATIVE (Confiança: 1.00, 1732 caracteres extraídos).",
+      "details": {
+        "tier": "TIER_0_NATIVE",
+        "quality_score": 1.0,
+        "segment": "OUTROS"
+      }
+    },
+    {
+      "timestamp": "2026-08-24 19:15:20.082",
+      "elapsed_ms": 110,
+      "phase": "FASE_1_INGESTAO_OCR",
+      "level": "INFO",
+      "message": "Pág 13 (1261994347397242024254096921_3234__51124133423.pdf p.13): OCR TIER_0_NATIVE (Confiança: 1.00, 1789 caracteres extraídos).",
+      "details": {
+        "tier": "TIER_0_NATIVE",
+        "quality_score": 1.0,
+        "segment": "PETICAO_INICIAL"
+      }
+    },
+    {
+      "timestamp": "2026-08-24 19:15:20.089",
+      "elapsed_ms": 117,
+      "phase": "FASE_1_INGESTAO_OCR",
+      "level": "INFO",
+      "message": "Pág 14 (1261994347397242024254096921_3234__51124133423.pdf p.14): OCR TIER_0_NATIVE (Confiança: 1.00, 1496 caracteres extraídos).",
+      "details": {
+        "tier": "TIER_0_NATIVE",
+        "quality_score": 1.0,
+        "segment": "OUTROS"
+      }
+    },
+    {
+      "timestamp": "2026-08-24 19:15:20.092",
+      "elapsed_ms": 120,
+      "phase": "FASE_1_INGESTAO_OCR",
+      "level": "INFO",
+      "message": "Pág 15 (1261994347397242024254096921_3234__51124133423.pdf p.15): OCR TIER_0_NATIVE (Confiança: 1.00, 388 caracteres extraídos).",
+      "details": {
+        "tier": "TIER_0_NATIVE",
+        "quality_score": 1.0,
+        "segment": "OUTROS"
+      }
+    },
+    {
+      "timestamp": "2026-08-24 19:15:20.095",
+      "elapsed_ms": 122,
+      "phase": "FASE_1_INGESTAO_OCR",
+      "level": "INFO",
+      "message": "Pág 16 (1261994347397242024254096921_3234__51124133423.pdf p.16): OCR TIER_0_NATIVE (Confiança: 1.00, 878 caracteres extraídos).",
+      "details": {
+        "tier": "TIER_0_NATIVE",
+        "quality_score": 1.0,
+        "segment": "OUTROS"
+      }
+    },
+    {
+      "timestamp": "2026-08-24 19:15:20.098",
+      "elapsed_ms": 125,
+      "phase": "FASE_1_INGESTAO_OCR",
+      "level": "INFO",
+      "message": "Pág 17 (1261994347397242024254096921_3234__51124133423.pdf p.17): OCR TIER_0_NATIVE (Confiança: 1.00, 878 caracteres extraídos).",
+      "details": {
+        "tier": "TIER_0_NATIVE",
+        "quality_score": 1.0,
+        "segment": "OUTROS"
+      }
+    },
+    {
+      "timestamp": "2026-08-24 19:15:20.104",
+      "elapsed_ms": 131,
+      "phase": "FASE_1_INGESTAO_OCR",
+      "level": "INFO",
+      "message": "Pág 18 (1261994347397242024254096921_3234__51124133423.pdf p.18): OCR TIER_0_NATIVE (Confiança: 1.00, 1554 caracteres extraídos).",
+      "details": {
+        "tier": "TIER_0_NATIVE",
+        "quality_score": 1.0,
+        "segment": "OUTROS"
+      }
+    },
+    {
+      "timestamp": "2026-08-24 19:15:20.589",
+      "elapsed_ms": 617,
+      "phase": "FASE_1_INGESTAO_OCR",
+      "level": "INFO",
+      "message": "Pág 19 (1261994347397242024254096921_3234__51124133423.pdf p.19): OCR TIER_1_UNPROCESSED_SCANNED (Confiança: 0.00, 40 caracteres extraídos).",
+      "details": {
+        "tier": "TIER_1_UNPROCESSED_SCANNED",
+        "quality_score": 0.0,
+        "segment": "OUTROS"
+      }
+    },
+    {
+      "timestamp": "2026-08-24 19:15:20.590",
+      "elapsed_ms": 618,
+      "phase": "FASE_1_INGESTAO_OCR",
+      "level": "INFO",
+      "message": "Pág 20 (1261994347397242024254096921_3234__51124133423.pdf p.20): OCR TIER_0_NATIVE (Confiança: 1.00, 388 caracteres extraídos).",
+      "details": {
+        "tier": "TIER_0_NATIVE",
+        "quality_score": 1.0,
+        "segment": "OUTROS"
+      }
+    },
+    {
+      "timestamp": "2026-08-24 19:15:20.592",
+      "elapsed_ms": 620,
+      "phase": "FASE_1_INGESTAO_OCR",
+      "level": "INFO",
+      "message": "Pág 21 (1261994347397242024254096921_3234__51124133423.pdf p.21): OCR TIER_0_NATIVE (Confiança: 1.00, 388 caracteres extraídos).",
+      "details": {
+        "tier": "TIER_0_NATIVE",
+        "quality_score": 1.0,
+        "segment": "OUTROS"
+      }
+    },
+    {
+      "timestamp": "2026-08-24 19:15:20.593",
+      "elapsed_ms": 621,
+      "phase": "FASE_1_INGESTAO_OCR",
+      "level": "INFO",
+      "message": "Pág 22 (1261994347397242024254096921_3234__51124133423.pdf p.22): OCR TIER_0_NATIVE (Confiança: 1.00, 388 caracteres extraídos).",
+      "details": {
+        "tier": "TIER_0_NATIVE",
+        "quality_score": 1.0,
+        "segment": "OUTROS"
+      }
+    },
+    {
+      "timestamp": "2026-08-24 19:15:20.595",
+      "elapsed_ms": 623,
+      "phase": "FASE_1_INGESTAO_OCR",
+      "level": "INFO",
+      "message": "Pág 23 (1261994347397242024254096921_3234__51124133423.pdf p.23): OCR TIER_0_NATIVE (Confiança: 1.00, 388 caracteres extraídos).",
+      "details": {
+        "tier": "TIER_0_NATIVE",
+        "quality_score": 1.0,
+        "segment": "OUTROS"
+      }
+    },
+    {
+      "timestamp": "2026-08-24 19:15:20.595",
+      "elapsed_ms": 623,
+      "phase": "FASE_1_INGESTAO_OCR",
+      "level": "INFO",
+      "message": "Pág 24 (1261994347397242024254096921_3234__51124133423.pdf p.24): OCR TIER_0_NATIVE (Confiança: 1.00, 388 caracteres extraídos).",
+      "details": {
+        "tier": "TIER_0_NATIVE",
+        "quality_score": 1.0,
+        "segment": "OUTROS"
+      }
+    },
+    {
+      "timestamp": "2026-08-24 19:15:20.596",
+      "elapsed_ms": 624,
+      "phase": "FASE_1_INGESTAO_OCR",
+      "level": "INFO",
+      "message": "Pág 25 (1261994347397242024254096921_3234__51124133423.pdf p.25): OCR TIER_0_NATIVE (Confiança: 1.00, 388 caracteres extraídos).",
+      "details": {
+        "tier": "TIER_0_NATIVE",
+        "quality_score": 1.0,
+        "segment": "OUTROS"
+      }
+    },
+    {
+      "timestamp": "2026-08-24 19:15:20.598",
+      "elapsed_ms": 626,
+      "phase": "FASE_1_INGESTAO_OCR",
+      "level": "INFO",
+      "message": "Pág 26 (1261994347397242024254096921_3234__51124133423.pdf p.26): OCR TIER_0_NATIVE (Confiança: 1.00, 388 caracteres extraídos).",
+      "details": {
+        "tier": "TIER_0_NATIVE",
+        "quality_score": 1.0,
+        "segment": "OUTROS"
+      }
+    },
+    {
+      "timestamp": "2026-08-24 19:15:20.600",
+      "elapsed_ms": 627,
+      "phase": "FASE_1_INGESTAO_OCR",
+      "level": "INFO",
+      "message": "Pág 27 (1261994347397242024254096921_3234__51124133423.pdf p.27): OCR TIER_0_NATIVE (Confiança: 1.00, 388 caracteres extraídos).",
+      "details": {
+        "tier": "TIER_0_NATIVE",
+        "quality_score": 1.0,
+        "segment": "OUTROS"
+      }
+    },
+    {
+      "timestamp": "2026-08-24 19:15:20.602",
+      "elapsed_ms": 629,
+      "phase": "FASE_1_INGESTAO_OCR",
+      "level": "INFO",
+      "message": "Pág 28 (1261994347397242024254096921_3234__51124133423.pdf p.28): OCR TIER_0_NATIVE (Confiança: 1.00, 388 caracteres extraídos).",
+      "details": {
+        "tier": "TIER_0_NATIVE",
+        "quality_score": 1.0,
+        "segment": "OUTROS"
+      }
+    },
+    {
+      "timestamp": "2026-08-24 19:15:20.603",
+      "elapsed_ms": 631,
+      "phase": "FASE_1_INGESTAO_OCR",
+      "level": "INFO",
+      "message": "Pág 29 (1261994347397242024254096921_3234__51124133423.pdf p.29): OCR TIER_0_NATIVE (Confiança: 1.00, 388 caracteres extraídos).",
+      "details": {
+        "tier": "TIER_0_NATIVE",
+        "quality_score": 1.0,
+        "segment": "OUTROS"
+      }
+    },
+    {
+      "timestamp": "2026-08-24 19:15:20.605",
+      "elapsed_ms": 633,
+      "phase": "FASE_1_INGESTAO_OCR",
+      "level": "INFO",
+      "message": "Pág 30 (1261994347397242024254096921_3234__51124133423.pdf p.30): OCR TIER_0_NATIVE (Confiança: 1.00, 443 caracteres extraídos).",
+      "details": {
+        "tier": "TIER_0_NATIVE",
+        "quality_score": 1.0,
+        "segment": "OUTROS"
+      }
+    },
+    {
+      "timestamp": "2026-08-24 19:15:20.606",
+      "elapsed_ms": 634,
+      "phase": "FASE_1_INGESTAO_OCR",
+      "level": "INFO",
+      "message": "Pág 31 (1261994347397242024254096921_3234__51124133423.pdf p.31): OCR TIER_0_NATIVE (Confiança: 1.00, 388 caracteres extraídos).",
+      "details": {
+        "tier": "TIER_0_NATIVE",
+        "quality_score": 1.0,
+        "segment": "OUTROS"
+      }
+    },
+    {
+      "timestamp": "2026-08-24 19:15:20.608",
+      "elapsed_ms": 636,
+      "phase": "FASE_1_INGESTAO_OCR",
+      "level": "INFO",
+      "message": "Pág 32 (1261994347397242024254096921_3234__51124133423.pdf p.32): OCR TIER_0_NATIVE (Confiança: 1.00, 388 caracteres extraídos).",
+      "details": {
+        "tier": "TIER_0_NATIVE",
+        "quality_score": 1.0,
+        "segment": "OUTROS"
+      }
+    },
+    {
+      "timestamp": "2026-08-24 19:15:20.610",
+      "elapsed_ms": 638,
+      "phase": "FASE_1_INGESTAO_OCR",
+      "level": "INFO",
+      "message": "Pág 33 (1261994347397242024254096921_3234__51124133423.pdf p.33): OCR TIER_0_NATIVE (Confiança: 1.00, 447 caracteres extraídos).",
+      "details": {
+        "tier": "TIER_0_NATIVE",
+        "quality_score": 1.0,
+        "segment": "OUTROS"
+      }
+    },
+    {
+      "timestamp": "2026-08-24 19:15:20.622",
+      "elapsed_ms": 650,
+      "phase": "FASE_1_INGESTAO_OCR",
+      "level": "INFO",
+      "message": "Pág 34 (1261994347397242024254096921_3234__51124133423.pdf p.34): OCR TIER_0_NATIVE (Confiança: 1.00, 2901 caracteres extraídos).",
+      "details": {
+        "tier": "TIER_0_NATIVE",
+        "quality_score": 1.0,
+        "segment": "NOTA_FISCAL"
+      }
+    },
+    {
+      "timestamp": "2026-08-24 19:15:20.627",
+      "elapsed_ms": 654,
+      "phase": "FASE_1_INGESTAO_OCR",
+      "level": "INFO",
+      "message": "Pág 35 (1261994347397242024254096921_3234__51124133423.pdf p.35): OCR TIER_0_NATIVE (Confiança: 1.00, 924 caracteres extraídos).",
+      "details": {
+        "tier": "TIER_0_NATIVE",
+        "quality_score": 1.0,
+        "segment": "OUTROS"
+      }
+    },
+    {
+      "timestamp": "2026-08-24 19:15:20.628",
+      "elapsed_ms": 656,
+      "phase": "FASE_1_INGESTAO_OCR",
+      "level": "SUCCESS",
+      "message": "Fase finalizada com status: COMPLETED",
+      "details": {
+        "total_pages": 35,
+        "total_files": 1
+      }
+    },
+    {
+      "timestamp": "2026-08-24 19:15:20.628",
+      "elapsed_ms": 656,
+      "phase": "FASE_2_SEGMENTACAO_PECAS",
+      "level": "INFO",
+      "message": "Segmentando 35 páginas em peças processuais...",
+      "details": {}
+    },
+    {
+      "timestamp": "2026-08-24 19:15:20.628",
+      "elapsed_ms": 656,
+      "phase": "FASE_2_SEGMENTACAO_PECAS",
+      "level": "SUCCESS",
+      "message": "Fase finalizada com status: COMPLETED",
+      "details": {
+        "segments_distribution": {
+          "PETICAO_INICIAL": 3,
+          "RECIBO_PAGAMENTO": 1,
+          "OUTROS": 30,
+          "NOTA_FISCAL": 1
+        }
+      }
+    },
+    {
+      "timestamp": "2026-08-24 19:15:20.630",
+      "elapsed_ms": 658,
+      "phase": "FASE_4_CLASSIFICACAO_TEMA",
+      "level": "INFO",
+      "message": "Norma Ativa Carregada: V-54D0FC (ID: a40e5e3b-23ec-4cee-9fb4-dd050f5e0d95).",
+      "details": {}
+    },
+    {
+      "timestamp": "2026-08-24 19:15:20.630",
+      "elapsed_ms": 658,
+      "phase": "FASE_3_EXTRACAO_FATOS",
+      "level": "INFO",
+      "message": "Iniciando varredura e extração de variáveis em 35 página(s)...",
+      "details": {}
+    },
+    {
+      "timestamp": "2026-08-24 19:15:20.630",
+      "elapsed_ms": 658,
+      "phase": "FASE_3_EXTRACAO_FATOS",
+      "level": "INFO",
+      "message": "Enviando processo para análise e extração estruturada via LLM (openai/gpt-4o-mini)...",
+      "details": {}
+    },
+    {
+      "timestamp": "2026-08-24 19:15:27.820",
+      "elapsed_ms": 7848,
+      "phase": "FASE_3_EXTRACAO_FATOS",
+      "level": "SUCCESS",
+      "message": "Extração LLM concluída. Valor: R$ 16,788.18 | Fase: PRE_SENTENCA | CID: N/A | Tema: Tema 1",
+      "details": {}
+    },
+    {
+      "timestamp": "2026-08-24 19:15:27.820",
+      "elapsed_ms": 7848,
+      "phase": "FASE_3_EXTRACAO_FATOS",
+      "level": "SUCCESS",
+      "message": "Fase finalizada com status: COMPLETED",
+      "details": {
+        "requested_amount": 16788.18,
+        "material_amount": 6788.18,
+        "moral_amount": 10000.0,
+        "procedural_stage": "PRE_SENTENCA",
+        "cid_10": null,
+        "has_school_aide": false,
+        "extractor": "OPENROUTER_LLM"
+      }
+    },
+    {
+      "timestamp": "2026-08-24 19:15:27.825",
+      "elapsed_ms": 7853,
+      "phase": "FASE_4_CLASSIFICACAO_TEMA",
+      "level": "SUCCESS",
+      "message": "Tema identificado via IA e confirmado na Norma Ativa: 'Tema 01: Tema 1'.",
+      "details": {}
+    },
+    {
+      "timestamp": "2026-08-24 19:15:27.825",
+      "elapsed_ms": 7853,
+      "phase": "FASE_4_CLASSIFICACAO_TEMA",
+      "level": "SUCCESS",
+      "message": "Fase finalizada com status: COMPLETED",
+      "details": {
+        "winner_theme": "Tema 01: Tema 1",
+        "topic_number": 1,
+        "method": "LLM_CONFIRMED"
+      }
+    },
+    {
+      "timestamp": "2026-08-24 19:15:27.830",
+      "elapsed_ms": 7857,
+      "phase": "FASE_5_AVALIACAO_REGRAS",
+      "level": "INFO",
+      "message": "Iniciando avaliação determinística no motor JSON-Logic contra 40 regras da norma...",
+      "details": {}
+    },
+    {
+      "timestamp": "2026-08-24 19:15:27.830",
+      "elapsed_ms": 7857,
+      "phase": "FASE_5_AVALIACAO_REGRAS",
+      "level": "ERROR",
+      "message": "Regra [TEMA_01_TETO_DANO_MORAL] 'Teto de Indenização / Dano Moral (Tema 1)' -> FAIL | Motivo: Pedido de indenização / dano moral excede o teto de R$ 7,200.00 estipulado na norma ativa para Tema 1.",
+      "details": {
+        "rule_code": "TEMA_01_TETO_DANO_MORAL",
+        "status": "FAIL",
+        "failure_reason": "Pedido de indenização / dano moral excede o teto de R$ 7,200.00 estipulado na norma ativa para Tema 1."
+      }
+    },
+    {
+      "timestamp": "2026-08-24 19:15:27.830",
+      "elapsed_ms": 7857,
+      "phase": "FASE_5_AVALIACAO_REGRAS",
+      "level": "SUCCESS",
+      "message": "Regra [TEMA_01_REQUISITOS_CONFORMIDADE] 'Cumprimento dos Requisitos (Tema 1)' -> PASS",
+      "details": {
+        "rule_code": "TEMA_01_REQUISITOS_CONFORMIDADE",
+        "status": "PASS",
+        "failure_reason": null
+      }
+    },
+    {
+      "timestamp": "2026-08-24 19:15:27.830",
+      "elapsed_ms": 7857,
+      "phase": "FASE_5_AVALIACAO_REGRAS",
+      "level": "SUCCESS",
+      "message": "Fase finalizada com status: COMPLETED",
+      "details": {
+        "total_rules": 2,
+        "passed": 1,
+        "failed": 1,
+        "unknown": 0
+      }
+    },
+    {
+      "timestamp": "2026-08-24 19:15:27.830",
+      "elapsed_ms": 7857,
+      "phase": "FASE_6_VEREDITO_FINAL",
+      "level": "INFO",
+      "message": "Veredito Final Consolidado: INELIGIBLE — Processo não elegível para acordo. Não atende aos critérios: Teto de Indenização / Dano Moral (Tema 1).",
+      "details": {}
+    },
+    {
+      "timestamp": "2026-08-24 19:15:27.830",
+      "elapsed_ms": 7857,
+      "phase": "FASE_6_VEREDITO_FINAL",
+      "level": "SUCCESS",
+      "message": "Fase finalizada com status: COMPLETED",
+      "details": {
+        "verdict": "INELIGIBLE",
+        "summary": "Processo não elegível para acordo. Não atende aos critérios: Teto de Indenização / Dano Moral (Tema 1)."
+      }
+    }
+  ]
+}
