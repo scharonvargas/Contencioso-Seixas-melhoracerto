@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<html lang="pt-BR" class="dark">
+<html lang="pt-BR" class="light">
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
@@ -17,22 +17,12 @@
           },
           colors: {
             brand: {
-              50: '#f4f5f9',
-              100: '#e9ebf2',
+              50: '#eef2ff',
+              100: '#e0e7ff',
               500: '#4f46e5',
               600: '#4338ca',
               700: '#3730a3'
-            },
-            canvas: '#08090c',
-            surface: '#0d0f14',
-            surfaceHover: '#13161f',
-            card: '#10131a',
-            borderSubtle: 'rgba(255, 255, 255, 0.06)',
-            borderMuted: 'rgba(255, 255, 255, 0.1)',
-            borderActive: 'rgba(99, 102, 241, 0.5)',
-            textPrimary: '#f8fafc',
-            textSecondary: '#94a3b8',
-            textMuted: '#64748b'
+            }
           }
         }
       }
@@ -44,20 +34,70 @@
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&family=JetBrains+Mono:wght@400;500;600;700&family=Plus+Jakarta+Sans:wght@500;600;700;800&display=swap" rel="stylesheet">
 
   <style>
+    /* VARIÁVEIS LIGHT MODE (DEFAULT CLEAN 2026 SAAS) */
     :root {
+      --bg-canvas: #f8fafc;
+      --bg-surface: #ffffff;
+      --bg-surface-hover: #f1f5f9;
+      --bg-card: #ffffff;
+      --border-subtle: #e2e8f0;
+      --border-muted: #cbd5e1;
+      --text-primary: #0f172a;
+      --text-secondary: #475569;
+      --text-muted: #64748b;
+      --ambient-radial: radial-gradient(circle, rgba(79, 70, 229, 0.04) 0%, rgba(16, 185, 129, 0.01) 50%, transparent 80%);
+      --active-card-bg: linear-gradient(145deg, #f5f3ff 0%, #ffffff 100%);
+      --active-card-border: #6366f1;
+      --active-card-shadow: 0 4px 14px -2px rgba(99, 102, 241, 0.12);
+      --badge-eligible-bg: #ecfdf5;
+      --badge-eligible-text: #047857;
+      --badge-eligible-border: #a7f3d0;
+      --badge-conditioned-bg: #f0fdfa;
+      --badge-conditioned-text: #0f766e;
+      --badge-conditioned-border: #99f6e4;
+      --badge-ineligible-bg: #fff1f2;
+      --badge-ineligible-text: #be123c;
+      --badge-ineligible-border: #fecdd3;
+      --badge-hitl-bg: #fffbeb;
+      --badge-hitl-text: #b45309;
+      --badge-hitl-border: #fde68a;
+    }
+
+    /* VARIÁVEIS DARK MODE */
+    html.dark {
       --bg-canvas: #08090c;
       --bg-surface: #0d0f14;
+      --bg-surface-hover: #13161f;
       --bg-card: #10131a;
       --border-subtle: rgba(255, 255, 255, 0.06);
       --border-muted: rgba(255, 255, 255, 0.12);
-      --accent-primary: #4f46e5;
+      --text-primary: #f8fafc;
+      --text-secondary: #94a3b8;
+      --text-muted: #64748b;
+      --ambient-radial: radial-gradient(circle, rgba(99, 102, 241, 0.05) 0%, rgba(16, 185, 129, 0.015) 50%, transparent 80%);
+      --active-card-bg: linear-gradient(145deg, rgba(79, 70, 229, 0.12) 0%, rgba(16, 19, 26, 0.95) 100%);
+      --active-card-border: rgba(99, 102, 241, 0.6);
+      --active-card-shadow: inset 0 0 0 1px rgba(99, 102, 241, 0.4);
+      --badge-eligible-bg: rgba(16, 185, 129, 0.1);
+      --badge-eligible-text: #34d399;
+      --badge-eligible-border: rgba(16, 185, 129, 0.25);
+      --badge-conditioned-bg: rgba(6, 182, 212, 0.1);
+      --badge-conditioned-text: #38bdf8;
+      --badge-conditioned-border: rgba(6, 182, 212, 0.25);
+      --badge-ineligible-bg: rgba(244, 63, 94, 0.1);
+      --badge-ineligible-text: #fb7185;
+      --badge-ineligible-border: rgba(244, 63, 94, 0.25);
+      --badge-hitl-bg: rgba(245, 158, 11, 0.1);
+      --badge-hitl-text: #fbbf24;
+      --badge-hitl-border: rgba(245, 158, 11, 0.25);
     }
 
     body {
       font-family: 'Inter', 'Plus Jakarta Sans', sans-serif;
       background-color: var(--bg-canvas);
-      color: #f8fafc;
+      color: var(--text-primary);
       letter-spacing: -0.012em;
+      transition: background-color 0.2s ease, color 0.2s ease;
     }
 
     .font-mono {
@@ -68,28 +108,29 @@
     /* Scrollbars elegantes e ultrafinas */
     ::-webkit-scrollbar { width: 4px; height: 4px; }
     ::-webkit-scrollbar-track { background: transparent; }
-    ::-webkit-scrollbar-thumb { background: rgba(255, 255, 255, 0.12); border-radius: 4px; }
-    ::-webkit-scrollbar-thumb:hover { background: rgba(255, 255, 255, 0.25); }
+    ::-webkit-scrollbar-thumb { background: rgba(100, 116, 139, 0.2); border-radius: 4px; }
+    ::-webkit-scrollbar-thumb:hover { background: rgba(100, 116, 139, 0.35); }
 
     /* Bento Box & Card Surfaces */
     .bento-card {
       background: var(--bg-card);
       border: 1px solid var(--border-subtle);
-      border-radius: 12px;
-      transition: border-color 0.15s ease, transform 0.15s ease;
+      border-radius: 10px;
+      transition: border-color 0.15s ease, box-shadow 0.15s ease, transform 0.15s ease;
     }
     .bento-card:hover {
       border-color: var(--border-muted);
+      box-shadow: 0 2px 8px -2px rgba(0, 0, 0, 0.04);
     }
 
-    /* Card Ativo Selecionado (Linear Style) */
+    /* Card Ativo Selecionado */
     .active-card {
-      border-color: rgba(99, 102, 241, 0.6) !important;
-      background: linear-gradient(145deg, rgba(79, 70, 229, 0.12) 0%, rgba(16, 19, 26, 0.95) 100%) !important;
-      box-shadow: inset 0 0 0 1px rgba(99, 102, 241, 0.4);
+      border-color: var(--active-card-border) !important;
+      background: var(--active-card-bg) !important;
+      box-shadow: var(--active-card-shadow);
     }
 
-    /* Efeito de luz ambiente de topo (2026 Calm SaaS) */
+    /* Efeito de luz ambiente de topo */
     .ambient-lighting {
       position: fixed;
       top: 0;
@@ -97,56 +138,56 @@
       transform: translateX(-50%);
       width: 900px;
       height: 200px;
-      background: radial-gradient(circle, rgba(99, 102, 241, 0.05) 0%, rgba(16, 185, 129, 0.015) 50%, transparent 80%);
+      background: var(--ambient-radial);
       pointer-events: none;
       z-index: 1;
     }
 
     .btn-press:active { transform: scale(0.98); }
 
-    /* Tags e Pastéis Muted (2026 Precision) */
+    /* Badges com cores dinâmicas via variáveis CSS */
     .badge-eligible {
-      background: rgba(16, 185, 129, 0.1);
-      color: #34d399;
-      border: 1px solid rgba(16, 185, 129, 0.25);
+      background: var(--badge-eligible-bg);
+      color: var(--badge-eligible-text);
+      border: 1px solid var(--badge-eligible-border);
     }
     .badge-conditioned {
-      background: rgba(6, 182, 212, 0.1);
-      color: #38bdf8;
-      border: 1px solid rgba(6, 182, 212, 0.25);
+      background: var(--badge-conditioned-bg);
+      color: var(--badge-conditioned-text);
+      border: 1px solid var(--badge-conditioned-border);
     }
     .badge-ineligible {
-      background: rgba(244, 63, 94, 0.1);
-      color: #fb7185;
-      border: 1px solid rgba(244, 63, 94, 0.25);
+      background: var(--badge-ineligible-bg);
+      color: var(--badge-ineligible-text);
+      border: 1px solid var(--badge-ineligible-border);
     }
     .badge-hitl {
-      background: rgba(245, 158, 11, 0.1);
-      color: #fbbf24;
-      border: 1px solid rgba(245, 158, 11, 0.25);
+      background: var(--badge-hitl-bg);
+      color: var(--badge-hitl-text);
+      border: 1px solid var(--badge-hitl-border);
     }
   </style>
 </head>
-<body class="min-h-screen flex antialiased selection:bg-indigo-500/25 selection:text-indigo-200">
+<body class="min-h-screen flex antialiased selection:bg-indigo-500/20 selection:text-indigo-900 dark:selection:text-indigo-200">
   
   <!-- LUZ AMBIENTE CALMA -->
   <div class="ambient-lighting"></div>
 
-  <!-- 1. SIDEBAR LATERAL ESCURA & MINIMALISTA (LINEAR STYLE) -->
-  <aside id="main-sidebar" class="w-64 bg-surface border-r border-borderSubtle flex flex-col justify-between shrink-0 z-40 transition-all duration-200 relative">
+  <!-- 1. SIDEBAR LATERAL CLEAN & MINIMALISTA -->
+  <aside id="main-sidebar" class="w-64 bg-white dark:bg-[#0d0f14] border-r border-slate-200 dark:border-white/5 flex flex-col justify-between shrink-0 z-40 transition-all duration-200 relative">
     <div class="flex flex-col h-full">
       
       <!-- LOGO E IDENTIDADE CORPORATIVA -->
-      <div class="p-4 border-b border-borderSubtle flex items-center justify-between">
+      <div class="p-4 border-b border-slate-200 dark:border-white/5 flex items-center justify-between">
         <div class="flex items-center space-x-3 cursor-pointer group" onclick="switchNav('command-center')">
           <div class="w-8 h-8 rounded-lg bg-indigo-600 flex items-center justify-center font-bold text-white shadow-sm group-hover:bg-indigo-500 transition duration-150">
             <i class="fa-solid fa-scale-balanced text-xs"></i>
           </div>
           <div>
-            <h1 class="font-bold text-sm tracking-tight text-white flex items-center gap-1.5">
-              Seixas AI <span class="text-[9px] bg-indigo-500/10 text-indigo-300 border border-indigo-500/20 px-1.5 py-0.2 rounded font-mono font-medium">2026.1</span>
+            <h1 class="font-bold text-sm tracking-tight text-slate-900 dark:text-white flex items-center gap-1.5">
+              Seixas AI <span class="text-[9px] bg-indigo-50 dark:bg-indigo-500/10 text-indigo-700 dark:text-indigo-300 border border-indigo-200 dark:border-indigo-500/20 px-1.5 py-0.2 rounded font-mono font-medium">2026.1</span>
             </h1>
-            <p class="text-[10px] text-textMuted font-medium">Central de Acordos</p>
+            <p class="text-[10px] text-slate-500 dark:text-slate-400 font-medium">Central de Acordos</p>
           </div>
         </div>
       </div>
@@ -155,7 +196,7 @@
       <div class="p-3 space-y-6 flex-1 overflow-y-auto">
         
         <div>
-          <p class="text-[10px] font-mono uppercase tracking-wider text-textMuted font-semibold px-2.5 mb-2">Workspace</p>
+          <p class="text-[10px] font-mono uppercase tracking-wider text-slate-400 dark:text-slate-500 font-semibold px-2.5 mb-2">Workspace</p>
           <nav class="space-y-1">
             <button onclick="switchNav('command-center')" id="nav-btn-command-center" class="w-full flex items-center justify-between px-2.5 py-2 rounded-lg text-xs font-semibold text-white bg-indigo-600 shadow-sm transition btn-press">
               <span class="flex items-center gap-2">
@@ -164,62 +205,62 @@
               <span id="badge-inbox-sidebar" class="bg-indigo-800 text-white font-mono text-[10px] px-1.5 py-0.5 rounded font-bold">0</span>
             </button>
             
-            <button onclick="switchNav('hitl-queue')" id="nav-btn-hitl-queue" class="w-full flex items-center justify-between px-2.5 py-2 rounded-lg text-xs font-medium text-textSecondary hover:text-white hover:bg-surfaceHover transition btn-press">
+            <button onclick="switchNav('hitl-queue')" id="nav-btn-hitl-queue" class="w-full flex items-center justify-between px-2.5 py-2 rounded-lg text-xs font-medium text-slate-600 dark:text-slate-300 hover:text-slate-900 dark:hover:text-white hover:bg-slate-100 dark:hover:bg-white/5 transition btn-press">
               <span class="flex items-center gap-2">
-                <i class="fa-solid fa-user-check text-xs text-amber-400"></i> Fila de Revisão (HITL)
+                <i class="fa-solid fa-user-check text-xs text-amber-500"></i> Fila de Revisão (HITL)
               </span>
-              <span id="badge-hitl-sidebar" class="bg-amber-500/15 text-amber-300 border border-amber-500/25 font-mono text-[10px] px-1.5 py-0.5 rounded font-bold">0</span>
+              <span id="badge-hitl-sidebar" class="bg-amber-100 dark:bg-amber-500/15 text-amber-800 dark:text-amber-300 border border-amber-200 dark:border-amber-500/25 font-mono text-[10px] px-1.5 py-0.5 rounded font-bold">0</span>
             </button>
 
-            <button onclick="switchNav('decision-history')" id="nav-btn-decision-history" class="w-full flex items-center justify-between px-2.5 py-2 rounded-lg text-xs font-medium text-textSecondary hover:text-white hover:bg-surfaceHover transition btn-press">
+            <button onclick="switchNav('decision-history')" id="nav-btn-decision-history" class="w-full flex items-center justify-between px-2.5 py-2 rounded-lg text-xs font-medium text-slate-600 dark:text-slate-300 hover:text-slate-900 dark:hover:text-white hover:bg-slate-100 dark:hover:bg-white/5 transition btn-press">
               <span class="flex items-center gap-2">
-                <i class="fa-solid fa-clock-rotate-left text-xs text-emerald-400"></i> Histórico & Arquivo
+                <i class="fa-solid fa-clock-rotate-left text-xs text-emerald-600 dark:text-emerald-400"></i> Histórico & Arquivo
               </span>
-              <span id="badge-history-sidebar" class="bg-surfaceHover text-textSecondary font-mono text-[10px] px-1.5 py-0.5 rounded font-bold">0</span>
+              <span id="badge-history-sidebar" class="bg-slate-100 dark:bg-white/5 text-slate-600 dark:text-slate-300 font-mono text-[10px] px-1.5 py-0.5 rounded font-bold">0</span>
             </button>
 
-            <button onclick="switchNav('policies-catalog')" id="nav-btn-policies-catalog" class="w-full flex items-center justify-between px-2.5 py-2 rounded-lg text-xs font-medium text-textSecondary hover:text-white hover:bg-surfaceHover transition btn-press">
+            <button onclick="switchNav('policies-catalog')" id="nav-btn-policies-catalog" class="w-full flex items-center justify-between px-2.5 py-2 rounded-lg text-xs font-medium text-slate-600 dark:text-slate-300 hover:text-slate-900 dark:hover:text-white hover:bg-slate-100 dark:hover:bg-white/5 transition btn-press">
               <span class="flex items-center gap-2">
-                <i class="fa-solid fa-book-bookmark text-xs text-textMuted"></i> Manual de Regras
+                <i class="fa-solid fa-book-bookmark text-xs text-slate-400"></i> Manual de Regras
               </span>
-              <span class="bg-surfaceHover text-textSecondary font-mono text-[10px] px-1.5 py-0.5 rounded font-bold" id="sidebar-topics-count">21</span>
+              <span class="bg-slate-100 dark:bg-white/5 text-slate-600 dark:text-slate-300 font-mono text-[10px] px-1.5 py-0.5 rounded font-bold" id="sidebar-topics-count">21</span>
             </button>
           </nav>
         </div>
 
         <!-- FILTROS RÁPIDOS POR STATUS NA SIDEBAR -->
         <div>
-          <p class="text-[10px] font-mono uppercase tracking-wider text-textMuted font-semibold px-2.5 mb-2">Filtros por Veredito</p>
+          <p class="text-[10px] font-mono uppercase tracking-wider text-slate-400 dark:text-slate-500 font-semibold px-2.5 mb-2">Filtros por Veredito</p>
           <div class="space-y-0.5 text-xs">
-            <button onclick="applyStatusFilter('ALL')" class="w-full flex items-center justify-between px-2.5 py-1.5 rounded-md text-textSecondary hover:text-white hover:bg-surfaceHover transition">
+            <button onclick="applyStatusFilter('ALL')" class="w-full flex items-center justify-between px-2.5 py-1.5 rounded-md text-slate-600 dark:text-slate-300 hover:text-slate-900 dark:hover:text-white hover:bg-slate-100 dark:hover:bg-white/5 transition">
               <span class="flex items-center gap-2">
                 <span class="w-1.5 h-1.5 rounded-full bg-slate-400"></span> Todos os Processos
               </span>
-              <span class="font-mono text-[11px] text-textMuted" id="filter-count-all">0</span>
+              <span class="font-mono text-[11px] text-slate-500 dark:text-slate-400" id="filter-count-all">0</span>
             </button>
-            <button onclick="applyStatusFilter('ELIGIBLE')" class="w-full flex items-center justify-between px-2.5 py-1.5 rounded-md text-textSecondary hover:text-white hover:bg-surfaceHover transition">
+            <button onclick="applyStatusFilter('ELIGIBLE')" class="w-full flex items-center justify-between px-2.5 py-1.5 rounded-md text-slate-600 dark:text-slate-300 hover:text-slate-900 dark:hover:text-white hover:bg-slate-100 dark:hover:bg-white/5 transition">
               <span class="flex items-center gap-2">
-                <span class="w-1.5 h-1.5 rounded-full bg-emerald-400"></span> 100% Elegíveis
+                <span class="w-1.5 h-1.5 rounded-full bg-emerald-500"></span> 100% Elegíveis
               </span>
-              <span class="font-mono text-[11px] text-emerald-400 font-semibold" id="filter-count-eligible">0</span>
+              <span class="font-mono text-[11px] text-emerald-600 dark:text-emerald-400 font-semibold" id="filter-count-eligible">0</span>
             </button>
-            <button onclick="applyStatusFilter('CONDITIONALLY_ELIGIBLE')" class="w-full flex items-center justify-between px-2.5 py-1.5 rounded-md text-textSecondary hover:text-white hover:bg-surfaceHover transition">
+            <button onclick="applyStatusFilter('CONDITIONALLY_ELIGIBLE')" class="w-full flex items-center justify-between px-2.5 py-1.5 rounded-md text-slate-600 dark:text-slate-300 hover:text-slate-900 dark:hover:text-white hover:bg-slate-100 dark:hover:bg-white/5 transition">
               <span class="flex items-center gap-2">
-                <span class="w-1.5 h-1.5 rounded-full bg-cyan-400"></span> Condicionados
+                <span class="w-1.5 h-1.5 rounded-full bg-cyan-500"></span> Condicionados
               </span>
-              <span class="font-mono text-[11px] text-cyan-400 font-semibold" id="filter-count-conditioned">0</span>
+              <span class="font-mono text-[11px] text-cyan-600 dark:text-cyan-400 font-semibold" id="filter-count-conditioned">0</span>
             </button>
-            <button onclick="applyStatusFilter('INELIGIBLE')" class="w-full flex items-center justify-between px-2.5 py-1.5 rounded-md text-textSecondary hover:text-white hover:bg-surfaceHover transition">
+            <button onclick="applyStatusFilter('INELIGIBLE')" class="w-full flex items-center justify-between px-2.5 py-1.5 rounded-md text-slate-600 dark:text-slate-300 hover:text-slate-900 dark:hover:text-white hover:bg-slate-100 dark:hover:bg-white/5 transition">
               <span class="flex items-center gap-2">
-                <span class="w-1.5 h-1.5 rounded-full bg-rose-400"></span> Inelegíveis
+                <span class="w-1.5 h-1.5 rounded-full bg-rose-500"></span> Inelegíveis
               </span>
-              <span class="font-mono text-[11px] text-rose-400 font-semibold" id="filter-count-ineligible">0</span>
+              <span class="font-mono text-[11px] text-rose-600 dark:text-rose-400 font-semibold" id="filter-count-ineligible">0</span>
             </button>
-            <button onclick="applyStatusFilter('REQUIRES_HUMAN_REVIEW')" class="w-full flex items-center justify-between px-2.5 py-1.5 rounded-md text-textSecondary hover:text-white hover:bg-surfaceHover transition">
+            <button onclick="applyStatusFilter('REQUIRES_HUMAN_REVIEW')" class="w-full flex items-center justify-between px-2.5 py-1.5 rounded-md text-slate-600 dark:text-slate-300 hover:text-slate-900 dark:hover:text-white hover:bg-slate-100 dark:hover:bg-white/5 transition">
               <span class="flex items-center gap-2">
-                <span class="w-1.5 h-1.5 rounded-full bg-amber-400"></span> Revisão Humana
+                <span class="w-1.5 h-1.5 rounded-full bg-amber-500"></span> Revisão Humana
               </span>
-              <span class="font-mono text-[11px] text-amber-400 font-semibold" id="filter-count-hitl">0</span>
+              <span class="font-mono text-[11px] text-amber-600 dark:text-amber-400 font-semibold" id="filter-count-hitl">0</span>
             </button>
           </div>
         </div>
@@ -227,18 +268,18 @@
       </div>
 
       <!-- RODAPÉ DA SIDEBAR: STATUS DE CONEXÃO E TENANT -->
-      <div class="p-3 border-t border-borderSubtle bg-canvas/40">
-        <div class="flex items-center justify-between p-2 rounded-lg bg-surface border border-borderSubtle text-xs">
+      <div class="p-3 border-t border-slate-200 dark:border-white/5 bg-slate-50 dark:bg-black/20">
+        <div class="flex items-center justify-between p-2 rounded-lg bg-white dark:bg-white/5 border border-slate-200 dark:border-white/5 text-xs shadow-sm">
           <div class="flex items-center gap-2 overflow-hidden">
-            <div class="w-6 h-6 rounded bg-indigo-500/10 text-indigo-400 flex items-center justify-center font-bold text-[10px] border border-indigo-500/20">
+            <div class="w-6 h-6 rounded bg-indigo-50 dark:bg-indigo-500/10 text-indigo-600 dark:text-indigo-400 flex items-center justify-center font-bold text-[10px] border border-indigo-200 dark:border-indigo-500/20">
               AM
             </div>
             <div class="truncate">
-              <p class="font-semibold text-slate-200 text-[11px] truncate">Grupo Amil</p>
-              <p class="text-[9px] text-textMuted font-mono">Tenant Ativo</p>
+              <p class="font-semibold text-slate-800 dark:text-slate-200 text-[11px] truncate">Grupo Amil</p>
+              <p class="text-[9px] text-slate-400 font-mono">Tenant Ativo</p>
             </div>
           </div>
-          <span class="w-2 h-2 rounded-full bg-emerald-400 animate-pulse" title="Motor Determinístico Online"></span>
+          <span class="w-2 h-2 rounded-full bg-emerald-500 animate-pulse" title="Motor Determinístico Online"></span>
         </div>
       </div>
 
@@ -249,27 +290,33 @@
   <div class="flex-1 flex flex-col min-w-0 overflow-hidden relative z-10">
     
     <!-- TOPBAR SUPERIOR (CLEAN & MINIMALIST) -->
-    <header class="h-13 py-2.5 bg-surface/90 backdrop-blur-md border-b border-borderSubtle px-5 flex items-center justify-between shrink-0 z-30">
+    <header class="h-13 py-2.5 bg-white/95 dark:bg-[#0d0f14]/90 backdrop-blur-md border-b border-slate-200 dark:border-white/5 px-5 flex items-center justify-between shrink-0 z-30">
       
       <!-- BREADCRUMB & VISÃO ATUAL -->
       <div class="flex items-center space-x-2.5">
-        <nav class="flex items-center space-x-1.5 text-xs text-textMuted">
-          <span class="hover:text-slate-200 cursor-pointer transition">Contencioso</span>
-          <i class="fa-solid fa-chevron-right text-[8px] text-slate-600"></i>
-          <span class="hover:text-slate-200 cursor-pointer transition">Amil</span>
-          <i class="fa-solid fa-chevron-right text-[8px] text-slate-600"></i>
-          <span class="text-indigo-400 font-medium font-mono" id="topbar-current-view">Central de Análises</span>
+        <nav class="flex items-center space-x-1.5 text-xs text-slate-500 dark:text-slate-400">
+          <span class="hover:text-slate-900 dark:hover:text-slate-200 cursor-pointer transition">Contencioso</span>
+          <i class="fa-solid fa-chevron-right text-[8px] text-slate-400"></i>
+          <span class="hover:text-slate-900 dark:hover:text-slate-200 cursor-pointer transition">Amil</span>
+          <i class="fa-solid fa-chevron-right text-[8px] text-slate-400"></i>
+          <span class="text-indigo-600 dark:text-indigo-400 font-semibold font-mono" id="topbar-current-view">Fila de Decisão (Inbox)</span>
         </nav>
       </div>
 
-      <!-- STATUS DA NORMA ATIVA & BOTÕES PRINCIPAIS -->
+      <!-- STATUS DA NORMA ATIVA, TEMA & BOTÕES PRINCIPAIS -->
       <div class="flex items-center space-x-2.5">
         
+        <!-- BOTÃO TOGGLE TEMA (LIGHT / DARK) -->
+        <button onclick="toggleTheme()" id="theme-toggle-btn" class="p-1.5 rounded-md bg-slate-100 dark:bg-white/5 hover:bg-slate-200 dark:hover:bg-white/10 text-slate-600 dark:text-slate-300 border border-slate-200 dark:border-white/10 text-xs transition btn-press" title="Alternar entre Modo Claro e Escuro">
+          <i class="fa-solid fa-moon dark:hidden text-indigo-600"></i>
+          <i class="fa-solid fa-sun hidden dark:inline text-amber-400"></i>
+        </button>
+
         <!-- BADGE DA NORMA ATIVA -->
-        <div class="hidden sm:flex items-center space-x-1.5 bg-canvas px-2.5 py-1 rounded-md border border-borderSubtle text-xs font-mono">
-          <i class="fa-solid fa-shield-halved text-emerald-400 text-[10px]"></i>
-          <span class="text-textMuted text-[10px]">Norma:</span>
-          <strong id="topbar-policy-ver" class="text-emerald-300 text-[10px]">2026.1-AMIL-OFICIAL</strong>
+        <div class="hidden sm:flex items-center space-x-1.5 bg-slate-50 dark:bg-black/30 px-2.5 py-1 rounded-md border border-slate-200 dark:border-white/5 text-xs font-mono">
+          <i class="fa-solid fa-shield-halved text-emerald-600 dark:text-emerald-400 text-[10px]"></i>
+          <span class="text-slate-500 dark:text-slate-400 text-[10px]">Norma:</span>
+          <strong id="topbar-policy-ver" class="text-emerald-700 dark:text-emerald-300 text-[10px]">2026.1-AMIL-OFICIAL</strong>
         </div>
 
         <!-- BOTÃO NOVO PROCESSO -->
@@ -278,14 +325,14 @@
         </button>
 
         <!-- BOTÃO ATUALIZAR MANUAL -->
-        <button onclick="openPolicyUploadModal()" class="px-2.5 py-1.5 bg-surfaceHover hover:bg-slate-800 text-slate-200 rounded-md border border-borderMuted text-xs font-medium flex items-center gap-1.5 transition btn-press" title="Subir nova versão do PDF da Norma">
-          <i class="fa-solid fa-file-arrow-up text-[10px] text-textMuted"></i> Atualizar Norma
+        <button onclick="openPolicyUploadModal()" class="px-2.5 py-1.5 bg-slate-100 dark:bg-white/5 hover:bg-slate-200 dark:hover:bg-white/10 text-slate-700 dark:text-slate-200 rounded-md border border-slate-200 dark:border-white/10 text-xs font-medium flex items-center gap-1.5 transition btn-press" title="Subir nova versão do PDF da Norma">
+          <i class="fa-solid fa-file-arrow-up text-[10px] text-slate-400"></i> Atualizar Norma
         </button>
       </div>
     </header>
 
     <!-- MAIN VIEWS -->
-    <main class="flex-1 flex flex-col overflow-hidden bg-canvas">
+    <main class="flex-1 flex flex-col overflow-hidden bg-slate-50 dark:bg-[#08090c]">
       
       <!-- ========================================================================= -->
       <!-- VIEW 1: CENTRAL DE ANÁLISES (BENTO METRICS + MASTER-DETAIL WORKSTATION) -->
@@ -293,51 +340,51 @@
       <section id="view-command-center" class="flex-1 flex flex-col overflow-hidden">
         
         <!-- BENTO KPI HEADER CARDS -->
-        <div class="p-3.5 border-b border-borderSubtle bg-surface/40 grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-2.5 shrink-0">
+        <div class="p-3.5 border-b border-slate-200 dark:border-white/5 bg-white/60 dark:bg-white/[0.02] grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-2.5 shrink-0">
           
           <div class="bento-card p-3">
-            <div class="flex items-center justify-between text-textMuted text-[10px] font-mono uppercase">
+            <div class="flex items-center justify-between text-slate-500 dark:text-slate-400 text-[10px] font-mono uppercase">
               <span>Processos</span>
               <i class="fa-solid fa-server text-[10px]"></i>
             </div>
-            <p class="text-xl font-bold text-white mt-0.5 font-mono tracking-tight" id="kpi-total-procs">0</p>
-            <p class="text-[10px] text-textMuted mt-0.5">Auditados no banco</p>
+            <p class="text-xl font-bold text-slate-900 dark:text-white mt-0.5 font-mono tracking-tight" id="kpi-total-procs">0</p>
+            <p class="text-[10px] text-slate-400 mt-0.5">Auditados no banco</p>
           </div>
 
           <div class="bento-card p-3">
-            <div class="flex items-center justify-between text-emerald-400 text-[10px] font-mono uppercase">
+            <div class="flex items-center justify-between text-emerald-600 dark:text-emerald-400 text-[10px] font-mono uppercase font-semibold">
               <span>Elegíveis</span>
               <i class="fa-solid fa-circle-check text-[10px]"></i>
             </div>
-            <p class="text-xl font-bold text-emerald-400 mt-0.5 font-mono tracking-tight" id="kpi-eligible-procs">0</p>
-            <p class="text-[10px] text-emerald-500/80 mt-0.5">100% aderentes</p>
+            <p class="text-xl font-bold text-emerald-600 dark:text-emerald-400 mt-0.5 font-mono tracking-tight" id="kpi-eligible-procs">0</p>
+            <p class="text-[10px] text-emerald-700/80 dark:text-emerald-400/80 mt-0.5">100% aderentes</p>
           </div>
 
           <div class="bento-card p-3">
-            <div class="flex items-center justify-between text-amber-400 text-[10px] font-mono uppercase">
+            <div class="flex items-center justify-between text-amber-600 dark:text-amber-400 text-[10px] font-mono uppercase font-semibold">
               <span>Revisão (HITL)</span>
               <i class="fa-solid fa-user-clock text-[10px]"></i>
             </div>
-            <p class="text-xl font-bold text-amber-400 mt-0.5 font-mono tracking-tight" id="kpi-hitl-procs">0</p>
-            <p class="text-[10px] text-amber-500/80 mt-0.5">Pendência de fato</p>
+            <p class="text-xl font-bold text-amber-600 dark:text-amber-400 mt-0.5 font-mono tracking-tight" id="kpi-hitl-procs">0</p>
+            <p class="text-[10px] text-amber-700/80 dark:text-amber-400/80 mt-0.5">Pendência de fato</p>
           </div>
 
           <div class="bento-card p-3">
-            <div class="flex items-center justify-between text-rose-400 text-[10px] font-mono uppercase">
+            <div class="flex items-center justify-between text-rose-600 dark:text-rose-400 text-[10px] font-mono uppercase font-semibold">
               <span>Inelegíveis</span>
               <i class="fa-solid fa-ban text-[10px]"></i>
             </div>
-            <p class="text-xl font-bold text-rose-400 mt-0.5 font-mono tracking-tight" id="kpi-ineligible-procs">0</p>
-            <p class="text-[10px] text-rose-500/80 mt-0.5">Vedação / teto</p>
+            <p class="text-xl font-bold text-rose-600 dark:text-rose-400 mt-0.5 font-mono tracking-tight" id="kpi-ineligible-procs">0</p>
+            <p class="text-[10px] text-rose-700/80 dark:text-rose-400/80 mt-0.5">Vedação / teto</p>
           </div>
 
-          <div class="bento-card p-3 border-indigo-500/20 bg-indigo-950/20">
-            <div class="flex items-center justify-between text-indigo-300 text-[10px] font-mono uppercase">
+          <div class="bento-card p-3 border-indigo-200 dark:border-indigo-500/20 bg-indigo-50/50 dark:bg-indigo-950/20">
+            <div class="flex items-center justify-between text-indigo-700 dark:text-indigo-300 text-[10px] font-mono uppercase font-semibold">
               <span>Saving Estimado</span>
               <i class="fa-solid fa-piggy-bank text-[10px]"></i>
             </div>
-            <p class="text-xl font-bold text-indigo-300 mt-0.5 font-mono tracking-tight" id="kpi-total-saving">R$ 0,00</p>
-            <p class="text-[10px] text-indigo-400/80 mt-0.5">Deságio médio de 20%</p>
+            <p class="text-xl font-bold text-indigo-700 dark:text-indigo-300 mt-0.5 font-mono tracking-tight" id="kpi-total-saving">R$ 0,00</p>
+            <p class="text-[10px] text-indigo-600/80 dark:text-indigo-400/80 mt-0.5">Deságio médio de 20%</p>
           </div>
 
         </div>
@@ -346,15 +393,15 @@
         <div class="flex-1 flex overflow-hidden">
           
           <!-- COLUNA ESQUERDA: LISTA DE PROCESSOS -->
-          <div class="w-80 lg:w-96 border-r border-borderSubtle flex flex-col bg-surface/30 shrink-0">
+          <div class="w-80 lg:w-96 border-r border-slate-200 dark:border-white/5 flex flex-col bg-white/50 dark:bg-white/[0.01] shrink-0">
             
             <!-- BUSCA E AÇÕES EM LOTE -->
-            <div class="p-3 border-b border-borderSubtle space-y-2">
+            <div class="p-3 border-b border-slate-200 dark:border-white/5 space-y-2">
               <div class="flex justify-between items-center">
-                <span class="text-xs font-semibold text-slate-200 flex items-center gap-1.5">
-                  <i class="fa-solid fa-inbox text-indigo-400 text-[11px]"></i> Fila de Decisão
+                <span class="text-xs font-semibold text-slate-800 dark:text-slate-200 flex items-center gap-1.5">
+                  <i class="fa-solid fa-inbox text-indigo-600 dark:text-indigo-400 text-[11px]"></i> Fila de Decisão
                 </span>
-                <span class="text-[10px] font-mono text-textMuted bg-surface px-1.5 py-0.5 rounded border border-borderSubtle" id="processes-count-label">0 itens</span>
+                <span class="text-[10px] font-mono text-slate-500 dark:text-slate-400 bg-slate-100 dark:bg-white/5 px-1.5 py-0.5 rounded border border-slate-200 dark:border-white/5" id="processes-count-label">0 itens</span>
               </div>
               
               <!-- BANNER DE APROVAÇÃO EM LOTE -->
@@ -366,8 +413,8 @@
 
               <!-- INPUT DE BUSCA -->
               <div class="relative">
-                <i class="fa-solid fa-magnifying-glass absolute left-2.5 top-2.5 text-textMuted text-[10px]"></i>
-                <input type="text" id="proc-search-input" oninput="filterProcessesList()" placeholder="Buscar por CNJ, Beneficiário..." class="w-full bg-surface border border-borderSubtle rounded-md pl-7 pr-2.5 py-1.5 text-xs text-slate-200 placeholder-textMuted focus:outline-none focus:border-indigo-500 font-mono transition">
+                <i class="fa-solid fa-magnifying-glass absolute left-2.5 top-2.5 text-slate-400 text-[10px]"></i>
+                <input type="text" id="proc-search-input" oninput="filterProcessesList()" placeholder="Buscar por CNJ, Beneficiário..." class="w-full bg-white dark:bg-black/30 border border-slate-200 dark:border-white/10 rounded-md pl-7 pr-2.5 py-1.5 text-xs text-slate-900 dark:text-slate-200 placeholder-slate-400 focus:outline-none focus:border-indigo-500 font-mono transition shadow-sm">
               </div>
             </div>
 
@@ -378,12 +425,12 @@
 
             <!-- ESTADO INBOX ZERO -->
             <div id="empty-processes-list" class="hidden p-6 text-center space-y-2.5 m-auto">
-              <div class="w-10 h-10 rounded-xl bg-emerald-500/10 text-emerald-400 flex items-center justify-center text-lg mx-auto border border-emerald-500/20">
+              <div class="w-10 h-10 rounded-xl bg-emerald-50 dark:bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 flex items-center justify-center text-lg mx-auto border border-emerald-200 dark:border-emerald-500/20">
                 <i class="fa-solid fa-circle-check"></i>
               </div>
               <div>
-                <h4 class="font-bold text-xs text-white">Inbox Zero</h4>
-                <p class="text-[11px] text-textMuted mt-0.5 leading-relaxed">Todos os processos auditados foram deliberados.</p>
+                <h4 class="font-bold text-xs text-slate-900 dark:text-white">Inbox Zero</h4>
+                <p class="text-[11px] text-slate-500 dark:text-slate-400 mt-0.5 leading-relaxed">Todos os processos auditados foram deliberados.</p>
               </div>
               <button onclick="openUploadModal()" class="px-3 py-1.5 bg-indigo-600 hover:bg-indigo-500 text-white rounded-md text-xs font-semibold shadow-sm transition flex items-center justify-center gap-1.5 mx-auto btn-press">
                 <i class="fa-solid fa-cloud-arrow-up text-[10px]"></i> Ingerir Processo
@@ -393,16 +440,16 @@
           </div>
 
           <!-- COLUNA DIREITA: DOSSIÊ AUDITÁVEL & RESULTADO -->
-          <div class="flex-1 flex flex-col overflow-y-auto bg-canvas" id="analysis-detail-pane">
+          <div class="flex-1 flex flex-col overflow-y-auto bg-slate-50/50 dark:bg-[#08090c]" id="analysis-detail-pane">
             
             <!-- ESTADO INICIAL VAZIO -->
             <div id="no-process-selected-state" class="flex-1 flex flex-col items-center justify-center p-8 text-center space-y-3">
-              <div class="w-12 h-12 rounded-xl bg-surface border border-borderSubtle flex items-center justify-center text-textMuted text-xl">
+              <div class="w-12 h-12 rounded-xl bg-white dark:bg-white/5 border border-slate-200 dark:border-white/10 flex items-center justify-center text-slate-400 text-xl shadow-sm">
                 <i class="fa-solid fa-scale-balanced"></i>
               </div>
               <div class="max-w-sm space-y-0.5">
-                <h3 class="font-bold text-sm text-slate-200">Selecione um Processo</h3>
-                <p class="text-xs text-textMuted">Clique em qualquer item da fila para inspecionar os fatos extraídos, a norma ativa e aprovar a minuta.</p>
+                <h3 class="font-bold text-sm text-slate-800 dark:text-slate-200">Selecione um Processo</h3>
+                <p class="text-xs text-slate-500 dark:text-slate-400">Clique em qualquer item da fila para inspecionar os fatos extraídos, a norma ativa e aprovar a minuta.</p>
               </div>
               <button onclick="openUploadModal()" class="px-3.5 py-1.5 bg-indigo-600 hover:bg-indigo-500 text-white rounded-md text-xs font-semibold shadow-sm transition flex items-center gap-1.5 btn-press">
                 <i class="fa-solid fa-cloud-arrow-up text-[10px]"></i> Ingerir Processo
@@ -416,29 +463,29 @@
               <div id="detail-priority-alerts" class="hidden px-5 pt-3"></div>
 
               <!-- CABEÇALHO DO PROCESSO & RESUMO FINANCEIRO -->
-              <div class="p-5 border-b border-borderSubtle bg-surface/30 space-y-3.5">
+              <div class="p-5 border-b border-slate-200 dark:border-white/5 bg-white dark:bg-[#0d0f14] space-y-3.5 shadow-sm">
                 
                 <div class="flex flex-col lg:flex-row lg:items-center justify-between gap-3">
                   <div>
                     <div class="flex items-center gap-2">
-                      <span class="text-xs font-mono font-bold text-indigo-400 px-2 py-0.5 bg-indigo-500/10 border border-indigo-500/20 rounded" id="detail-cnj-number">0000000-00.0000.0.00.0000</span>
-                      <span class="text-xs text-textMuted font-mono" id="detail-pages-count">10 págs</span>
-                      <span class="text-xs text-textMuted font-mono">•</span>
-                      <span class="text-xs text-textMuted" id="detail-policy-version">Norma 2026.OFICIAL</span>
+                      <span class="text-xs font-mono font-bold text-indigo-700 dark:text-indigo-300 px-2 py-0.5 bg-indigo-50 dark:bg-indigo-500/10 border border-indigo-200 dark:border-indigo-500/20 rounded" id="detail-cnj-number">0000000-00.0000.0.00.0000</span>
+                      <span class="text-xs text-slate-500 dark:text-slate-400 font-mono" id="detail-pages-count">10 págs</span>
+                      <span class="text-xs text-slate-400 font-mono">•</span>
+                      <span class="text-xs text-slate-500 dark:text-slate-400" id="detail-policy-version">Norma 2026.OFICIAL</span>
                     </div>
-                    <h2 class="text-base font-bold text-white mt-1 tracking-tight" id="detail-beneficiary-name">Nome do Beneficiário</h2>
-                    <p class="text-xs text-indigo-300 font-medium flex items-center gap-1 mt-0.5">
-                      <i class="fa-solid fa-bullseye text-[10px] text-indigo-400"></i> <span id="detail-theme-classified">Tema 01: Terapias Especiais</span>
+                    <h2 class="text-base font-bold text-slate-900 dark:text-white mt-1 tracking-tight" id="detail-beneficiary-name">Nome do Beneficiário</h2>
+                    <p class="text-xs text-indigo-700 dark:text-indigo-300 font-medium flex items-center gap-1 mt-0.5">
+                      <i class="fa-solid fa-bullseye text-[10px] text-indigo-600 dark:text-indigo-400"></i> <span id="detail-theme-classified">Tema 01: Terapias Especiais</span>
                     </p>
                   </div>
 
                   <!-- VEREDITO DO MOTOR DETERMINÍSTICO -->
-                  <div id="detail-verdict-badge-box" class="p-3 rounded-lg border flex items-center gap-2.5 badge-eligible">
+                  <div id="detail-verdict-badge-box" class="p-3 rounded-lg border flex items-center gap-2.5 badge-eligible shadow-sm">
                     <div class="w-8 h-8 rounded flex items-center justify-center text-lg" id="detail-verdict-icon">
-                      <i class="fa-solid fa-circle-check text-emerald-400"></i>
+                      <i class="fa-solid fa-circle-check text-emerald-600 dark:text-emerald-400"></i>
                     </div>
                     <div>
-                      <p class="text-[9px] font-mono uppercase tracking-wider text-textMuted font-bold">Veredito da Norma</p>
+                      <p class="text-[9px] font-mono uppercase tracking-wider text-slate-500 dark:text-slate-400 font-bold">Veredito da Norma</p>
                       <p class="text-xs font-bold" id="detail-verdict-title">ELEGÍVEL PARA ACORDO</p>
                     </div>
                   </div>
@@ -446,47 +493,47 @@
 
                 <!-- BENTO FINANCEIRO RESUMIDO -->
                 <div class="grid grid-cols-2 sm:grid-cols-4 gap-2.5 pt-1">
-                  <div class="bg-surface/80 p-2.5 rounded-lg border border-borderSubtle">
-                    <p class="text-[9px] text-textMuted font-mono uppercase">Valor Pleiteado</p>
-                    <p class="text-xs font-bold text-slate-200 font-mono mt-0.5" id="detail-fin-requested">R$ 0,00</p>
+                  <div class="bg-slate-50 dark:bg-white/5 p-2.5 rounded-lg border border-slate-200 dark:border-white/5">
+                    <p class="text-[9px] text-slate-500 dark:text-slate-400 font-mono uppercase">Valor Pleiteado</p>
+                    <p class="text-xs font-bold text-slate-900 dark:text-slate-200 font-mono mt-0.5" id="detail-fin-requested">R$ 0,00</p>
                   </div>
-                  <div class="bg-surface/80 p-2.5 rounded-lg border border-borderSubtle">
-                    <p class="text-[9px] text-textMuted font-mono uppercase">Teto da Norma</p>
-                    <p class="text-xs font-bold text-slate-300 font-mono mt-0.5" id="detail-fin-cap">Conforme Norma</p>
+                  <div class="bg-slate-50 dark:bg-white/5 p-2.5 rounded-lg border border-slate-200 dark:border-white/5">
+                    <p class="text-[9px] text-slate-500 dark:text-slate-400 font-mono uppercase">Teto da Norma</p>
+                    <p class="text-xs font-bold text-slate-700 dark:text-slate-300 font-mono mt-0.5" id="detail-fin-cap">Conforme Norma</p>
                   </div>
-                  <div class="bg-surface/80 p-2.5 rounded-lg border border-emerald-500/20 bg-emerald-950/10">
-                    <p class="text-[9px] text-emerald-400 font-mono uppercase font-semibold">Proposta de Acordo</p>
-                    <p class="text-xs font-bold text-emerald-300 font-mono mt-0.5" id="detail-fin-proposal">R$ 0,00</p>
+                  <div class="bg-emerald-50/60 dark:bg-emerald-950/10 p-2.5 rounded-lg border border-emerald-200 dark:border-emerald-500/20">
+                    <p class="text-[9px] text-emerald-700 dark:text-emerald-400 font-mono uppercase font-semibold">Proposta de Acordo</p>
+                    <p class="text-xs font-bold text-emerald-700 dark:text-emerald-300 font-mono mt-0.5" id="detail-fin-proposal">R$ 0,00</p>
                   </div>
-                  <div class="bg-surface/80 p-2.5 rounded-lg border border-indigo-500/20 bg-indigo-950/10">
-                    <p class="text-[9px] text-indigo-300 font-mono uppercase font-semibold">Saving Estimado</p>
-                    <p class="text-xs font-bold text-indigo-300 font-mono mt-0.5" id="detail-fin-saving">R$ 0,00 (0%)</p>
+                  <div class="bg-indigo-50/60 dark:bg-indigo-950/10 p-2.5 rounded-lg border border-indigo-200 dark:border-indigo-500/20">
+                    <p class="text-[9px] text-indigo-700 dark:text-indigo-300 font-mono uppercase font-semibold">Saving Estimado</p>
+                    <p class="text-xs font-bold text-indigo-700 dark:text-indigo-300 font-mono mt-0.5" id="detail-fin-saving">R$ 0,00 (0%)</p>
                   </div>
                 </div>
 
                 <!-- CLÁUSULA CONDICIONAL OBRIGATÓRIA -->
-                <div id="detail-conditional-clause-box" class="hidden p-3 rounded-lg border border-cyan-500/30 bg-cyan-950/20 text-xs">
-                  <p class="font-bold text-cyan-300 flex items-center gap-1.5 text-xs mb-0.5">
-                    <i class="fa-solid fa-file-contract text-cyan-400 text-[10px]"></i> Condição Obrigatória do Manual
+                <div id="detail-conditional-clause-box" class="hidden p-3 rounded-lg border border-cyan-300 dark:border-cyan-500/30 bg-cyan-50 dark:bg-cyan-950/20 text-xs">
+                  <p class="font-bold text-cyan-800 dark:text-cyan-300 flex items-center gap-1.5 text-xs mb-0.5">
+                    <i class="fa-solid fa-file-contract text-cyan-600 dark:text-cyan-400 text-[10px]"></i> Condição Obrigatória do Manual
                   </p>
-                  <p class="text-[11px] text-cyan-100 font-mono leading-relaxed whitespace-pre-wrap" id="detail-conditional-clause-text"></p>
+                  <p class="text-[11px] text-cyan-950 dark:text-cyan-100 font-mono leading-relaxed whitespace-pre-wrap" id="detail-conditional-clause-text"></p>
                 </div>
 
               </div>
 
               <!-- ABAS DE AUDITORIA & FORENSE -->
-              <div class="flex border-b border-borderSubtle bg-surface/50 px-5 shrink-0 gap-2">
-                <button onclick="switchDetailTab('split-pdf')" id="btn-tab-split-pdf" class="py-2.5 px-2.5 text-xs font-semibold text-white border-b-2 border-indigo-500 flex items-center gap-1.5 transition btn-press">
-                  <i class="fa-solid fa-file-shield text-indigo-400 text-[11px]"></i> Evidências & PDF
+              <div class="flex border-b border-slate-200 dark:border-white/5 bg-slate-100/60 dark:bg-white/[0.02] px-5 shrink-0 gap-2">
+                <button onclick="switchDetailTab('split-pdf')" id="btn-tab-split-pdf" class="py-2.5 px-2.5 text-xs font-semibold text-indigo-700 dark:text-white border-b-2 border-indigo-600 dark:border-indigo-500 flex items-center gap-1.5 transition btn-press">
+                  <i class="fa-solid fa-file-shield text-indigo-600 dark:text-indigo-400 text-[11px]"></i> Evidências & PDF
                 </button>
-                <button onclick="switchDetailTab('rules-eval')" id="btn-tab-rules-eval" class="py-2.5 px-2.5 text-xs font-medium text-textMuted hover:text-white border-b-2 border-transparent flex items-center gap-1.5 transition btn-press">
-                  <i class="fa-solid fa-scale-balanced text-textMuted text-[11px]"></i> Regras Avaliadas
+                <button onclick="switchDetailTab('rules-eval')" id="btn-tab-rules-eval" class="py-2.5 px-2.5 text-xs font-medium text-slate-500 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white border-b-2 border-transparent flex items-center gap-1.5 transition btn-press">
+                  <i class="fa-solid fa-scale-balanced text-slate-400 text-[11px]"></i> Regras Avaliadas
                 </button>
-                <button onclick="switchDetailTab('minuta-draft')" id="btn-tab-minuta-draft" class="py-2.5 px-2.5 text-xs font-medium text-textMuted hover:text-white border-b-2 border-transparent flex items-center gap-1.5 transition btn-press">
-                  <i class="fa-solid fa-feather-pointed text-textMuted text-[11px]"></i> Minuta do Acordo
+                <button onclick="switchDetailTab('minuta-draft')" id="btn-tab-minuta-draft" class="py-2.5 px-2.5 text-xs font-medium text-slate-500 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white border-b-2 border-transparent flex items-center gap-1.5 transition btn-press">
+                  <i class="fa-solid fa-feather-pointed text-slate-400 text-[11px]"></i> Minuta do Acordo
                 </button>
-                <button onclick="switchDetailTab('forensic-trace')" id="btn-tab-forensic-trace" class="py-2.5 px-2.5 text-xs font-medium text-textMuted hover:text-white border-b-2 border-transparent flex items-center gap-1.5 transition btn-press">
-                  <i class="fa-solid fa-clock-rotate-left text-textMuted text-[11px]"></i> Trace Forense
+                <button onclick="switchDetailTab('forensic-trace')" id="btn-tab-forensic-trace" class="py-2.5 px-2.5 text-xs font-medium text-slate-500 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white border-b-2 border-transparent flex items-center gap-1.5 transition btn-press">
+                  <i class="fa-solid fa-clock-rotate-left text-slate-400 text-[11px]"></i> Trace Forense
                 </button>
               </div>
 
@@ -497,16 +544,16 @@
                 <div id="pane-split-pdf" class="space-y-3.5">
                   
                   <!-- BARRA DE SELEÇÃO DE PÁGINAS -->
-                  <div class="flex items-center justify-between bg-surface p-1.5 rounded-lg border border-borderSubtle text-xs">
+                  <div class="flex items-center justify-between bg-white dark:bg-white/5 p-1.5 rounded-lg border border-slate-200 dark:border-white/5 text-xs shadow-sm">
                     <div class="flex items-center gap-1.5 overflow-x-auto" id="detail-pages-strip">
                       <!-- Botões gerados via JS -->
                     </div>
                     <div class="flex items-center gap-1 shrink-0 pl-2">
-                      <button onclick="changeAuditPage(-1)" class="w-6 h-6 rounded bg-surfaceHover hover:bg-slate-800 text-slate-300 flex items-center justify-center text-[10px] transition btn-press">
+                      <button onclick="changeAuditPage(-1)" class="w-6 h-6 rounded bg-slate-100 dark:bg-white/10 hover:bg-slate-200 dark:hover:bg-white/20 text-slate-700 dark:text-slate-300 flex items-center justify-center text-[10px] transition btn-press">
                         <i class="fa-solid fa-chevron-left"></i>
                       </button>
-                      <span class="font-mono text-textMuted px-1 text-[10px]" id="doc-page-indicator">1 / 1</span>
-                      <button onclick="changeAuditPage(1)" class="w-6 h-6 rounded bg-surfaceHover hover:bg-slate-800 text-slate-300 flex items-center justify-center text-[10px] transition btn-press">
+                      <span class="font-mono text-slate-500 dark:text-slate-400 px-1 text-[10px]" id="doc-page-indicator">1 / 1</span>
+                      <button onclick="changeAuditPage(1)" class="w-6 h-6 rounded bg-slate-100 dark:bg-white/10 hover:bg-slate-200 dark:hover:bg-white/20 text-slate-700 dark:text-slate-300 flex items-center justify-center text-[10px] transition btn-press">
                         <i class="fa-solid fa-chevron-right"></i>
                       </button>
                     </div>
@@ -516,20 +563,20 @@
                   <div class="grid grid-cols-1 lg:grid-cols-12 gap-3.5">
                     
                     <!-- LADO ESQUERDO: CANVAS DE TEXTO -->
-                    <div class="lg:col-span-7 bg-surface/90 border border-borderSubtle rounded-lg overflow-hidden flex flex-col">
-                      <div class="p-2 bg-canvas/90 border-b border-borderSubtle flex justify-between items-center text-xs font-mono">
-                        <span class="text-slate-300 text-[11px] truncate" id="doc-source-file-label">autos.pdf</span>
-                        <span class="px-1.5 py-0.5 rounded bg-indigo-500/10 text-indigo-300 font-semibold text-[9px] border border-indigo-500/20" id="doc-piece-badge">PETIÇÃO INICIAL</span>
+                    <div class="lg:col-span-7 bg-white dark:bg-[#0d0f14] border border-slate-200 dark:border-white/5 rounded-lg overflow-hidden flex flex-col shadow-sm">
+                      <div class="p-2 bg-slate-50 dark:bg-black/40 border-b border-slate-200 dark:border-white/5 flex justify-between items-center text-xs font-mono">
+                        <span class="text-slate-700 dark:text-slate-300 text-[11px] truncate" id="doc-source-file-label">autos.pdf</span>
+                        <span class="px-1.5 py-0.5 rounded bg-indigo-50 dark:bg-indigo-500/10 text-indigo-700 dark:text-indigo-300 font-semibold text-[9px] border border-indigo-200 dark:border-indigo-500/20" id="doc-piece-badge">PETIÇÃO INICIAL</span>
                       </div>
                       
-                      <div class="p-3.5 bg-canvas flex-1 flex flex-col justify-between min-h-[300px] relative font-mono text-xs leading-relaxed text-slate-300 border-dashed border-borderSubtle overflow-y-auto">
-                        <div id="doc-real-text" class="whitespace-pre-wrap select-text text-[11px] text-slate-400"></div>
+                      <div class="p-3.5 bg-white dark:bg-black/20 flex-1 flex flex-col justify-between min-h-[300px] relative font-mono text-xs leading-relaxed text-slate-800 dark:text-slate-300 overflow-y-auto">
+                        <div id="doc-real-text" class="whitespace-pre-wrap select-text text-[11px] text-slate-700 dark:text-slate-400"></div>
 
                         <!-- HIGHLIGHT FLUTUANTE DE EVIDENCE GROUNDING -->
-                        <div id="audit-bbox-highlight" class="mt-3 p-2.5 rounded border border-emerald-400/80 bg-emerald-950/60 space-y-0.5">
-                          <span class="text-[8px] font-bold px-1 py-0.2 rounded bg-emerald-500 text-slate-950 uppercase" id="audit-bbox-tag">EVIDÊNCIA LOCALIZADA</span>
-                          <p class="text-[11px] font-bold text-white" id="audit-bbox-main-text">Fato Comprovado</p>
-                          <p class="text-[10px] text-slate-300" id="audit-bbox-sub-text">Rastreabilidade espacial confirmada no documento.</p>
+                        <div id="audit-bbox-highlight" class="mt-3 p-2.5 rounded border border-emerald-400 bg-emerald-50/80 dark:bg-emerald-950/60 dark:border-emerald-400/80 space-y-0.5 shadow-sm">
+                          <span class="text-[8px] font-bold px-1 py-0.2 rounded bg-emerald-600 text-white uppercase" id="audit-bbox-tag">EVIDÊNCIA LOCALIZADA</span>
+                          <p class="text-[11px] font-bold text-emerald-950 dark:text-white" id="audit-bbox-main-text">Fato Comprovado</p>
+                          <p class="text-[10px] text-emerald-800 dark:text-slate-300" id="audit-bbox-sub-text">Rastreabilidade espacial confirmada no documento.</p>
                         </div>
                       </div>
                     </div>
@@ -545,9 +592,9 @@
 
                 <!-- ABA 2: REGRAS DA NORMA AVALIADAS -->
                 <div id="pane-rules-eval" class="hidden space-y-2.5">
-                  <div class="p-2.5 bg-surface border border-borderSubtle rounded-lg flex justify-between items-center text-xs">
-                    <span class="font-semibold text-slate-200">Critérios Avaliados Conforme Manual de Acordos</span>
-                    <span class="text-textMuted font-mono text-[10px]">Motor Determinístico JSON-Logic</span>
+                  <div class="p-2.5 bg-white dark:bg-white/5 border border-slate-200 dark:border-white/5 rounded-lg flex justify-between items-center text-xs shadow-sm">
+                    <span class="font-semibold text-slate-800 dark:text-slate-200">Critérios Avaliados Conforme Manual de Acordos</span>
+                    <span class="text-slate-400 font-mono text-[10px]">Motor Determinístico JSON-Logic</span>
                   </div>
                   <div class="space-y-2" id="audit-theme-rules-container">
                     <!-- Cards de regras PASS / FAIL -->
@@ -556,13 +603,13 @@
 
                 <!-- ABA 3: MINUTA DO ACORDO -->
                 <div id="pane-minuta-draft" class="hidden space-y-3">
-                  <div class="flex justify-between items-center bg-surface p-2.5 rounded-lg border border-borderSubtle">
+                  <div class="flex justify-between items-center bg-white dark:bg-white/5 p-2.5 rounded-lg border border-slate-200 dark:border-white/5 shadow-sm">
                     <div>
-                      <h4 class="text-xs font-bold text-white">Petição de Acordo Extrajudicial e Homologação</h4>
-                      <p class="text-[10px] text-textMuted">Minuta pré-formatada pronta para protocolo no tribunal (PJe/e-SAJ)</p>
+                      <h4 class="text-xs font-bold text-slate-900 dark:text-white">Petição de Acordo Extrajudicial e Homologação</h4>
+                      <p class="text-[10px] text-slate-500 dark:text-slate-400">Minuta pré-formatada pronta para protocolo no tribunal (PJe/e-SAJ)</p>
                     </div>
                     <div class="flex gap-1.5">
-                      <button onclick="copyMinutaText()" class="px-2.5 py-1 bg-surfaceHover hover:bg-slate-800 text-slate-200 rounded text-xs font-medium transition flex items-center gap-1 btn-press">
+                      <button onclick="copyMinutaText()" class="px-2.5 py-1 bg-slate-100 dark:bg-white/10 hover:bg-slate-200 dark:hover:bg-white/20 text-slate-700 dark:text-slate-200 rounded text-xs font-medium transition flex items-center gap-1 btn-press">
                         <i class="fa-solid fa-copy text-[10px]"></i> Copiar
                       </button>
                       <button onclick="downloadMinutaDOCX()" class="px-2.5 py-1 bg-indigo-600 hover:bg-indigo-500 text-white rounded text-xs font-semibold shadow-sm transition flex items-center gap-1 btn-press">
@@ -571,23 +618,23 @@
                     </div>
                   </div>
 
-                  <div class="p-4 bg-surface border border-borderSubtle rounded-lg font-mono text-xs text-slate-200 leading-relaxed whitespace-pre-wrap max-h-96 overflow-y-auto" id="minuta-text-content">
+                  <div class="p-4 bg-white dark:bg-white/5 border border-slate-200 dark:border-white/5 rounded-lg font-mono text-xs text-slate-800 dark:text-slate-200 leading-relaxed whitespace-pre-wrap max-h-96 overflow-y-auto shadow-sm" id="minuta-text-content">
                     Carregando minuta do acordo...
                   </div>
                 </div>
 
                 <!-- ABA 4: TRACE FORENSE -->
                 <div id="pane-forensic-trace" class="hidden space-y-2.5">
-                  <div class="flex justify-between items-center bg-surface p-2.5 rounded-lg border border-borderSubtle text-xs">
+                  <div class="flex justify-between items-center bg-white dark:bg-white/5 p-2.5 rounded-lg border border-slate-200 dark:border-white/5 text-xs shadow-sm">
                     <div>
-                      <span class="font-bold text-white">Rastreabilidade Forense das 6 Fases</span>
-                      <p class="text-[10px] text-textMuted" id="trace-exec-duration">Duração: 0 ms</p>
+                      <span class="font-bold text-slate-900 dark:text-white">Rastreabilidade Forense das 6 Fases</span>
+                      <p class="text-[10px] text-slate-500 dark:text-slate-400" id="trace-exec-duration">Duração: 0 ms</p>
                     </div>
                     <div class="flex gap-1.5">
-                      <button onclick="copyTraceJSON()" class="px-2 py-1 bg-surfaceHover hover:bg-slate-800 text-slate-300 rounded text-[11px] transition btn-press">
+                      <button onclick="copyTraceJSON()" class="px-2 py-1 bg-slate-100 dark:bg-white/10 hover:bg-slate-200 text-slate-700 dark:text-slate-300 rounded text-[11px] transition btn-press">
                         <i class="fa-solid fa-code mr-1 text-[10px]"></i> JSON
                       </button>
-                      <button onclick="downloadProcessLog()" class="px-2 py-1 bg-surfaceHover hover:bg-slate-800 text-slate-300 rounded text-[11px] transition btn-press">
+                      <button onclick="downloadProcessLog()" class="px-2 py-1 bg-slate-100 dark:bg-white/10 hover:bg-slate-200 text-slate-700 dark:text-slate-300 rounded text-[11px] transition btn-press">
                         <i class="fa-solid fa-file-lines mr-1 text-[10px]"></i> Log TXT
                       </button>
                     </div>
@@ -598,18 +645,18 @@
               </div>
 
               <!-- BARRA DE AÇÕES E DELIBERAÇÃO FINAL -->
-              <div class="p-3.5 border-t border-borderSubtle bg-surface/90 backdrop-blur-md flex flex-col sm:flex-row items-center justify-between gap-2.5 shrink-0">
-                <div class="text-[11px] text-textMuted flex items-center gap-1.5">
-                  <i class="fa-solid fa-fingerprint text-indigo-400 text-xs"></i>
+              <div class="p-3.5 border-t border-slate-200 dark:border-white/5 bg-white/95 dark:bg-[#0d0f14]/90 backdrop-blur-md flex flex-col sm:flex-row items-center justify-between gap-2.5 shrink-0 shadow-sm">
+                <div class="text-[11px] text-slate-500 dark:text-slate-400 flex items-center gap-1.5">
+                  <i class="fa-solid fa-fingerprint text-indigo-600 dark:text-indigo-400 text-xs"></i>
                   <span>Decisão auditada em conformidade estrita com a Norma Ativa.</span>
                 </div>
                 
                 <div class="flex items-center gap-2 w-full sm:w-auto">
-                  <button onclick="rejectSettlementDecision()" class="flex-1 sm:flex-none px-3 py-1.5 bg-surface hover:bg-rose-950/60 text-rose-300 border border-borderSubtle hover:border-rose-800/80 rounded-md text-xs font-semibold transition flex items-center justify-center gap-1.5 btn-press">
+                  <button onclick="rejectSettlementDecision()" class="flex-1 sm:flex-none px-3 py-1.5 bg-white dark:bg-white/5 hover:bg-rose-50 dark:hover:bg-rose-950/60 text-rose-600 dark:text-rose-300 border border-slate-200 dark:border-white/10 hover:border-rose-300 rounded-md text-xs font-semibold transition flex items-center justify-center gap-1.5 btn-press shadow-sm">
                     <i class="fa-solid fa-xmark text-[10px]"></i> Rejeitar
                   </button>
                   
-                  <button onclick="sendToHitlQueue()" class="flex-1 sm:flex-none px-3 py-1.5 bg-surface hover:bg-amber-950/60 text-amber-300 border border-borderSubtle hover:border-amber-800/80 rounded-md text-xs font-semibold transition flex items-center justify-center gap-1.5 btn-press">
+                  <button onclick="sendToHitlQueue()" class="flex-1 sm:flex-none px-3 py-1.5 bg-white dark:bg-white/5 hover:bg-amber-50 dark:hover:bg-amber-950/60 text-amber-700 dark:text-amber-300 border border-slate-200 dark:border-white/10 hover:border-amber-300 rounded-md text-xs font-semibold transition flex items-center justify-center gap-1.5 btn-press shadow-sm">
                     <i class="fa-solid fa-user-clock text-[10px]"></i> Enviar p/ HITL
                   </button>
                   
@@ -635,11 +682,11 @@
         <div class="bento-card p-4 flex flex-col md:flex-row justify-between items-start md:items-center gap-3">
           <div>
             <div class="flex items-center gap-1.5">
-              <span class="w-2 h-2 rounded-full bg-emerald-400 animate-pulse"></span>
-              <span class="text-[10px] font-mono font-bold text-emerald-400 uppercase">Instrução de Trabalho Ativa</span>
+              <span class="w-2 h-2 rounded-full bg-emerald-500 animate-pulse"></span>
+              <span class="text-[10px] font-mono font-bold text-emerald-700 dark:text-emerald-400 uppercase">Instrução de Trabalho Ativa</span>
             </div>
-            <h2 class="text-sm font-bold text-white mt-0.5 tracking-tight">Manual de Acordos — Contencioso Cível de Massa (Grupo Amil)</h2>
-            <p class="text-xs text-textMuted">21 Temas compilados dinamicamente com requisitos de cobertura, tetos financeiros e vedações.</p>
+            <h2 class="text-sm font-bold text-slate-900 dark:text-white mt-0.5 tracking-tight">Manual de Acordos — Contencioso Cível de Massa (Grupo Amil)</h2>
+            <p class="text-xs text-slate-500 dark:text-slate-400">21 Temas compilados dinamicamente com requisitos de cobertura, tetos financeiros e vedações.</p>
           </div>
           <button onclick="openPolicyUploadModal()" class="px-3 py-1.5 bg-indigo-600 hover:bg-indigo-500 text-white rounded-md text-xs font-semibold shadow-sm transition flex items-center gap-1.5 shrink-0 btn-press">
             <i class="fa-solid fa-cloud-arrow-up text-[10px]"></i> Upload Novo PDF de Norma
@@ -658,11 +705,11 @@
       <!-- ========================================================================= -->
       <section id="view-hitl-queue" class="hidden flex-1 overflow-y-auto p-5 space-y-4">
         <div class="bento-card p-4">
-          <div class="flex items-center gap-1.5 text-amber-400 text-[10px] font-bold font-mono">
+          <div class="flex items-center gap-1.5 text-amber-600 dark:text-amber-400 text-[10px] font-bold font-mono">
             <i class="fa-solid fa-user-clock text-xs"></i> FILA DE REVISÃO HUMANA (HITL)
           </div>
-          <h2 class="text-sm font-bold text-white mt-0.5 tracking-tight">Pendências Documentais e Triagem</h2>
-          <p class="text-xs text-textMuted">Processos onde uma evidência crítica estava ausente ou ilegível, exigindo validação de um advogado sênior.</p>
+          <h2 class="text-sm font-bold text-slate-900 dark:text-white mt-0.5 tracking-tight">Pendências Documentais e Triagem</h2>
+          <p class="text-xs text-slate-500 dark:text-slate-400">Processos onde uma evidência crítica estava ausente ou ilegível, exigindo validação de um advogado sênior.</p>
         </div>
 
         <div id="hitl-queue-container" class="space-y-2.5">
@@ -677,16 +724,16 @@
         
         <div class="bento-card p-4 flex flex-col md:flex-row justify-between items-start md:items-center gap-3">
           <div>
-            <div class="flex items-center gap-1.5 text-emerald-400 text-[10px] font-bold font-mono">
+            <div class="flex items-center gap-1.5 text-emerald-600 dark:text-emerald-400 text-[10px] font-bold font-mono">
               <i class="fa-solid fa-clock-rotate-left text-xs"></i> REPOSITÓRIO HISTÓRICO DE AUDITORIA
             </div>
-            <h2 class="text-sm font-bold text-white mt-0.5 tracking-tight">Histórico de Decisões & Acordos Deliberados</h2>
-            <p class="text-xs text-textMuted">Consulte todos os processos já deliberados, baixe minutas prontas ou reabra casos.</p>
+            <h2 class="text-sm font-bold text-slate-900 dark:text-white mt-0.5 tracking-tight">Histórico de Decisões & Acordos Deliberados</h2>
+            <p class="text-xs text-slate-500 dark:text-slate-400">Consulte todos os processos já deliberados, baixe minutas prontas ou reabra casos.</p>
           </div>
           
           <div class="flex items-center gap-2">
-            <button onclick="exportHistoryCSV()" class="px-3 py-1.5 bg-surfaceHover hover:bg-slate-800 text-slate-200 border border-borderMuted rounded-md text-xs font-semibold shadow-sm transition flex items-center gap-1.5 btn-press">
-              <i class="fa-solid fa-file-csv text-emerald-400 text-xs"></i> Exportar (.CSV)
+            <button onclick="exportHistoryCSV()" class="px-3 py-1.5 bg-slate-100 dark:bg-white/5 hover:bg-slate-200 dark:hover:bg-white/10 text-slate-700 dark:text-slate-200 border border-slate-200 dark:border-white/10 rounded-md text-xs font-semibold shadow-sm transition flex items-center gap-1.5 btn-press">
+              <i class="fa-solid fa-file-csv text-emerald-600 dark:text-emerald-400 text-xs"></i> Exportar (.CSV)
             </button>
           </div>
         </div>
@@ -694,34 +741,34 @@
         <!-- CARDS DE MÉTRICAS DO HISTÓRICO -->
         <div class="grid grid-cols-2 sm:grid-cols-4 gap-2.5">
           <div class="bento-card p-3">
-            <p class="text-[9px] text-textMuted font-mono uppercase">Total Deliberado</p>
-            <p class="text-lg font-bold text-white font-mono mt-0.5" id="hist-stat-total">0</p>
+            <p class="text-[9px] text-slate-500 dark:text-slate-400 font-mono uppercase">Total Deliberado</p>
+            <p class="text-lg font-bold text-slate-900 dark:text-white font-mono mt-0.5" id="hist-stat-total">0</p>
           </div>
           <div class="bento-card p-3">
-            <p class="text-[9px] text-emerald-400 font-mono uppercase">Acordos Aprovados</p>
-            <p class="text-lg font-bold text-emerald-400 font-mono mt-0.5" id="hist-stat-approved">0</p>
+            <p class="text-[9px] text-emerald-600 dark:text-emerald-400 font-mono uppercase font-semibold">Acordos Aprovados</p>
+            <p class="text-lg font-bold text-emerald-600 dark:text-emerald-400 font-mono mt-0.5" id="hist-stat-approved">0</p>
           </div>
           <div class="bento-card p-3">
-            <p class="text-[9px] text-rose-400 font-mono uppercase">Propostas Rejeitadas</p>
-            <p class="text-lg font-bold text-rose-400 font-mono mt-0.5" id="hist-stat-rejected">0</p>
+            <p class="text-[9px] text-rose-600 dark:text-rose-400 font-mono uppercase font-semibold">Propostas Rejeitadas</p>
+            <p class="text-lg font-bold text-rose-600 dark:text-rose-400 font-mono mt-0.5" id="hist-stat-rejected">0</p>
           </div>
-          <div class="bento-card p-3 border-indigo-500/20 bg-indigo-950/20">
-            <p class="text-[9px] text-indigo-300 font-mono uppercase font-semibold">Saving Acumulado</p>
-            <p class="text-lg font-bold text-indigo-300 font-mono mt-0.5" id="hist-stat-saving">R$ 0,00</p>
+          <div class="bento-card p-3 border-indigo-200 dark:border-indigo-500/20 bg-indigo-50/50 dark:bg-indigo-950/20">
+            <p class="text-[9px] text-indigo-700 dark:text-indigo-300 font-mono uppercase font-semibold">Saving Acumulado</p>
+            <p class="text-lg font-bold text-indigo-700 dark:text-indigo-300 font-mono mt-0.5" id="hist-stat-saving">R$ 0,00</p>
           </div>
         </div>
 
         <!-- SUB-ABAS E BUSCA DO HISTÓRICO -->
-        <div class="flex flex-col sm:flex-row justify-between items-center gap-2.5 bg-surface p-2 rounded-lg border border-borderSubtle">
+        <div class="flex flex-col sm:flex-row justify-between items-center gap-2.5 bg-white dark:bg-white/5 p-2 rounded-lg border border-slate-200 dark:border-white/5 shadow-sm">
           <div class="flex items-center gap-1 w-full sm:w-auto">
             <button onclick="setHistorySubTab('ALL')" id="hist-tab-all" class="px-2.5 py-1 rounded text-xs font-semibold bg-indigo-600 text-white transition btn-press">Todos (<span id="hist-tab-count-all">0</span>)</button>
-            <button onclick="setHistorySubTab('APPROVED')" id="hist-tab-approved" class="px-2.5 py-1 rounded text-xs font-medium text-textMuted hover:text-white transition btn-press">Aprovados (<span id="hist-tab-count-approved">0</span>)</button>
-            <button onclick="setHistorySubTab('REJECTED')" id="hist-tab-rejected" class="px-2.5 py-1 rounded text-xs font-medium text-textMuted hover:text-white transition btn-press">Rejeitados (<span id="hist-tab-count-rejected">0</span>)</button>
+            <button onclick="setHistorySubTab('APPROVED')" id="hist-tab-approved" class="px-2.5 py-1 rounded text-xs font-medium text-slate-500 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white transition btn-press">Aprovados (<span id="hist-tab-count-approved">0</span>)</button>
+            <button onclick="setHistorySubTab('REJECTED')" id="hist-tab-rejected" class="px-2.5 py-1 rounded text-xs font-medium text-slate-500 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white transition btn-press">Rejeitados (<span id="hist-tab-count-rejected">0</span>)</button>
           </div>
           
           <div class="relative w-full sm:w-64">
-            <i class="fa-solid fa-magnifying-glass absolute left-2.5 top-2 text-textMuted text-[10px]"></i>
-            <input type="text" id="hist-search-input" oninput="renderHistoryList()" placeholder="Buscar no histórico..." class="w-full bg-canvas border border-borderSubtle rounded pl-7 pr-2.5 py-1 text-xs text-slate-200 placeholder-textMuted focus:outline-none focus:border-indigo-500 font-mono transition">
+            <i class="fa-solid fa-magnifying-glass absolute left-2.5 top-2 text-slate-400 text-[10px]"></i>
+            <input type="text" id="hist-search-input" oninput="renderHistoryList()" placeholder="Buscar no histórico..." class="w-full bg-slate-50 dark:bg-black/30 border border-slate-200 dark:border-white/10 rounded pl-7 pr-2.5 py-1 text-xs text-slate-900 dark:text-slate-200 placeholder-slate-400 focus:outline-none focus:border-indigo-500 font-mono transition">
           </div>
         </div>
 
@@ -739,16 +786,16 @@
   <!-- ========================================================================= -->
   <!-- MODAL 1: UPLOAD DE PROCESSO JUDICIAL -->
   <!-- ========================================================================= -->
-  <div id="upload-modal" class="hidden fixed inset-0 bg-canvas/85 backdrop-blur-md z-50 flex items-center justify-center p-4">
-    <div class="bg-surface border border-borderMuted rounded-xl max-w-md w-full p-5 shadow-2xl space-y-4">
-      <div class="flex justify-between items-center border-b border-borderSubtle pb-2.5">
+  <div id="upload-modal" class="hidden fixed inset-0 bg-slate-900/60 dark:bg-black/80 backdrop-blur-sm z-50 flex items-center justify-center p-4">
+    <div class="bg-white dark:bg-[#0d0f14] border border-slate-200 dark:border-white/10 rounded-xl max-w-md w-full p-5 shadow-2xl space-y-4">
+      <div class="flex justify-between items-center border-b border-slate-200 dark:border-white/5 pb-2.5">
         <div class="flex items-center gap-2">
-          <div class="w-7 h-7 rounded bg-indigo-500/10 text-indigo-400 flex items-center justify-center text-xs border border-indigo-500/20">
+          <div class="w-7 h-7 rounded bg-indigo-50 dark:bg-indigo-500/10 text-indigo-600 dark:text-indigo-400 flex items-center justify-center text-xs border border-indigo-200 dark:border-indigo-500/20">
             <i class="fa-solid fa-file-pdf"></i>
           </div>
-          <h3 class="font-bold text-xs text-white">Ingestão de Processo Judicial</h3>
+          <h3 class="font-bold text-xs text-slate-900 dark:text-white">Ingestão de Processo Judicial</h3>
         </div>
-        <button onclick="closeUploadModal()" class="text-textMuted hover:text-white transition">
+        <button onclick="closeUploadModal()" class="text-slate-400 hover:text-slate-700 dark:hover:text-white transition">
           <i class="fa-solid fa-xmark text-xs"></i>
         </button>
       </div>
@@ -756,28 +803,28 @@
       <form id="upload-form" onsubmit="handleProcessUpload(event)" class="space-y-3">
         
         <div class="space-y-1">
-          <label class="text-xs font-semibold text-slate-300">Número do Processo (CNJ) <span class="text-textMuted font-normal">(Opcional se constar no PDF)</span></label>
-          <input type="text" id="input-cnj" placeholder="Ex: 0001234-56.2026.8.26.0100" class="w-full bg-canvas border border-borderSubtle rounded-md px-3 py-1.5 text-xs text-slate-100 placeholder-textMuted font-mono focus:outline-none focus:border-indigo-500">
+          <label class="text-xs font-semibold text-slate-700 dark:text-slate-300">Número do Processo (CNJ) <span class="text-slate-400 font-normal">(Opcional se constar no PDF)</span></label>
+          <input type="text" id="input-cnj" placeholder="Ex: 0001234-56.2026.8.26.0100" class="w-full bg-slate-50 dark:bg-black/30 border border-slate-200 dark:border-white/10 rounded-md px-3 py-1.5 text-xs text-slate-900 dark:text-slate-100 placeholder-slate-400 font-mono focus:outline-none focus:border-indigo-500">
         </div>
 
         <div class="space-y-1">
-          <label class="text-xs font-semibold text-slate-300">Nome do Beneficiário / Autor <span class="text-textMuted font-normal">(Opcional)</span></label>
-          <input type="text" id="input-beneficiary" placeholder="Ex: Maria dos Santos" class="w-full bg-canvas border border-borderSubtle rounded-md px-3 py-1.5 text-xs text-slate-100 placeholder-textMuted focus:outline-none focus:border-indigo-500">
+          <label class="text-xs font-semibold text-slate-700 dark:text-slate-300">Nome do Beneficiário / Autor <span class="text-slate-400 font-normal">(Opcional)</span></label>
+          <input type="text" id="input-beneficiary" placeholder="Ex: Maria dos Santos" class="w-full bg-slate-50 dark:bg-black/30 border border-slate-200 dark:border-white/10 rounded-md px-3 py-1.5 text-xs text-slate-900 dark:text-slate-100 placeholder-slate-400 focus:outline-none focus:border-indigo-500">
         </div>
 
         <!-- DROPZONE MULTI-PDF -->
-        <div class="border border-dashed border-borderMuted hover:border-indigo-500/70 rounded-lg p-4 text-center cursor-pointer transition bg-canvas/40" onclick="document.getElementById('pdf-file-input').click()">
+        <div class="border border-dashed border-slate-300 dark:border-white/20 hover:border-indigo-500 rounded-lg p-4 text-center cursor-pointer transition bg-slate-50/50 dark:bg-black/20" onclick="document.getElementById('pdf-file-input').click()">
           <input type="file" id="pdf-file-input" accept=".pdf" multiple class="hidden" onchange="onFilesSelected(event)">
-          <i class="fa-solid fa-cloud-arrow-up text-indigo-400 text-xl mb-1"></i>
-          <p class="text-xs font-medium text-slate-200" id="file-name-label">Clique para selecionar ou arraste os PDFs</p>
-          <p class="text-[9px] text-textMuted mt-0.5">Petição Inicial, Laudos, Documentos, Sentença</p>
+          <i class="fa-solid fa-cloud-arrow-up text-indigo-600 dark:text-indigo-400 text-xl mb-1"></i>
+          <p class="text-xs font-medium text-slate-800 dark:text-slate-200" id="file-name-label">Clique para selecionar ou arraste os PDFs</p>
+          <p class="text-[9px] text-slate-500 dark:text-slate-400 mt-0.5">Petição Inicial, Laudos, Documentos, Sentença</p>
         </div>
 
         <!-- LISTA DE ARQUIVOS SELECIONADOS -->
-        <div id="selected-files-list" class="hidden space-y-1 max-h-32 overflow-y-auto p-1 border border-borderSubtle rounded-md bg-canvas/40"></div>
+        <div id="selected-files-list" class="hidden space-y-1 max-h-32 overflow-y-auto p-1 border border-slate-200 dark:border-white/10 rounded-md bg-slate-50 dark:bg-black/20"></div>
 
-        <div class="flex justify-end space-x-2 pt-2 border-t border-borderSubtle">
-          <button type="button" onclick="closeUploadModal()" class="px-3 py-1.5 bg-surfaceHover hover:bg-slate-800 text-textSecondary rounded-md text-xs font-medium transition btn-press">Cancelar</button>
+        <div class="flex justify-end space-x-2 pt-2 border-t border-slate-200 dark:border-white/5">
+          <button type="button" onclick="closeUploadModal()" class="px-3 py-1.5 bg-slate-100 dark:bg-white/5 hover:bg-slate-200 text-slate-700 dark:text-slate-300 rounded-md text-xs font-medium transition btn-press">Cancelar</button>
           <button type="submit" class="px-4 py-1.5 bg-indigo-600 hover:bg-indigo-500 text-white rounded-md text-xs font-semibold shadow-sm transition flex items-center gap-1.5 btn-press">
             <i class="fa-solid fa-play text-[10px]"></i> Iniciar Análise
           </button>
@@ -789,35 +836,35 @@
   <!-- ========================================================================= -->
   <!-- MODAL 2: UPLOAD DE NOVA NORMA (PDF) -->
   <!-- ========================================================================= -->
-  <div id="policy-upload-modal" class="hidden fixed inset-0 bg-canvas/85 backdrop-blur-md z-50 flex items-center justify-center p-4">
-    <div class="bg-surface border border-borderMuted rounded-xl max-w-md w-full p-5 shadow-2xl space-y-4">
-      <div class="flex justify-between items-center border-b border-borderSubtle pb-2.5">
+  <div id="policy-upload-modal" class="hidden fixed inset-0 bg-slate-900/60 dark:bg-black/80 backdrop-blur-sm z-50 flex items-center justify-center p-4">
+    <div class="bg-white dark:bg-[#0d0f14] border border-slate-200 dark:border-white/10 rounded-xl max-w-md w-full p-5 shadow-2xl space-y-4">
+      <div class="flex justify-between items-center border-b border-slate-200 dark:border-white/5 pb-2.5">
         <div class="flex items-center gap-2">
-          <div class="w-7 h-7 rounded bg-emerald-500/10 text-emerald-400 flex items-center justify-center text-xs border border-emerald-500/20">
+          <div class="w-7 h-7 rounded bg-emerald-50 dark:bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 flex items-center justify-center text-xs border border-emerald-200 dark:border-emerald-500/20">
             <i class="fa-solid fa-book-medical"></i>
           </div>
-          <h3 class="font-bold text-xs text-white">Compilar Nova Norma da Operadora</h3>
+          <h3 class="font-bold text-xs text-slate-900 dark:text-white">Compilar Nova Norma da Operadora</h3>
         </div>
-        <button onclick="closePolicyUploadModal()" class="text-textMuted hover:text-white transition">
+        <button onclick="closePolicyUploadModal()" class="text-slate-400 hover:text-slate-700 dark:hover:text-white transition">
           <i class="fa-solid fa-xmark text-xs"></i>
         </button>
       </div>
 
       <form id="policy-upload-form" onsubmit="handlePolicyUpload(event)" class="space-y-3">
         <div class="space-y-1">
-          <label class="text-xs font-semibold text-slate-300">Versão da Norma (Identificador)</label>
-          <input type="text" id="input-policy-version" placeholder="Ex: 2026.2-AMIL-REVISAO" required class="w-full bg-canvas border border-borderSubtle rounded-md px-3 py-1.5 text-xs text-slate-100 font-mono focus:outline-none focus:border-indigo-500">
+          <label class="text-xs font-semibold text-slate-700 dark:text-slate-300">Versão da Norma (Identificador)</label>
+          <input type="text" id="input-policy-version" placeholder="Ex: 2026.2-AMIL-REVISAO" required class="w-full bg-slate-50 dark:bg-black/30 border border-slate-200 dark:border-white/10 rounded-md px-3 py-1.5 text-xs text-slate-900 dark:text-slate-100 font-mono focus:outline-none focus:border-indigo-500">
         </div>
 
-        <div class="border border-dashed border-borderMuted hover:border-emerald-500/70 rounded-lg p-4 text-center cursor-pointer transition bg-canvas/40" onclick="document.getElementById('policy-file-input').click()">
+        <div class="border border-dashed border-slate-300 dark:border-white/20 hover:border-emerald-500 rounded-lg p-4 text-center cursor-pointer transition bg-slate-50/50 dark:bg-black/20" onclick="document.getElementById('policy-file-input').click()">
           <input type="file" id="policy-file-input" accept=".pdf" class="hidden" onchange="onPolicyFileSelected(event)">
-          <i class="fa-solid fa-file-pdf text-emerald-400 text-xl mb-1"></i>
-          <p class="text-xs font-medium text-slate-200" id="policy-file-label">Clique para selecionar o PDF do Manual da Operadora</p>
-          <p class="text-[9px] text-textMuted mt-0.5">O compilador dinâmico extrai todos os 21 temas, requisitos e tetos.</p>
+          <i class="fa-solid fa-file-pdf text-emerald-600 dark:text-emerald-400 text-xl mb-1"></i>
+          <p class="text-xs font-medium text-slate-800 dark:text-slate-200" id="policy-file-label">Clique para selecionar o PDF do Manual da Operadora</p>
+          <p class="text-[9px] text-slate-500 dark:text-slate-400 mt-0.5">O compilador dinâmico extrai todos os 21 temas, requisitos e tetos.</p>
         </div>
 
-        <div class="flex justify-end space-x-2 pt-2 border-t border-borderSubtle">
-          <button type="button" onclick="closePolicyUploadModal()" class="px-3 py-1.5 bg-surfaceHover hover:bg-slate-800 text-textSecondary rounded-md text-xs font-medium transition btn-press">Cancelar</button>
+        <div class="flex justify-end space-x-2 pt-2 border-t border-slate-200 dark:border-white/5">
+          <button type="button" onclick="closePolicyUploadModal()" class="px-3 py-1.5 bg-slate-100 dark:bg-white/5 hover:bg-slate-200 text-slate-700 dark:text-slate-300 rounded-md text-xs font-medium transition btn-press">Cancelar</button>
           <button type="submit" class="px-4 py-1.5 bg-emerald-600 hover:bg-emerald-500 text-white rounded-md text-xs font-semibold shadow-sm transition btn-press">Compilar e Ativar</button>
         </div>
       </form>
@@ -827,26 +874,26 @@
   <!-- ========================================================================= -->
   <!-- MODAL 3: RUNNER EM TEMPO REAL (PROGRESSO) -->
   <!-- ========================================================================= -->
-  <div id="live-runner-modal" class="hidden fixed inset-0 bg-canvas/85 backdrop-blur-md z-50 flex items-center justify-center p-4">
-    <div class="bg-surface border border-borderMuted rounded-xl max-w-md w-full p-5 shadow-2xl space-y-3.5">
-      <div class="flex items-center justify-between border-b border-borderSubtle pb-2.5">
+  <div id="live-runner-modal" class="hidden fixed inset-0 bg-slate-900/60 dark:bg-black/80 backdrop-blur-sm z-50 flex items-center justify-center p-4">
+    <div class="bg-white dark:bg-[#0d0f14] border border-slate-200 dark:border-white/10 rounded-xl max-w-md w-full p-5 shadow-2xl space-y-3.5">
+      <div class="flex items-center justify-between border-b border-slate-200 dark:border-white/5 pb-2.5">
         <div class="flex items-center gap-2">
-          <div class="w-6 h-6 rounded bg-indigo-500/15 text-indigo-400 flex items-center justify-center animate-spin">
+          <div class="w-6 h-6 rounded bg-indigo-50 dark:bg-indigo-500/15 text-indigo-600 dark:text-indigo-400 flex items-center justify-center animate-spin">
             <i class="fa-solid fa-circle-notch text-xs"></i>
           </div>
           <div>
-            <h3 class="font-bold text-xs text-white" id="runner-modal-title">Executando Esteira de Inteligência</h3>
-            <p class="text-[10px] text-textMuted" id="runner-modal-sub">Extração determinística e validação contra a norma ativa</p>
+            <h3 class="font-bold text-xs text-slate-900 dark:text-white" id="runner-modal-title">Executando Esteira de Inteligência</h3>
+            <p class="text-[10px] text-slate-500 dark:text-slate-400" id="runner-modal-sub">Extração determinística e validação contra a norma ativa</p>
           </div>
         </div>
       </div>
 
-      <div class="bg-canvas border border-borderSubtle rounded-lg p-3 font-mono text-xs text-slate-300 space-y-1.5 max-h-48 overflow-y-auto" id="runner-logs">
-        <p class="text-textMuted">[1/5] Inicializando pipeline de ingestão...</p>
+      <div class="bg-slate-50 dark:bg-black/30 border border-slate-200 dark:border-white/10 rounded-lg p-3 font-mono text-xs text-slate-800 dark:text-slate-300 space-y-1.5 max-h-48 overflow-y-auto" id="runner-logs">
+        <p class="text-slate-500 dark:text-slate-400">[1/5] Inicializando pipeline de ingestão...</p>
       </div>
 
-      <div class="w-full bg-surfaceHover rounded-full h-1 overflow-hidden">
-        <div id="runner-progress-bar" class="bg-indigo-500 h-1 rounded-full w-2/3 transition-all duration-200"></div>
+      <div class="w-full bg-slate-200 dark:bg-white/10 rounded-full h-1 overflow-hidden">
+        <div id="runner-progress-bar" class="bg-indigo-600 dark:bg-indigo-500 h-1 rounded-full w-2/3 transition-all duration-200"></div>
       </div>
     </div>
   </div>
@@ -854,34 +901,34 @@
   <!-- ========================================================================= -->
   <!-- MODAL 4: REABRIR PROCESSO DO HISTÓRICO -->
   <!-- ========================================================================= -->
-  <div id="reopen-modal" class="hidden fixed inset-0 bg-canvas/85 backdrop-blur-md z-50 flex items-center justify-center p-4">
-    <div class="bg-surface border border-borderMuted rounded-xl max-w-sm w-full p-5 shadow-2xl space-y-3.5">
-      <div class="flex justify-between items-center border-b border-borderSubtle pb-2.5">
-        <div class="flex items-center gap-1.5 text-indigo-400">
+  <div id="reopen-modal" class="hidden fixed inset-0 bg-slate-900/60 dark:bg-black/80 backdrop-blur-sm z-50 flex items-center justify-center p-4">
+    <div class="bg-white dark:bg-[#0d0f14] border border-slate-200 dark:border-white/10 rounded-xl max-w-sm w-full p-5 shadow-2xl space-y-3.5">
+      <div class="flex justify-between items-center border-b border-slate-200 dark:border-white/5 pb-2.5">
+        <div class="flex items-center gap-1.5 text-indigo-600 dark:text-indigo-400">
           <i class="fa-solid fa-rotate-left text-sm"></i>
-          <h3 class="font-bold text-xs text-white">Reabrir Processo</h3>
+          <h3 class="font-bold text-xs text-slate-900 dark:text-white">Reabrir Processo</h3>
         </div>
-        <button onclick="closeReopenModal()" class="text-textMuted hover:text-white transition">
+        <button onclick="closeReopenModal()" class="text-slate-400 hover:text-slate-700 dark:hover:text-white transition">
           <i class="fa-solid fa-xmark text-xs"></i>
         </button>
       </div>
 
       <div class="space-y-2.5 text-xs">
-        <p class="text-textSecondary leading-relaxed">Este processo será devolvido para a <strong class="text-white">Fila de Decisão (Inbox)</strong>.</p>
+        <p class="text-slate-600 dark:text-slate-300 leading-relaxed">Este processo será devolvido para a <strong class="text-slate-900 dark:text-white">Fila de Decisão (Inbox)</strong>.</p>
         
-        <div class="p-2.5 bg-canvas rounded-lg border border-borderSubtle font-mono">
-          <span class="text-textMuted text-[9px]">PROCESSO:</span>
-          <p class="text-white font-bold text-xs" id="reopen-target-cnj">0000000-00.0000.0.00.0000</p>
+        <div class="p-2.5 bg-slate-50 dark:bg-black/30 rounded-lg border border-slate-200 dark:border-white/10 font-mono">
+          <span class="text-slate-400 text-[9px]">PROCESSO:</span>
+          <p class="text-slate-900 dark:text-white font-bold text-xs" id="reopen-target-cnj">0000000-00.0000.0.00.0000</p>
         </div>
 
         <div class="space-y-1">
-          <label class="text-xs font-semibold text-slate-300">Justificativa <span class="text-rose-400">*</span></label>
-          <textarea id="reopen-reason-input" rows="3" placeholder="Ex: Juntada de novo laudo às fls. 120..." class="w-full bg-canvas border border-borderSubtle rounded-md p-2.5 text-xs text-slate-100 placeholder-textMuted focus:outline-none focus:border-indigo-500 font-mono"></textarea>
+          <label class="text-xs font-semibold text-slate-700 dark:text-slate-300">Justificativa <span class="text-rose-500">*</span></label>
+          <textarea id="reopen-reason-input" rows="3" placeholder="Ex: Juntada de novo laudo às fls. 120..." class="w-full bg-slate-50 dark:bg-black/30 border border-slate-200 dark:border-white/10 rounded-md p-2.5 text-xs text-slate-900 dark:text-slate-100 placeholder-slate-400 focus:outline-none focus:border-indigo-500 font-mono"></textarea>
         </div>
       </div>
 
-      <div class="flex justify-end gap-1.5 pt-2 border-t border-borderSubtle">
-        <button type="button" onclick="closeReopenModal()" class="px-3 py-1.5 bg-surfaceHover hover:bg-slate-800 text-textSecondary rounded-md text-xs font-medium transition btn-press">Cancelar</button>
+      <div class="flex justify-end gap-1.5 pt-2 border-t border-slate-200 dark:border-white/5">
+        <button type="button" onclick="closeReopenModal()" class="px-3 py-1.5 bg-slate-100 dark:bg-white/5 hover:bg-slate-200 text-slate-700 dark:text-slate-300 rounded-md text-xs font-medium transition btn-press">Cancelar</button>
         <button type="button" onclick="confirmReopenProcess()" class="px-3 py-1.5 bg-indigo-600 hover:bg-indigo-500 text-white rounded-md text-xs font-semibold shadow-sm transition flex items-center gap-1.5 btn-press">
           <i class="fa-solid fa-check text-[10px]"></i> Confirmar
         </button>
@@ -893,7 +940,7 @@
   <div id="toast-container" class="fixed bottom-4 right-4 z-50 space-y-2 pointer-events-none"></div>
 
   <!-- ========================================================================= -->
-  <!-- JAVASCRIPT: AUDITORIA FORENSE E LÓGICA REATIVA -->
+  <!-- JAVASCRIPT: AUDITORIA FORENSE, TEMA & LÓGICA REATIVA -->
   <!-- ========================================================================= -->
   <script>
     let allProcesses = [];
@@ -909,9 +956,36 @@
     let reopenTargetProcessId = null;
 
     document.addEventListener('DOMContentLoaded', () => {
+      initTheme();
       loadActivePolicy();
       loadProcesses();
     });
+
+    function initTheme() {
+      const savedTheme = localStorage.getItem('seixas_theme') || 'light';
+      if (savedTheme === 'dark') {
+        document.documentElement.classList.add('dark');
+        document.documentElement.classList.remove('light');
+      } else {
+        document.documentElement.classList.remove('dark');
+        document.documentElement.classList.add('light');
+      }
+    }
+
+    function toggleTheme() {
+      const isDark = document.documentElement.classList.contains('dark');
+      if (isDark) {
+        document.documentElement.classList.remove('dark');
+        document.documentElement.classList.add('light');
+        localStorage.setItem('seixas_theme', 'light');
+        showToast('Tema Alterado', 'Modo Claro (Clean Light) ativado.', 'info');
+      } else {
+        document.documentElement.classList.add('dark');
+        document.documentElement.classList.remove('light');
+        localStorage.setItem('seixas_theme', 'dark');
+        showToast('Tema Alterado', 'Modo Escuro ativado.', 'info');
+      }
+    }
 
     function escapeHTML(str) {
       if (str === null || str === undefined) return '';
@@ -936,7 +1010,7 @@
       const topLabel = document.getElementById('topbar-current-view');
 
       [bCmd, bPol, bHitl, bHist].forEach(b => {
-        if (b) b.className = 'w-full flex items-center justify-between px-2.5 py-2 rounded-lg text-xs font-medium text-textSecondary hover:text-white hover:bg-surfaceHover transition btn-press';
+        if (b) b.className = 'w-full flex items-center justify-between px-2.5 py-2 rounded-lg text-xs font-medium text-slate-600 dark:text-slate-300 hover:text-slate-900 dark:hover:text-white hover:bg-slate-100 dark:hover:bg-white/5 transition btn-press';
       });
       [vCmd, vPol, vHitl, vHist].forEach(v => {
         if (v) v.classList.add('hidden');
@@ -983,27 +1057,27 @@
           topics.forEach(t => {
             const card = document.createElement('div');
             const isAssist = t.category === 'ASSISTENCIAL';
-            card.className = 'bento-card p-3.5 space-y-2.5 flex flex-col justify-between';
+            card.className = 'bento-card p-3.5 space-y-2.5 flex flex-col justify-between shadow-sm';
             
             let reqsHtml = (t.requirements || []).length > 0
-              ? `<div class="space-y-0.5">${t.requirements.slice(0, 3).map(r => `<p class="text-xs text-textSecondary leading-relaxed">• ${escapeHTML(r)}</p>`).join('')}</div>`
-              : '<p class="text-xs text-textMuted italic">Conforme critérios gerais</p>';
+              ? `<div class="space-y-0.5">${t.requirements.slice(0, 3).map(r => `<p class="text-xs text-slate-600 dark:text-slate-300 leading-relaxed">• ${escapeHTML(r)}</p>`).join('')}</div>`
+              : '<p class="text-xs text-slate-400 italic">Conforme critérios gerais</p>';
 
             let paramsHtml = (t.agreement_parameters || []).length > 0
-              ? `<div class="pt-1.5 border-t border-borderSubtle space-y-0.5">${t.agreement_parameters.slice(0, 2).map(p => `<p class="text-[11px] text-emerald-400 font-mono"><i class="fa-solid fa-check text-[8px] mr-1"></i>${escapeHTML(p)}</p>`).join('')}</div>`
+              ? `<div class="pt-1.5 border-t border-slate-200 dark:border-white/5 space-y-0.5">${t.agreement_parameters.slice(0, 2).map(p => `<p class="text-[11px] text-emerald-700 dark:text-emerald-400 font-mono"><i class="fa-solid fa-check text-[8px] mr-1"></i>${escapeHTML(p)}</p>`).join('')}</div>`
               : '';
 
             let vedsHtml = (t.prohibitions || []).length > 0 
-              ? `<div class="pt-1.5 border-t border-borderSubtle"><p class="text-[11px] text-rose-400 font-medium leading-relaxed"><i class="fa-solid fa-ban text-[8px] mr-1"></i><strong>Vedado:</strong> ${escapeHTML(t.prohibitions.slice(0, 2).join('; '))}</p></div>`
+              ? `<div class="pt-1.5 border-t border-slate-200 dark:border-white/5"><p class="text-[11px] text-rose-700 dark:text-rose-400 font-medium leading-relaxed"><i class="fa-solid fa-ban text-[8px] mr-1"></i><strong>Vedado:</strong> ${escapeHTML(t.prohibitions.slice(0, 2).join('; '))}</p></div>`
               : '';
 
             card.innerHTML = `
               <div class="space-y-1.5">
                 <div class="flex justify-between items-center">
                   <span class="text-[9px] font-bold px-1.5 py-0.5 rounded ${isAssist ? 'badge-eligible' : 'badge-conditioned'} font-mono">TEMA ${String(t.topic_number).padStart(2, '0')} • ${t.category}</span>
-                  ${t.saving_rules ? `<span class="text-[10px] text-emerald-400 font-mono font-bold">${escapeHTML(t.saving_rules)}</span>` : ''}
+                  ${t.saving_rules ? `<span class="text-[10px] text-emerald-700 dark:text-emerald-400 font-mono font-bold">${escapeHTML(t.saving_rules)}</span>` : ''}
                 </div>
-                <h4 class="font-bold text-xs text-white">${escapeHTML(t.topic_name || t.title || 'Tema ' + t.topic_number)}</h4>
+                <h4 class="font-bold text-xs text-slate-900 dark:text-white">${escapeHTML(t.topic_name || t.title || 'Tema ' + t.topic_number)}</h4>
                 ${reqsHtml}
               </div>
               <div class="space-y-1 pt-0.5">
@@ -1166,7 +1240,7 @@
 
         const card = document.createElement('div');
         card.id = `proc-card-${p.process_id}`;
-        card.className = `p-3 rounded-lg border border-borderSubtle bg-card hover:border-borderMuted cursor-pointer transition-all duration-150 flex flex-col justify-between space-y-1.5 ${isSelected ? 'active-card' : ''}`;
+        card.className = `p-3 rounded-lg border border-slate-200 dark:border-white/5 bg-white dark:bg-[#10131a] hover:border-slate-300 dark:hover:border-white/10 cursor-pointer transition-all duration-150 flex flex-col justify-between space-y-1.5 shadow-sm ${isSelected ? 'active-card' : ''}`;
         card.onclick = () => selectProcess(p.process_id);
 
         const theme = p.identified_theme || 'Tema 01: Terapias Especiais';
@@ -1174,18 +1248,18 @@
 
         card.innerHTML = `
           <div class="flex items-center justify-between">
-            <span class="font-mono text-xs font-semibold text-slate-200">${escapeHTML(p.cnj_number)}</span>
+            <span class="font-mono text-xs font-semibold text-slate-800 dark:text-slate-200">${escapeHTML(p.cnj_number)}</span>
             <span class="text-[9px] px-1.5 py-0.2 rounded font-semibold font-mono ${badgeClass} flex items-center gap-1">
               <i class="fa-solid ${icon} text-[7px]"></i> ${badgeText}
             </span>
           </div>
           <div>
-            <p class="text-xs font-medium text-white truncate">${escapeHTML(p.beneficiary_name || 'Beneficiário dos Autos')}</p>
-            <p class="text-[11px] text-indigo-300 font-medium truncate mt-0.5"><i class="fa-solid fa-bullseye text-[8px] mr-1"></i>${escapeHTML(theme)}</p>
+            <p class="text-xs font-semibold text-slate-900 dark:text-white truncate">${escapeHTML(p.beneficiary_name || 'Beneficiário dos Autos')}</p>
+            <p class="text-[11px] text-indigo-700 dark:text-indigo-300 font-medium truncate mt-0.5"><i class="fa-solid fa-bullseye text-[8px] mr-1"></i>${escapeHTML(theme)}</p>
           </div>
-          <div class="flex items-center justify-between text-[10px] text-textMuted font-mono pt-1 border-t border-borderSubtle">
+          <div class="flex items-center justify-between text-[10px] text-slate-500 dark:text-slate-400 font-mono pt-1 border-t border-slate-100 dark:border-white/5">
             <span>${pages} págs</span>
-            <span class="text-textSecondary">${escapeHTML(p.policy_version || '2026.OFICIAL')}</span>
+            <span class="text-slate-600 dark:text-slate-300">${escapeHTML(p.policy_version || '2026.OFICIAL')}</span>
           </div>
         `;
 
@@ -1233,7 +1307,7 @@
           if (t.toUpperCase() === tabKey) {
             btn.className = 'px-2.5 py-1 rounded text-xs font-semibold bg-indigo-600 text-white transition btn-press';
           } else {
-            btn.className = 'px-2.5 py-1 rounded text-xs font-medium text-textMuted hover:text-white transition btn-press';
+            btn.className = 'px-2.5 py-1 rounded text-xs font-medium text-slate-500 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white transition btn-press';
           }
         }
       });
@@ -1258,10 +1332,10 @@
 
       if (list.length === 0) {
         container.innerHTML = `
-          <div class="bento-card p-6 text-center space-y-1.5">
-            <i class="fa-solid fa-folder-open text-textMuted text-2xl mb-1"></i>
-            <h4 class="font-bold text-xs text-white">Nenhum registro</h4>
-            <p class="text-xs text-textMuted">Não há processos deliberados com os filtros selecionados.</p>
+          <div class="bento-card p-6 text-center space-y-1.5 shadow-sm">
+            <i class="fa-solid fa-folder-open text-slate-400 text-2xl mb-1"></i>
+            <h4 class="font-bold text-xs text-slate-800 dark:text-white">Nenhum registro</h4>
+            <p class="text-xs text-slate-500 dark:text-slate-400">Não há processos deliberados com os filtros selecionados.</p>
           </div>
         `;
         return;
@@ -1270,7 +1344,7 @@
       list.forEach(p => {
         const isApproved = p.status === 'APPROVED';
         const card = document.createElement('div');
-        card.className = 'bento-card p-3.5 flex flex-col md:flex-row justify-between items-start md:items-center gap-3';
+        card.className = 'bento-card p-3.5 flex flex-col md:flex-row justify-between items-start md:items-center gap-3 shadow-sm';
 
         const statusBadge = isApproved
           ? '<span class="badge-eligible text-[9px] px-2 py-0.2 rounded font-semibold font-mono"><i class="fa-solid fa-check mr-1 text-[7px]"></i>ACORDO APROVADO</span>'
@@ -1281,26 +1355,26 @@
         card.innerHTML = `
           <div class="space-y-0.5">
             <div class="flex items-center gap-2">
-              <span class="text-xs font-mono font-semibold text-indigo-400">${escapeHTML(p.cnj_number)}</span>
+              <span class="text-xs font-mono font-semibold text-indigo-700 dark:text-indigo-400">${escapeHTML(p.cnj_number)}</span>
               ${statusBadge}
-              <span class="text-[10px] text-textMuted font-mono">• ${escapeHTML(dateStr)}</span>
+              <span class="text-[10px] text-slate-400 font-mono">• ${escapeHTML(dateStr)}</span>
             </div>
-            <h4 class="font-semibold text-xs text-white">${escapeHTML(p.beneficiary_name || 'Beneficiário')}</h4>
-            <p class="text-[11px] text-indigo-300 font-medium"><i class="fa-solid fa-bullseye text-[8px] mr-1"></i>${escapeHTML(p.identified_theme || 'Tema Geral')}</p>
+            <h4 class="font-semibold text-xs text-slate-900 dark:text-white">${escapeHTML(p.beneficiary_name || 'Beneficiário')}</h4>
+            <p class="text-[11px] text-indigo-700 dark:text-indigo-300 font-medium"><i class="fa-solid fa-bullseye text-[8px] mr-1"></i>${escapeHTML(p.identified_theme || 'Tema Geral')}</p>
           </div>
 
           <div class="flex flex-col md:flex-row items-start md:items-center gap-3 shrink-0">
             <div class="text-right font-mono pr-2">
-              <p class="text-[10px] text-textMuted">Pleiteado: R$ ${(p.requested_amount || 0).toLocaleString('pt-BR', {minimumFractionDigits: 2})}</p>
-              ${isApproved ? `<p class="text-xs font-bold text-emerald-400">Acordo: R$ ${(p.proposal_amount || 0).toLocaleString('pt-BR', {minimumFractionDigits: 2})}</p>` : '<p class="text-xs text-rose-400 font-bold">Sem Acordo</p>'}
+              <p class="text-[10px] text-slate-500 dark:text-slate-400">Pleiteado: R$ ${(p.requested_amount || 0).toLocaleString('pt-BR', {minimumFractionDigits: 2})}</p>
+              ${isApproved ? `<p class="text-xs font-bold text-emerald-700 dark:text-emerald-400">Acordo: R$ ${(p.proposal_amount || 0).toLocaleString('pt-BR', {minimumFractionDigits: 2})}</p>` : '<p class="text-xs text-rose-700 dark:text-rose-400 font-bold">Sem Acordo</p>'}
             </div>
 
             <div class="flex items-center gap-1.5">
-              <button onclick="selectProcess('${p.process_id}'); switchNav('command-center');" class="px-2.5 py-1 bg-surfaceHover hover:bg-slate-800 text-slate-200 rounded text-xs font-medium transition btn-press" title="Ver Dossiê">
+              <button onclick="selectProcess('${p.process_id}'); switchNav('command-center');" class="px-2.5 py-1 bg-slate-100 dark:bg-white/10 hover:bg-slate-200 text-slate-700 dark:text-slate-200 rounded text-xs font-medium transition btn-press" title="Ver Dossiê">
                 <i class="fa-solid fa-eye mr-1 text-[10px]"></i> Auditar
               </button>
               
-              <button onclick="openReopenModal('${p.process_id}', '${p.cnj_number}')" class="px-2.5 py-1 bg-surface hover:bg-amber-950/60 text-amber-300 border border-borderSubtle hover:border-amber-700 rounded text-xs font-medium transition btn-press" title="Devolver para a Fila de Decisão">
+              <button onclick="openReopenModal('${p.process_id}', '${p.cnj_number}')" class="px-2.5 py-1 bg-white dark:bg-white/5 hover:bg-amber-50 dark:hover:bg-amber-950/60 text-amber-700 dark:text-amber-300 border border-slate-200 dark:border-white/10 hover:border-amber-300 rounded text-xs font-medium transition btn-press" title="Devolver para a Fila de Decisão">
                 <i class="fa-solid fa-rotate-left mr-1 text-[10px]"></i> Reabrir
               </button>
             </div>
@@ -1430,20 +1504,20 @@
       const vTitle = document.getElementById('detail-verdict-title');
 
       if (isEligible) {
-        vBox.className = 'p-2.5 rounded-lg border flex items-center gap-2.5 badge-eligible';
-        vIcon.innerHTML = '<i class="fa-solid fa-circle-check text-emerald-400"></i>';
+        vBox.className = 'p-2.5 rounded-lg border flex items-center gap-2.5 badge-eligible shadow-sm';
+        vIcon.innerHTML = '<i class="fa-solid fa-circle-check text-emerald-600 dark:text-emerald-400"></i>';
         vTitle.innerText = 'ELEGÍVEL PARA ACORDO';
       } else if (isConditioned) {
-        vBox.className = 'p-2.5 rounded-lg border flex items-center gap-2.5 badge-conditioned';
-        vIcon.innerHTML = '<i class="fa-solid fa-scale-balanced text-cyan-400"></i>';
+        vBox.className = 'p-2.5 rounded-lg border flex items-center gap-2.5 badge-conditioned shadow-sm';
+        vIcon.innerHTML = '<i class="fa-solid fa-scale-balanced text-cyan-600 dark:text-cyan-400"></i>';
         vTitle.innerText = 'ELEGÍVEL CONDICIONADO';
       } else if (isReview) {
-        vBox.className = 'p-2.5 rounded-lg border flex items-center gap-2.5 badge-hitl';
-        vIcon.innerHTML = '<i class="fa-solid fa-triangle-exclamation text-amber-400"></i>';
+        vBox.className = 'p-2.5 rounded-lg border flex items-center gap-2.5 badge-hitl shadow-sm';
+        vIcon.innerHTML = '<i class="fa-solid fa-triangle-exclamation text-amber-600 dark:text-amber-400"></i>';
         vTitle.innerText = 'REVISÃO HUMANA (HITL)';
       } else {
-        vBox.className = 'p-2.5 rounded-lg border flex items-center gap-2.5 badge-ineligible';
-        vIcon.innerHTML = '<i class="fa-solid fa-ban text-rose-400"></i>';
+        vBox.className = 'p-2.5 rounded-lg border flex items-center gap-2.5 badge-ineligible shadow-sm';
+        vIcon.innerHTML = '<i class="fa-solid fa-ban text-rose-600 dark:text-rose-400"></i>';
         vTitle.innerText = 'INELEGÍVEL (VEDADO)';
       }
 
@@ -1492,22 +1566,22 @@
       if (data.verdict === 'INELIGIBLE') {
         container.classList.remove('hidden');
         container.innerHTML = `
-          <div class="p-2.5 bg-rose-950/40 border border-rose-500/30 rounded-lg flex items-center gap-2.5 text-xs text-rose-200">
-            <i class="fa-solid fa-triangle-exclamation text-rose-400 text-sm"></i>
+          <div class="p-2.5 bg-rose-50 dark:bg-rose-950/40 border border-rose-200 dark:border-rose-500/30 rounded-lg flex items-center gap-2.5 text-xs text-rose-800 dark:text-rose-200 shadow-sm">
+            <i class="fa-solid fa-triangle-exclamation text-rose-600 dark:text-rose-400 text-sm"></i>
             <div>
-              <strong class="text-rose-300">Hipótese Vedada pelo Manual da Operadora.</strong>
-              <p class="text-[11px] text-slate-300 mt-0.5">${escapeHTML(data.summary || 'O processo apresenta teto financeiro excedido ou vedação expressa na norma.')}</p>
+              <strong class="text-rose-900 dark:text-rose-300">Hipótese Vedada pelo Manual da Operadora.</strong>
+              <p class="text-[11px] text-slate-600 dark:text-slate-300 mt-0.5">${escapeHTML(data.summary || 'O processo apresenta teto financeiro excedido ou vedação expressa na norma.')}</p>
             </div>
           </div>
         `;
       } else if (data.verdict === 'REQUIRES_HUMAN_REVIEW') {
         container.classList.remove('hidden');
         container.innerHTML = `
-          <div class="p-2.5 bg-amber-950/40 border border-amber-500/30 rounded-lg flex items-center gap-2.5 text-xs text-amber-200">
-            <i class="fa-solid fa-user-clock text-amber-400 text-sm"></i>
+          <div class="p-2.5 bg-amber-50 dark:bg-amber-950/40 border border-amber-200 dark:border-amber-500/30 rounded-lg flex items-center gap-2.5 text-xs text-amber-800 dark:text-amber-200 shadow-sm">
+            <i class="fa-solid fa-user-clock text-amber-600 dark:text-amber-400 text-sm"></i>
             <div>
-              <strong class="text-amber-300">Pendência Documental para Revisão Humana (HITL).</strong>
-              <p class="text-[11px] text-slate-300 mt-0.5">${escapeHTML(data.summary || 'Verifique o laudo ou comprovante anexado antes de formalizar a proposta.')}</p>
+              <strong class="text-amber-900 dark:text-amber-300">Pendência Documental para Revisão Humana (HITL).</strong>
+              <p class="text-[11px] text-slate-600 dark:text-slate-300 mt-0.5">${escapeHTML(data.summary || 'Verifique o laudo ou comprovante anexado antes de formalizar a proposta.')}</p>
             </div>
           </div>
         `;
@@ -1528,21 +1602,21 @@
       const pTrace = document.getElementById('pane-forensic-trace');
 
       [bSplit, bRules, bMinuta, bTrace].forEach(b => {
-        b.className = 'py-2.5 px-2.5 text-xs font-medium text-textMuted hover:text-white border-b-2 border-transparent flex items-center gap-1.5 transition btn-press';
+        b.className = 'py-2.5 px-2.5 text-xs font-medium text-slate-500 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white border-b-2 border-transparent flex items-center gap-1.5 transition btn-press';
       });
       [pSplit, pRules, pMinuta, pTrace].forEach(p => p.classList.add('hidden'));
 
       if (tabKey === 'split-pdf') {
-        bSplit.className = 'py-2.5 px-2.5 text-xs font-semibold text-white border-b-2 border-indigo-500 flex items-center gap-1.5 transition btn-press';
+        bSplit.className = 'py-2.5 px-2.5 text-xs font-semibold text-indigo-700 dark:text-white border-b-2 border-indigo-600 dark:border-indigo-500 flex items-center gap-1.5 transition btn-press';
         pSplit.classList.remove('hidden');
       } else if (tabKey === 'rules-eval') {
-        bRules.className = 'py-2.5 px-2.5 text-xs font-semibold text-white border-b-2 border-indigo-500 flex items-center gap-1.5 transition btn-press';
+        bRules.className = 'py-2.5 px-2.5 text-xs font-semibold text-indigo-700 dark:text-white border-b-2 border-indigo-600 dark:border-indigo-500 flex items-center gap-1.5 transition btn-press';
         pRules.classList.remove('hidden');
       } else if (tabKey === 'minuta-draft') {
-        bMinuta.className = 'py-2.5 px-2.5 text-xs font-semibold text-white border-b-2 border-indigo-500 flex items-center gap-1.5 transition btn-press';
+        bMinuta.className = 'py-2.5 px-2.5 text-xs font-semibold text-indigo-700 dark:text-white border-b-2 border-indigo-600 dark:border-indigo-500 flex items-center gap-1.5 transition btn-press';
         pMinuta.classList.remove('hidden');
       } else if (tabKey === 'forensic-trace') {
-        bTrace.className = 'py-2.5 px-2.5 text-xs font-semibold text-white border-b-2 border-indigo-500 flex items-center gap-1.5 transition btn-press';
+        bTrace.className = 'py-2.5 px-2.5 text-xs font-semibold text-indigo-700 dark:text-white border-b-2 border-indigo-600 dark:border-indigo-500 flex items-center gap-1.5 transition btn-press';
         pTrace.classList.remove('hidden');
       }
     }
@@ -1556,7 +1630,7 @@
           const btn = document.createElement('button');
           btn.id = `detail-page-btn-${idx}`;
           const isSelected = idx === 0;
-          btn.className = `px-2 py-0.5 rounded font-mono text-[9px] whitespace-nowrap transition border ${isSelected ? 'bg-indigo-600 text-white border-indigo-500 font-bold' : 'bg-surface text-textMuted border-borderSubtle hover:text-white'}`;
+          btn.className = `px-2 py-0.5 rounded font-mono text-[9px] whitespace-nowrap transition border ${isSelected ? 'bg-indigo-600 text-white border-indigo-500 font-bold' : 'bg-white dark:bg-white/5 text-slate-600 dark:text-slate-400 border-slate-200 dark:border-white/5 hover:text-slate-900'}`;
           
           const segName = (p.segment_type || 'PÁGINA').replace('_', ' ');
           btn.innerHTML = `<span>Pág ${p.page_number}</span> <span class="text-[8px] opacity-75 uppercase">(${escapeHTML(segName)})</span>`;
@@ -1587,8 +1661,8 @@
         const btn = document.getElementById(`detail-page-btn-${i}`);
         if (btn) {
           btn.className = (i === currentAuditPageIndex)
-            ? 'px-2 py-0.5 rounded font-mono text-[9px] whitespace-nowrap transition border bg-indigo-600 text-white border-indigo-500 font-bold'
-            : 'px-2 py-0.5 rounded font-mono text-[9px] whitespace-nowrap transition border bg-surface text-textMuted border-borderSubtle hover:text-white';
+            ? 'px-2 py-0.5 rounded font-mono text-[9px] whitespace-nowrap transition border bg-indigo-600 text-white border-indigo-500 font-bold shadow-sm'
+            : 'px-2 py-0.5 rounded font-mono text-[9px] whitespace-nowrap transition border bg-white dark:bg-white/5 text-slate-600 dark:text-slate-400 border-slate-200 dark:border-white/5 hover:text-slate-900 dark:hover:text-white';
         }
       }
 
@@ -1639,30 +1713,30 @@
       const themeName = data.identified_theme || 'Tema 01: Terapias Especiais';
 
       container.innerHTML = `
-        <div class="bento-card p-3 space-y-1.5 text-xs">
-          <div class="flex justify-between items-center border-b border-borderSubtle pb-1.5">
-            <span class="font-semibold text-emerald-400 flex items-center gap-1"><i class="fa-solid fa-coins text-[10px]"></i> Análise Financeira</span>
-            <span class="font-mono text-white font-bold">R$ ${(fin.requested_amount || fin.amount || 0).toLocaleString('pt-BR', {minimumFractionDigits: 2})}</span>
+        <div class="bento-card p-3 space-y-1.5 text-xs shadow-sm">
+          <div class="flex justify-between items-center border-b border-slate-200 dark:border-white/5 pb-1.5">
+            <span class="font-semibold text-emerald-700 dark:text-emerald-400 flex items-center gap-1"><i class="fa-solid fa-coins text-[10px]"></i> Análise Financeira</span>
+            <span class="font-mono text-slate-900 dark:text-white font-bold">R$ ${(fin.requested_amount || fin.amount || 0).toLocaleString('pt-BR', {minimumFractionDigits: 2})}</span>
           </div>
-          <p class="text-textSecondary text-[11px]"><strong>Comprovação de Desembolso:</strong> ${fin.has_fiscal_receipt || fin.has_receipt ? '<span class="text-emerald-400 font-semibold">SIM (Nota Fiscal / Recibo)</span>' : '<span class="text-rose-400 font-semibold">NÃO ENCONTRADO</span>'}</p>
-          <p class="text-textSecondary text-[11px]"><strong>Tema Classificado:</strong> ${themeName}</p>
+          <p class="text-slate-600 dark:text-slate-300 text-[11px]"><strong>Comprovação de Desembolso:</strong> ${fin.has_fiscal_receipt || fin.has_receipt ? '<span class="text-emerald-700 dark:text-emerald-400 font-semibold">SIM (Nota Fiscal / Recibo)</span>' : '<span class="text-rose-600 dark:text-rose-400 font-semibold">NÃO ENCONTRADO</span>'}</p>
+          <p class="text-slate-600 dark:text-slate-300 text-[11px]"><strong>Tema Classificado:</strong> ${themeName}</p>
         </div>
 
-        <div class="bento-card p-3 space-y-1.5 text-xs">
-          <div class="flex justify-between items-center border-b border-borderSubtle pb-1.5">
-            <span class="font-semibold text-teal-400 flex items-center gap-1"><i class="fa-solid fa-stethoscope text-[10px]"></i> Análise Médica & Clínica</span>
-            <span class="font-mono text-textMuted text-[10px]">${treat.cid_10 ? `CID-10: ${treat.cid_10}` : 'CID nos autos'}</span>
+        <div class="bento-card p-3 space-y-1.5 text-xs shadow-sm">
+          <div class="flex justify-between items-center border-b border-slate-200 dark:border-white/5 pb-1.5">
+            <span class="font-semibold text-teal-700 dark:text-teal-400 flex items-center gap-1"><i class="fa-solid fa-stethoscope text-[10px]"></i> Análise Médica & Clínica</span>
+            <span class="font-mono text-slate-500 dark:text-slate-400 text-[10px]">${treat.cid_10 ? `CID-10: ${treat.cid_10}` : 'CID nos autos'}</span>
           </div>
-          <p class="text-textSecondary text-[11px]"><strong>Tipo de Tratamento:</strong> ${treat.treatment_type || treat.type || 'Tratamento Assistencial'}</p>
-          <p class="text-textSecondary text-[11px]"><strong>Laudo Pericial:</strong> ${treat.has_medical_report !== false ? '<span class="text-emerald-400 font-semibold">Identificado</span>' : '<span class="text-amber-400">Pendente de juntada</span>'}</p>
+          <p class="text-slate-600 dark:text-slate-300 text-[11px]"><strong>Tipo de Tratamento:</strong> ${treat.treatment_type || treat.type || 'Tratamento Assistencial'}</p>
+          <p class="text-slate-600 dark:text-slate-300 text-[11px]"><strong>Laudo Pericial:</strong> ${treat.has_medical_report !== false ? '<span class="text-emerald-700 dark:text-emerald-400 font-semibold">Identificado</span>' : '<span class="text-amber-600">Pendente de juntada</span>'}</p>
         </div>
 
-        <div class="bento-card p-3 space-y-1.5 text-xs">
-          <div class="flex justify-between items-center border-b border-borderSubtle pb-1.5">
-            <span class="font-semibold text-indigo-400 flex items-center gap-1"><i class="fa-solid fa-file-circle-xmark text-[10px]"></i> Negativa Administrativa</span>
-            <span class="font-mono text-textMuted text-[10px]">${adm.has_administrative_denial || adm.denied ? 'COMPROVADA' : 'NÃO CONSTA'}</span>
+        <div class="bento-card p-3 space-y-1.5 text-xs shadow-sm">
+          <div class="flex justify-between items-center border-b border-slate-200 dark:border-white/5 pb-1.5">
+            <span class="font-semibold text-indigo-700 dark:text-indigo-400 flex items-center gap-1"><i class="fa-solid fa-file-circle-xmark text-[10px]"></i> Negativa Administrativa</span>
+            <span class="font-mono text-slate-500 dark:text-slate-400 text-[10px]">${adm.has_administrative_denial || adm.denied ? 'COMPROVADA' : 'NÃO CONSTA'}</span>
           </div>
-          <p class="text-textSecondary text-[11px]"><strong>Recusa Prévia:</strong> ${adm.has_administrative_denial || adm.denied ? '<span class="text-emerald-400 font-semibold">Protocolo localizado</span>' : '<span class="text-textMuted">Sem comprovante explícito</span>'}</p>
+          <p class="text-slate-600 dark:text-slate-300 text-[11px]"><strong>Recusa Prévia:</strong> ${adm.has_administrative_denial || adm.denied ? '<span class="text-emerald-700 dark:text-emerald-400 font-semibold">Protocolo localizado</span>' : '<span class="text-slate-400">Sem comprovante explícito</span>'}</p>
         </div>
       `;
     }
@@ -1675,22 +1749,22 @@
         data.rules.forEach(r => {
           const pass = r.status === 'PASS';
           const rDiv = document.createElement('div');
-          rDiv.className = `p-3 rounded-lg border ${pass ? 'border-emerald-500/25 bg-emerald-950/15' : 'border-rose-500/25 bg-rose-950/15'}`;
+          rDiv.className = `p-3 rounded-lg border shadow-sm ${pass ? 'border-emerald-200 dark:border-emerald-500/25 bg-emerald-50/60 dark:bg-emerald-950/15' : 'border-rose-200 dark:border-rose-500/25 bg-rose-50/60 dark:bg-rose-950/15'}`;
           rDiv.innerHTML = `
             <div class="flex justify-between items-center mb-0.5">
-              <span class="font-mono font-semibold text-xs ${pass ? 'text-emerald-400' : 'text-rose-400'}">${escapeHTML(r.rule_code)}</span>
+              <span class="font-mono font-semibold text-xs ${pass ? 'text-emerald-700 dark:text-emerald-400' : 'text-rose-700 dark:text-rose-400'}">${escapeHTML(r.rule_code)}</span>
               <span class="${pass ? 'badge-eligible' : 'badge-ineligible'} text-[9px] font-bold px-1.5 py-0.2 rounded">${escapeHTML(r.status)}</span>
             </div>
-            <p class="text-xs text-slate-200 font-medium">${escapeHTML(r.title || 'Critério da Norma')}</p>
-            ${r.failure_reason ? `<p class="text-[11px] text-textMuted mt-0.5">${escapeHTML(r.failure_reason)}</p>` : ''}
+            <p class="text-xs text-slate-800 dark:text-slate-200 font-medium">${escapeHTML(r.title || 'Critério da Norma')}</p>
+            ${r.failure_reason ? `<p class="text-[11px] text-slate-500 dark:text-slate-400 mt-0.5">${escapeHTML(r.failure_reason)}</p>` : ''}
           `;
           container.appendChild(rDiv);
         });
       } else {
         container.innerHTML = `
-          <div class="p-3.5 rounded-lg border border-emerald-500/25 bg-emerald-950/15">
-            <span class="font-mono font-bold text-xs text-emerald-400">CONFORMIDADE GERAL</span>
-            <p class="text-xs text-slate-200 mt-0.5">${escapeHTML(data.summary || 'Processo validado em conformidade com o Manual Corporativo.')}</p>
+          <div class="p-3.5 rounded-lg border border-emerald-200 dark:border-emerald-500/25 bg-emerald-50/60 dark:bg-emerald-950/15 shadow-sm">
+            <span class="font-mono font-bold text-xs text-emerald-700 dark:text-emerald-400">CONFORMIDADE GERAL</span>
+            <p class="text-xs text-slate-800 dark:text-slate-200 mt-0.5">${escapeHTML(data.summary || 'Processo validado em conformidade com o Manual Corporativo.')}</p>
           </div>
         `;
       }
@@ -1843,8 +1917,8 @@ OAB/...                                      OAB/...`;
       if (!trace || !trace.phases) {
         if (durationLabel) durationLabel.innerText = 'Log: Padrão';
         phasesList.innerHTML = `
-          <div class="bento-card p-3 text-textMuted text-xs">
-            <p class="font-semibold text-slate-300 mb-0.5">Processamento Registrado</p>
+          <div class="bento-card p-3 text-slate-500 dark:text-slate-400 text-xs shadow-sm">
+            <p class="font-semibold text-slate-800 dark:text-slate-300 mb-0.5">Processamento Registrado</p>
             <p class="text-[11px]">Faça um novo upload para visualizar o trace forense detalhado aqui.</p>
           </div>
         `;
@@ -1867,38 +1941,38 @@ OAB/...                                      OAB/...`;
         const meta = phaseNames[pKey] || { title: pKey, icon: 'fa-circle-notch' };
         const statusBadge = pVal.status === 'COMPLETED' 
           ? '<span class="badge-eligible text-[8px] font-bold px-1.5 py-0.2 rounded">OK</span>'
-          : (pVal.status === 'ERROR' ? '<span class="badge-ineligible text-[8px] font-bold px-1.5 py-0.2 rounded">ERRO</span>' : '<span class="bg-surfaceHover text-textMuted px-1.5 py-0.2 rounded text-[8px]">PENDENTE</span>');
+          : (pVal.status === 'ERROR' ? '<span class="badge-ineligible text-[8px] font-bold px-1.5 py-0.2 rounded">ERRO</span>' : '<span class="bg-slate-100 dark:bg-white/5 text-slate-500 px-1.5 py-0.2 rounded text-[8px]">PENDENTE</span>');
 
         const pCard = document.createElement('div');
-        pCard.className = 'bento-card overflow-hidden';
+        pCard.className = 'bento-card overflow-hidden shadow-sm';
         
         let logsHtml = (pVal.logs || []).map(l => {
-          let lvlColor = 'text-slate-300';
-          if (l.level === 'SUCCESS') lvlColor = 'text-emerald-400 font-semibold';
-          if (l.level === 'WARNING') lvlColor = 'text-amber-400 font-semibold';
-          if (l.level === 'ERROR') lvlColor = 'text-rose-400 font-bold';
+          let lvlColor = 'text-slate-700 dark:text-slate-300';
+          if (l.level === 'SUCCESS') lvlColor = 'text-emerald-700 dark:text-emerald-400 font-semibold';
+          if (l.level === 'WARNING') lvlColor = 'text-amber-700 dark:text-amber-400 font-semibold';
+          if (l.level === 'ERROR') lvlColor = 'text-rose-700 dark:text-rose-400 font-bold';
 
           return `
-            <div class="text-[10px] leading-relaxed border-b border-borderSubtle pb-0.5 pt-0.5">
-              <span class="text-textMuted font-mono">[+${l.elapsed_ms}ms]</span>
+            <div class="text-[10px] leading-relaxed border-b border-slate-100 dark:border-white/5 pb-0.5 pt-0.5">
+              <span class="text-slate-400 font-mono">[+${l.elapsed_ms}ms]</span>
               <span class="${lvlColor}">${escapeHTML(l.message)}</span>
             </div>
           `;
         }).join('');
 
         pCard.innerHTML = `
-          <div class="p-2 bg-canvas flex justify-between items-center cursor-pointer border-b border-borderSubtle select-none hover:bg-surface transition" onclick="this.nextElementSibling.classList.toggle('hidden')">
+          <div class="p-2 bg-slate-50 dark:bg-black/30 flex justify-between items-center cursor-pointer border-b border-slate-200 dark:border-white/5 select-none hover:bg-slate-100 dark:hover:bg-white/5 transition" onclick="this.nextElementSibling.classList.toggle('hidden')">
             <div class="flex items-center gap-1.5">
-              <i class="fa-solid ${meta.icon} text-indigo-400 text-[10px]"></i>
-              <span class="font-semibold text-slate-200 text-xs">${meta.title}</span>
+              <i class="fa-solid ${meta.icon} text-indigo-600 dark:text-indigo-400 text-[10px]"></i>
+              <span class="font-semibold text-slate-800 dark:text-slate-200 text-xs">${meta.title}</span>
             </div>
             <div class="flex items-center gap-1.5">
               ${statusBadge}
-              <i class="fa-solid fa-chevron-down text-[8px] text-textMuted"></i>
+              <i class="fa-solid fa-chevron-down text-[8px] text-slate-400"></i>
             </div>
           </div>
-          <div class="p-2 space-y-0.5 bg-canvas/60 max-h-40 overflow-y-auto font-mono">
-            ${logsHtml || '<p class="text-textMuted text-[10px]">Sem logs nesta fase.</p>'}
+          <div class="p-2 space-y-0.5 bg-white dark:bg-black/20 max-h-40 overflow-y-auto font-mono">
+            ${logsHtml || '<p class="text-slate-400 text-[10px]">Sem logs nesta fase.</p>'}
           </div>
         `;
         phasesList.appendChild(pCard);
@@ -1929,10 +2003,10 @@ OAB/...                                      OAB/...`;
 
         if (items.length === 0) {
           container.innerHTML = `
-            <div class="bento-card p-6 text-center space-y-1.5">
-              <i class="fa-solid fa-circle-check text-emerald-400 text-2xl mb-1"></i>
-              <h4 class="font-bold text-xs text-white">Fila Zerada</h4>
-              <p class="text-xs text-textMuted">Todos os processos foram validados deterministicamente sem pendências de evidência.</p>
+            <div class="bento-card p-6 text-center space-y-1.5 shadow-sm">
+              <i class="fa-solid fa-circle-check text-emerald-600 dark:text-emerald-400 text-2xl mb-1"></i>
+              <h4 class="font-bold text-xs text-slate-800 dark:text-white">Fila Zerada</h4>
+              <p class="text-xs text-slate-500 dark:text-slate-400">Todos os processos foram validados deterministicamente sem pendências de evidência.</p>
             </div>
           `;
           return;
@@ -1940,15 +2014,15 @@ OAB/...                                      OAB/...`;
 
         items.forEach(item => {
           const div = document.createElement('div');
-          div.className = 'bento-card p-3.5 flex justify-between items-center hover:border-borderMuted transition';
+          div.className = 'bento-card p-3.5 flex justify-between items-center hover:border-slate-300 dark:hover:border-white/10 transition shadow-sm';
           div.innerHTML = `
             <div>
               <div class="flex items-center gap-2">
-                <span class="text-xs font-mono font-semibold text-indigo-400">${escapeHTML(item.cnj_number || item.process_id)}</span>
+                <span class="text-xs font-mono font-semibold text-indigo-700 dark:text-indigo-400">${escapeHTML(item.cnj_number || item.process_id)}</span>
                 <span class="badge-hitl text-[9px] px-1.5 py-0.2 rounded font-bold font-mono">REVISÃO PENDENTE</span>
               </div>
-              <p class="text-xs text-slate-300 mt-1"><strong>Campo Pendente:</strong> ${escapeHTML(item.reason || item.missing_fact_field || 'Evidência médica/financeira')}</p>
-              <p class="text-[10px] text-textMuted font-mono mt-0.5">ID: ${escapeHTML(item.process_id)}</p>
+              <p class="text-xs text-slate-700 dark:text-slate-300 mt-1"><strong>Campo Pendente:</strong> ${escapeHTML(item.reason || item.missing_fact_field || 'Evidência médica/financeira')}</p>
+              <p class="text-[10px] text-slate-400 font-mono mt-0.5">ID: ${escapeHTML(item.process_id)}</p>
             </div>
             <button onclick="selectProcess('${escapeHTML(item.process_id)}'); switchNav('command-center');" class="px-3 py-1.5 bg-indigo-600 hover:bg-indigo-500 text-white rounded-md text-xs font-semibold shadow-sm transition btn-press">
               Auditar <i class="fa-solid fa-arrow-right ml-1 text-[10px]"></i>
@@ -2001,13 +2075,13 @@ OAB/...                                      OAB/...`;
       label.innerText = `${selectedProcessFiles.length} documento(s) (${totalMb} MB)`;
 
       listContainer.innerHTML = selectedProcessFiles.map((f, idx) => `
-        <div class="flex items-center justify-between p-1.5 bg-surface border border-borderSubtle rounded text-xs">
+        <div class="flex items-center justify-between p-1.5 bg-slate-100 dark:bg-white/5 border border-slate-200 dark:border-white/5 rounded text-xs">
           <div class="flex items-center gap-1.5 overflow-hidden">
-            <i class="fa-solid fa-file-pdf text-rose-400 text-[10px] shrink-0"></i>
-            <span class="font-mono text-slate-200 truncate max-w-[240px]" title="${f.name}">${idx + 1}. ${f.name}</span>
-            <span class="text-[9px] text-textMuted shrink-0">(${(f.size / (1024 * 1024)).toFixed(2)} MB)</span>
+            <i class="fa-solid fa-file-pdf text-rose-500 text-[10px] shrink-0"></i>
+            <span class="font-mono text-slate-800 dark:text-slate-200 truncate max-w-[240px]" title="${f.name}">${idx + 1}. ${f.name}</span>
+            <span class="text-[9px] text-slate-400 shrink-0">(${(f.size / (1024 * 1024)).toFixed(2)} MB)</span>
           </div>
-          <button type="button" onclick="removeSelectedFile(${idx})" class="text-textMuted hover:text-rose-400 px-1 transition" title="Remover">
+          <button type="button" onclick="removeSelectedFile(${idx})" class="text-slate-400 hover:text-rose-500 px-1 transition" title="Remover">
             <i class="fa-solid fa-xmark text-[10px]"></i>
           </button>
         </div>
@@ -2040,7 +2114,7 @@ OAB/...                                      OAB/...`;
       
       modal.classList.remove('hidden');
       pBar.style.width = '20%';
-      logs.innerHTML = `<p class="text-slate-300">[1/5] Ingestão de ${selectedProcessFiles.length} documento(s) e OCR em cascata...</p>`;
+      logs.innerHTML = `<p class="text-slate-700 dark:text-slate-300">[1/5] Ingestão de ${selectedProcessFiles.length} documento(s) e OCR em cascata...</p>`;
 
       try {
         const res = await fetch('/processes/upload', {
@@ -2057,15 +2131,15 @@ OAB/...                                      OAB/...`;
         
         pBar.style.width = '50%';
         await new Promise(r => setTimeout(r, 200));
-        logs.innerHTML += `<p class="text-slate-300">[2/5] OCR Concluído: ${data.total_pages} páginas indexadas.</p>`;
+        logs.innerHTML += `<p class="text-slate-700 dark:text-slate-300">[2/5] OCR Concluído: ${data.total_pages} páginas indexadas.</p>`;
         
         pBar.style.width = '75%';
         await new Promise(r => setTimeout(r, 200));
-        logs.innerHTML += `<p class="text-slate-300">[3/5] Tema Classificado: ${data.identified_theme || 'Tema 01: Terapias'}</p>`;
+        logs.innerHTML += `<p class="text-slate-700 dark:text-slate-300">[3/5] Tema Classificado: ${data.identified_theme || 'Tema 01: Terapias'}</p>`;
         
         pBar.style.width = '100%';
         await new Promise(r => setTimeout(r, 200));
-        logs.innerHTML += `<p class="text-emerald-400 font-semibold">[4/5] Veredito: ${data.verdict} — ${data.summary}</p>`;
+        logs.innerHTML += `<p class="text-emerald-700 dark:text-emerald-400 font-semibold">[4/5] Veredito: ${data.verdict} — ${data.summary}</p>`;
 
         await new Promise(r => setTimeout(r, 400));
         modal.classList.add('hidden');
@@ -2129,19 +2203,19 @@ OAB/...                                      OAB/...`;
       const container = document.getElementById('toast-container');
       const toast = document.createElement('div');
       const borderColors = {
-        success: 'border-emerald-500/60 text-emerald-300 bg-surface/95 shadow-sm',
-        warning: 'border-amber-500/60 text-amber-300 bg-surface/95',
-        error: 'border-rose-500/60 text-rose-300 bg-surface/95 shadow-sm',
-        info: 'border-indigo-500/60 text-indigo-300 bg-surface/95 shadow-sm'
+        success: 'border-emerald-300 text-emerald-900 bg-white dark:border-emerald-500/60 dark:text-emerald-300 dark:bg-black/90 shadow-md',
+        warning: 'border-amber-300 text-amber-900 bg-white dark:border-amber-500/60 dark:text-amber-300 dark:bg-black/90 shadow-md',
+        error: 'border-rose-300 text-rose-900 bg-white dark:border-rose-500/60 dark:text-rose-300 dark:bg-black/90 shadow-md',
+        info: 'border-indigo-300 text-indigo-900 bg-white dark:border-indigo-500/60 dark:text-indigo-300 dark:bg-black/90 shadow-md'
       };
       
-      toast.className = `p-3 rounded-lg border shadow-xl transition-all duration-200 max-w-xs pointer-events-auto backdrop-blur-md ${borderColors[type] || borderColors.info}`;
+      toast.className = `p-3 rounded-lg border transition-all duration-200 max-w-xs pointer-events-auto backdrop-blur-md ${borderColors[type] || borderColors.info}`;
       toast.innerHTML = `
         <div class="flex items-center gap-1.5">
-          <i class="fa-solid ${type === 'success' ? 'fa-circle-check text-emerald-400' : (type === 'error' ? 'fa-triangle-exclamation text-rose-400' : (type === 'warning' ? 'fa-triangle-exclamation text-amber-400' : 'fa-circle-info text-indigo-400'))} text-xs"></i>
+          <i class="fa-solid ${type === 'success' ? 'fa-circle-check text-emerald-600' : (type === 'error' ? 'fa-triangle-exclamation text-rose-600' : (type === 'warning' ? 'fa-triangle-exclamation text-amber-600' : 'fa-circle-info text-indigo-600'))} text-xs"></i>
           <p class="font-semibold text-xs">${escapeHTML(title)}</p>
         </div>
-        <p class="text-[11px] text-textSecondary mt-0.5 pl-4">${escapeHTML(msg)}</p>
+        <p class="text-[11px] text-slate-600 dark:text-slate-300 mt-0.5 pl-4">${escapeHTML(msg)}</p>
       `;
 
       container.appendChild(toast);
