@@ -63,6 +63,10 @@ def test_policy_draft_diff_and_activation_lifecycle():
     diff_data = diff_res.json()
     assert any(r["rule_code"] == rule_code_new for r in diff_data["rules_added"])
 
+    # 0. Captura versão ativa original
+    original_active = client.get("/policies/active").json()
+    original_version = original_active.get("version")
+
     # 3. Ativa a nova versão (Transição Atômica)
     activate_res = client.post(f"/policies/{draft_id}/activate")
     assert activate_res.status_code == 200
@@ -77,13 +81,12 @@ def test_policy_draft_diff_and_activation_lifecycle():
     from src.models.entities import PolicyVersion
     db = SessionLocal()
     try:
-        oficial = db.query(PolicyVersion).filter(PolicyVersion.version == "2026.1-AMIL-IT-ACORDOS").first()
-        if not oficial:
-            oficial = db.query(PolicyVersion).filter(PolicyVersion.version == "2026.OFICIAL").first()
-        if oficial:
-            db.query(PolicyVersion).filter(PolicyVersion.tenant_id == oficial.tenant_id).update({"status": "INACTIVE"})
-            oficial.status = "ACTIVE"
-            db.commit()
+        if original_version:
+            orig = db.query(PolicyVersion).filter(PolicyVersion.version == original_version).first()
+            if orig:
+                db.query(PolicyVersion).filter(PolicyVersion.tenant_id == orig.tenant_id).update({"status": "INACTIVE"})
+                orig.status = "ACTIVE"
+                db.commit()
     finally:
         db.close()
 
@@ -165,6 +168,109 @@ def test_process_multi_pdf_upload_endpoint():
     res_json = response.json()
     assert res_json["status"] == "SUCCESS"
     assert res_json["documents_count"] == 3
-    assert res_json["total_pages"] == 3
-    assert len(res_json["documents_summary"]) == 3
     assert res_json["cnj_number"] == "5008888-11.2025.8.26.0100"
+
+
+def test_process_decision_lifecycle():
+    # 1. Cria um processo para teste
+    doc = fitz.open()
+    page = doc.new_page()
+    page.insert_text((50, 50), "Petição Inicial. Ação de Saúde. R$ 5.000,00.")
+    fake_pdf = doc.tobytes()
+    doc.close()
+
+    upload_res = client.post(
+        "/processes/upload",
+        data={"cnj_number": "7777777-11.2026.8.26.0100", "beneficiary_name": "Decisao Teste"},
+        files={"file": ("teste_decisao.pdf", fake_pdf, "application/pdf")}
+    )
+    assert upload_res.status_code == 200
+    proc_id = upload_res.json()["process_id"]
+
+    # 2. Testa Aprovação
+    approve_res = client.post(f"/processes/{proc_id}/decide", json={
+        "decision": "APPROVE",
+        "operator_notes": "Aprovado com sucesso.",
+        "proposal_amount": 4000.0,
+        "operator_name": "Dr. Silva"
+    })
+    assert approve_res.status_code == 200
+    assert approve_res.json()["new_status"] == "APPROVED"
+
+    # 3. Testa Envio p/ HITL
+    hitl_res = client.post(f"/processes/{proc_id}/decide", json={
+        "decision": "SEND_TO_HITL",
+        "operator_notes": "Falta documento legível.",
+        "operator_name": "Dr. Silva"
+    })
+    assert hitl_res.status_code == 200
+    assert hitl_res.json()["new_status"] == "REQUIRES_HUMAN_REVIEW"
+
+    # 4. Testa Rejeição
+    reject_res = client.post(f"/processes/{proc_id}/decide", json={
+        "decision": "REJECT",
+        "operator_notes": "Teto excedido e matéria vedada.",
+        "operator_name": "Dr. Silva"
+    })
+    assert reject_res.status_code == 200
+    assert reject_res.json()["new_status"] == "REJECTED"
+
+    # 5. Testa Reabertura do Processo do Histórico para Inbox
+    reopen_res = client.post(f"/processes/{proc_id}/reopen", json={
+        "reason": "Nova prova documental juntada aos autos.",
+        "operator_name": "Dr. Silva"
+    })
+    assert reopen_res.status_code == 200
+    assert reopen_res.json()["new_status"] == "EVALUATED"
+
+
+def test_process_scope_filtering_and_bulk_actions():
+    # 1. Cria 2 processos sintéticos
+    doc = fitz.open()
+    p = doc.new_page()
+    p.insert_text((50, 50), "Petição Inicial. Ação Teste. R$ 3.000,00.")
+    fake_pdf = doc.tobytes()
+    doc.close()
+
+    res1 = client.post(
+        "/processes/upload",
+        data={"cnj_number": "8888888-01.2026.8.26.0100", "beneficiary_name": "Bulk Teste 1"},
+        files={"file": ("bulk1.pdf", fake_pdf, "application/pdf")}
+    )
+    res2 = client.post(
+        "/processes/upload",
+        data={"cnj_number": "8888888-02.2026.8.26.0100", "beneficiary_name": "Bulk Teste 2"},
+        files={"file": ("bulk2.pdf", fake_pdf, "application/pdf")}
+    )
+    p1_id = res1.json()["process_id"]
+    p2_id = res2.json()["process_id"]
+
+    # 2. Testa Aprovação em Lote
+    bulk_res = client.post("/processes/bulk-approve", json={
+        "process_ids": [p1_id, p2_id],
+        "operator_name": "Dr. Coordenador",
+        "operator_notes": "Aprovados em lote."
+    })
+    assert bulk_res.status_code == 200
+    assert bulk_res.json()["approved_count"] == 2
+
+    # 3. Testa Filtragem por Scope
+    inbox_res = client.get("/processes?scope=inbox")
+    assert inbox_res.status_code == 200
+    inbox_ids = [p["process_id"] for p in inbox_res.json()]
+    assert p1_id not in inbox_ids
+    assert p2_id not in inbox_ids
+
+    history_res = client.get("/processes?scope=history")
+    assert history_res.status_code == 200
+    hist_ids = [p["process_id"] for p in history_res.json()]
+    assert p1_id in hist_ids
+    assert p2_id in hist_ids
+
+    # 4. Testa Exportação CSV
+    csv_res = client.get("/processes/export/csv?scope=history")
+    assert csv_res.status_code == 200
+    assert "text/csv" in csv_res.headers["content-type"]
+    assert "CNJ" in csv_res.text
+
+

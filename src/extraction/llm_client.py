@@ -49,13 +49,19 @@ class ProcessExtractedFacts(BaseModel):
 
 
 class OpenRouterExtractionClient:
-    def __init__(self):
-        self.api_key = settings.OPENROUTER_API_KEY
-        self.model = settings.LLM_MODEL or "openai/gpt-4o-mini"
+    def __init__(self, api_key: Optional[str] = None):
+        self._explicit_key = api_key
+        self.api_key = api_key or getattr(settings, "OPENROUTER_API_KEY", None)
+        self.model = getattr(settings, "LLM_MODEL", "openai/gpt-4o-mini")
         self.base_url = "https://openrouter.ai/api/v1"
         
     def is_configured(self) -> bool:
-        return bool(self.api_key and len(self.api_key.strip()) > 5)
+        if self._explicit_key is not None:
+            return bool(self._explicit_key and len(str(self._explicit_key).strip()) > 5)
+        current_key = getattr(settings, "OPENROUTER_API_KEY", None)
+        if current_key is None:
+            current_key = self.api_key or ""
+        return bool(current_key and len(str(current_key).strip()) > 5)
 
     def extract_facts(self, process_text: str, policy_summary: str = "") -> Optional[Dict[str, Any]]:
         """

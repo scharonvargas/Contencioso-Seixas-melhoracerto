@@ -277,13 +277,19 @@ async def get_policy_diff_for_version(version_id: str):
     """
     db = SessionLocal()
     try:
-        active_ver = db.query(PolicyVersion).filter(PolicyVersion.status == "ACTIVE").first()
         target_ver = db.query(PolicyVersion).filter(
             (PolicyVersion.id == version_id) | (PolicyVersion.version == version_id)
         ).first()
 
         if not target_ver:
             raise HTTPException(status_code=404, detail="Versão de destino não encontrada.")
+
+        active_ver = db.query(PolicyVersion).filter(
+            PolicyVersion.tenant_id == target_ver.tenant_id,
+            PolicyVersion.status == "ACTIVE"
+        ).first()
+        if not active_ver:
+            active_ver = db.query(PolicyVersion).filter(PolicyVersion.status == "ACTIVE").first()
 
         source_rules = active_ver.structured_rules.get("rules", []) if active_ver else []
         target_rules = target_ver.structured_rules.get("rules", [])

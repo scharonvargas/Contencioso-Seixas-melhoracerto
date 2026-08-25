@@ -298,8 +298,8 @@ class DynamicPolicyCompiler:
                 if inline_prohibs:
                     prohibitions.extend([ip.strip() for ip in inline_prohibs])
 
-                for r_item in pre_sentence:
-                    if re.search(r'n[aã]o\s+fazer\s+acordo|somente\s+com\s+senten[çc]a|vedad[ao]', r_item, re.IGNORECASE):
+                for r_item in pre_sentence + post_sentence:
+                    if re.search(r'n[aã]o\s+(?:fazer\s+acordo[s]?|cobrir|realizar\s+acordos?|fechar\s+acordo)|somente\s+com\s+senten[çc]a|vedad[ao]|sem\s+possibilidade\s+futura', r_item, re.IGNORECASE):
                         if r_item not in prohibitions:
                             prohibitions.append(r_item)
 

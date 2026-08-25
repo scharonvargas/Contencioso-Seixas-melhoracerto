@@ -354,21 +354,36 @@ for tenant in tenants:
 
     db.query(PolicyVersion).filter(PolicyVersion.tenant_id == tenant.id).update({"status": "INACTIVE"})
     
-    pv = PolicyVersion(
-        tenant_id=tenant.id,
-        policy_id=policy.id,
-        version="2026.1-AMIL-OFICIAL",
-        status="ACTIVE",
-        file_hash_sha256="sha256_full_16_pages_amil_2026",
-        pdf_storage_path="policies/Instrucao_Trabalho_Acordos_Amil_2026.pdf",
-        structured_rules={
+    pv = db.query(PolicyVersion).filter(
+        PolicyVersion.tenant_id == tenant.id,
+        PolicyVersion.policy_id == policy.id,
+        PolicyVersion.version == "2026.1-AMIL-OFICIAL"
+    ).first()
+
+    if pv:
+        pv.status = "ACTIVE"
+        pv.structured_rules = {
             "policy_version_id": "2026.1-AMIL-OFICIAL",
             "topics": [t.model_dump() for t in compiled.topics],
             "general_rules": compiled.general_rules,
             "rules": compiled.all_rules
         }
-    )
-    db.add(pv)
+    else:
+        pv = PolicyVersion(
+            tenant_id=tenant.id,
+            policy_id=policy.id,
+            version="2026.1-AMIL-OFICIAL",
+            status="ACTIVE",
+            file_hash_sha256="sha256_full_16_pages_amil_2026",
+            pdf_storage_path="policies/Instrucao_Trabalho_Acordos_Amil_2026.pdf",
+            structured_rules={
+                "policy_version_id": "2026.1-AMIL-OFICIAL",
+                "topics": [t.model_dump() for t in compiled.topics],
+                "general_rules": compiled.general_rules,
+                "rules": compiled.all_rules
+            }
+        )
+        db.add(pv)
 
 db.commit()
 print("All tenants updated successfully with ACTIVE 2026.1-AMIL-OFICIAL policy!")

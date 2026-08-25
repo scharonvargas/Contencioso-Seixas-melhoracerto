@@ -8,6 +8,11 @@ def disable_remote_llm_during_tests(monkeypatch):
     sem timeout de rede ou chamadas externas a APIs de terceiros.
     """
     monkeypatch.setattr(settings, "OPENROUTER_API_KEY", "")
+    monkeypatch.setattr(settings, "GEMINI_API_KEY", "")
+    monkeypatch.setattr(settings, "GOOGLE_VISION_API_KEY", "")
+    monkeypatch.setenv("OPENROUTER_API_KEY", "")
+    monkeypatch.setenv("GEMINI_API_KEY", "")
+    monkeypatch.setenv("GOOGLE_VISION_API_KEY", "")
 
 @pytest.fixture
 def db_session_fixture():

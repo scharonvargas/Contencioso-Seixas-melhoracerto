@@ -74,7 +74,7 @@ class Process(Base):
     status = Column(String(32), nullable=False, default="PENDING") # PENDING, PROCESSING, EVALUATED, REQUIRES_HUMAN_REVIEW, ERROR
     total_pages = Column(Integer, nullable=False, default=0)
     created_at = Column(DateTime(timezone=True), server_default=func.now())
-    updated_at = Column(DateTime(timezone=True), onupdate=func.now())
+    updated_at = Column(DateTime(timezone=True), server_default=func.now(), onupdate=func.now())
     __table_args__ = (UniqueConstraint("tenant_id", "cnj_number", name="uq_tenant_cnj"),)
 
 class DocumentPage(Base):

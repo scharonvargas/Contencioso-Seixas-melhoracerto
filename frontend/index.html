@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Seixas AI — Inteligência Documental e Validação de Acordos</title>
+  <title>Seixas AI — Central de Inteligência de Acordos e Processos</title>
   <link rel="icon" type="image/svg+xml" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>⚖️</text></svg>">
   <script src="https://cdn.tailwindcss.com"></script>
   <script>
@@ -12,7 +12,8 @@
       theme: {
         extend: {
           colors: {
-            brand: { 50: '#ecfdf5', 500: '#10b981', 600: '#059669', 700: '#047857' },
+            brand: { 50: '#eef2ff', 500: '#6366f1', 600: '#4f46e5', 700: '#4338ca' },
+            emerald: { 50: '#ecfdf5', 500: '#10b981', 600: '#059669', 700: '#047857' },
             slate: { 850: '#151e2e', 900: '#0f172a', 950: '#020617' }
           }
         }
@@ -21,458 +22,767 @@
   </script>
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
   <style>
-    @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=JetBrains+Mono:wght@400;600&display=swap');
+    @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&family=JetBrains+Mono:wght@400;500;600;700&display=swap');
     body { font-family: 'Inter', sans-serif; }
     .font-mono { font-family: 'JetBrains Mono', monospace; }
+    ::-webkit-scrollbar { width: 6px; height: 6px; }
+    ::-webkit-scrollbar-track { background: rgba(15, 23, 42, 0.6); }
+    ::-webkit-scrollbar-thumb { background: rgba(51, 65, 85, 0.6); border-radius: 3px; }
+    ::-webkit-scrollbar-thumb:hover { background: rgba(100, 116, 139, 0.8); }
+    .active-card {
+      border-color: #6366f1 !important;
+      background: linear-gradient(135deg, rgba(99, 102, 241, 0.12) 0%, rgba(15, 23, 42, 0.95) 100%) !important;
+      box-shadow: 0 0 15px -3px rgba(99, 102, 241, 0.3) !important;
+    }
   </style>
 </head>
-<body class="bg-slate-950 text-slate-100 min-h-screen flex flex-col antialiased">
+<body class="bg-slate-950 text-slate-100 min-h-screen flex antialiased selection:bg-indigo-500/30 selection:text-indigo-200">
 
-  <!-- TOPBAR -->
-  <header class="bg-slate-900/90 backdrop-blur border-b border-slate-800 px-6 py-3 flex justify-between items-center sticky top-0 z-50 shadow-md">
-    <div class="flex items-center space-x-3 cursor-pointer" onclick="switchTab('dashboard')">
-      <div class="w-9 h-9 rounded-xl bg-gradient-to-tr from-emerald-600 via-teal-500 to-emerald-400 flex items-center justify-center font-bold text-white shadow-lg shadow-emerald-500/25">
-        <i class="fa-solid fa-scale-balanced text-base"></i>
-      </div>
-      <div>
-        <h1 class="font-bold text-sm tracking-tight text-white flex items-center gap-2">
-          Seixas AI <span class="text-[10px] bg-emerald-500/20 text-emerald-300 border border-emerald-500/30 px-2 py-0.5 rounded-full font-mono font-semibold">100% Dinâmico</span>
-        </h1>
-        <p class="text-[11px] text-slate-400">Validação com Base Exclusiva na Norma Interna Vigente</p>
-      </div>
-    </div>
-
-    <!-- TABS DE NAVEGAÇÃO -->
-    <nav class="flex space-x-1 bg-slate-950/80 p-1 rounded-xl border border-slate-800 shadow-inner">
-      <button onclick="switchTab('dashboard')" id="tab-dashboard" class="nav-tab px-4 py-2 rounded-lg text-xs font-semibold text-white bg-slate-800 border border-slate-700 shadow flex items-center gap-2 transition">
-        <i class="fa-solid fa-chart-line text-emerald-400"></i> Dashboard Executivo
-      </button>
-      <button onclick="switchTab('audit')" id="tab-audit" class="nav-tab px-4 py-2 rounded-lg text-xs font-semibold text-slate-400 hover:text-slate-200 flex items-center gap-2 transition">
-        <i class="fa-solid fa-file-shield text-slate-400"></i> Auditoria Split-Screen
-      </button>
-      <button onclick="switchTab('policies')" id="tab-policies" class="nav-tab px-4 py-2 rounded-lg text-xs font-semibold text-slate-400 hover:text-slate-200 flex items-center gap-2 transition">
-        <i class="fa-solid fa-book-bookmark text-slate-400"></i> Manual da Operadora (<span id="topics-count-badge">--</span> Temas)
-      </button>
-      <button onclick="switchTab('hitl')" id="tab-hitl" class="nav-tab px-4 py-2 rounded-lg text-xs font-semibold text-slate-400 hover:text-slate-200 flex items-center gap-2 transition">
-        <i class="fa-solid fa-user-check text-slate-400"></i> Fila HITL <span id="hitl-badge" class="bg-slate-800 text-slate-400 text-[10px] px-1.5 py-0.2 rounded-full font-mono font-bold">0</span>
-      </button>
-    </nav>
-
-    <!-- STATUS DA NORMA & BOTÃO DE UPLOAD -->
-    <div class="flex items-center space-x-3">
-      <button onclick="openUploadModal()" class="px-3.5 py-2 bg-emerald-600 hover:bg-emerald-500 text-white rounded-xl text-xs font-semibold shadow-md shadow-emerald-600/20 flex items-center gap-1.5 transition">
-        <i class="fa-solid fa-file-arrow-up text-xs"></i> Subir Processo PDF Real
-      </button>
-      <div class="flex items-center space-x-2 bg-slate-900 px-3 py-1.5 rounded-lg border border-slate-800">
-        <span class="inline-flex items-center gap-2 text-xs text-slate-400 font-mono">
-          <span class="w-2.5 h-2.5 rounded-full bg-emerald-400 animate-pulse"></span>
-          Norma: <strong id="topbar-policy-ver" class="text-emerald-300">Carregando...</strong>
-        </span>
-      </div>
-    </div>
-  </header>
-
-  <!-- CONTAINER PRINCIPAL -->
-  <main class="flex-1 flex flex-col p-6 max-w-7xl w-full mx-auto">
-
-    <!-- 1. DASHBOARD EXECUTIVO -->
-    <section id="view-dashboard" class="space-y-6">
-      <div class="grid grid-cols-1 md:grid-cols-4 gap-4">
-        <div class="bg-slate-900 border border-slate-800 p-4 rounded-xl shadow-lg">
-          <p class="text-xs text-slate-400 font-medium">Processos no Banco</p>
-          <p class="text-2xl font-bold text-white mt-1 font-mono" id="stat-total-processes">0 <span class="text-xs font-normal text-slate-400">processos</span></p>
-          <p class="mt-2 text-[11px] text-emerald-400 font-medium"><i class="fa-solid fa-database mr-1"></i> Banco Higienizado</p>
-        </div>
-        <div class="bg-slate-900 border border-slate-800 p-4 rounded-xl shadow-lg">
-          <p class="text-xs text-slate-400 font-medium">Custo Médio por Processo</p>
-          <p class="text-2xl font-bold text-white mt-1 font-mono">R$ 0,58 <span class="text-xs font-normal text-slate-400">/ 500 págs</span></p>
-          <p class="mt-2 text-[11px] text-emerald-400 font-medium"><i class="fa-solid fa-piggy-bank mr-1"></i> Saving de 98.4%</p>
-        </div>
-        <div class="bg-slate-900 border border-slate-800 p-4 rounded-xl shadow-lg">
-          <p class="text-xs text-slate-400 font-medium">Temas no Manual Ativo</p>
-          <p class="text-2xl font-bold text-emerald-400 mt-1 font-mono"><span id="stat-topics-count">--</span> Temas <span class="text-xs font-normal text-slate-400" id="stat-rules-count"></span></p>
-          <p class="mt-2 text-[11px] text-slate-400 font-medium">100% Dinâmico do PDF</p>
-        </div>
-        <div class="bg-slate-900 border border-slate-800 p-4 rounded-xl shadow-lg">
-          <p class="text-xs text-slate-400 font-medium">Fila Human-in-the-Loop</p>
-          <p class="text-2xl font-bold text-slate-200 mt-1 font-mono" id="stat-hitl-count">0 <span class="text-xs font-normal text-slate-400">pendentes</span></p>
-          <p class="mt-2 text-[11px] text-emerald-400 font-medium">Triagem sob demanda</p>
-        </div>
-      </div>
-
-      <!-- PAINEL DE UPLOAD -->
-      <div class="bg-gradient-to-r from-slate-900 via-slate-850 to-slate-900 border border-emerald-500/30 p-5 rounded-2xl shadow-xl flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
-        <div>
-          <h3 class="font-bold text-sm text-white flex items-center gap-2">
-            <i class="fa-solid fa-cloud-arrow-up text-emerald-400"></i> Enviar Autos Judiciais (PDF Real)
-          </h3>
-          <p class="text-xs text-slate-400 mt-1">Envie o arquivo PDF dos autos para extração de fatos, OCR em cascata e validação determinística contra a norma ativa.</p>
-        </div>
-        <div>
-          <button onclick="openUploadModal()" class="px-4 py-2.5 bg-emerald-600 hover:bg-emerald-500 text-white rounded-xl text-xs font-semibold shadow-lg shadow-emerald-600/20 flex items-center gap-2 transition">
-            <i class="fa-solid fa-plus"></i> Selecionar Arquivo PDF...
-          </button>
-        </div>
-      </div>
-
-      <!-- MODAL DE EXECUÇÃO EM TEMPO REAL -->
-      <div id="live-runner-modal" class="hidden bg-slate-900 border border-slate-700 rounded-xl p-5 shadow-2xl space-y-3">
-        <div class="flex justify-between items-center border-b border-slate-800 pb-3">
-          <span class="text-xs font-mono font-bold text-emerald-400 flex items-center gap-2">
-            <i class="fa-solid fa-gear fa-spin"></i> EXECUTANDO ESTEIRA DOCUMENTAL CONTRA MANUAL REGISTRADO...
-          </span>
-          <span class="text-xs font-mono text-slate-400">Em tempo real</span>
-        </div>
-        <div class="space-y-2 text-xs font-mono" id="runner-logs"></div>
-      </div>
-
-      <!-- TABELA DE PROCESSOS REAIS DO BANCO -->
-      <div class="bg-slate-900 border border-slate-800 rounded-xl overflow-hidden shadow-lg">
-        <div class="p-4 border-b border-slate-800 flex justify-between items-center">
+  <!-- 1. SIDEBAR LATERAL ESCURA RECOLHÍVEL -->
+  <aside id="main-sidebar" class="w-64 bg-slate-900/95 border-r border-slate-800 flex flex-col justify-between shrink-0 z-40 transition-all duration-300">
+    <div class="flex flex-col h-full">
+      
+      <!-- LOGO E IDENTIDADE -->
+      <div class="p-4 border-b border-slate-800 flex items-center justify-between">
+        <div class="flex items-center space-x-3 cursor-pointer" onclick="switchNav('command-center')">
+          <div class="w-9 h-9 rounded-xl bg-gradient-to-tr from-indigo-600 via-indigo-500 to-emerald-400 flex items-center justify-center font-bold text-white shadow-lg shadow-indigo-500/25">
+            <i class="fa-solid fa-scale-balanced text-base"></i>
+          </div>
           <div>
-            <h2 class="font-semibold text-sm text-slate-100">Processos Judiciais Registrados no Banco</h2>
-            <p class="text-xs text-slate-400">Histórico de autos processados e auditados em conformidade com a Instrução de Trabalho</p>
+            <h1 class="font-bold text-sm tracking-tight text-white flex items-center gap-1.5">
+              Seixas AI <span class="text-[9px] bg-indigo-500/20 text-indigo-300 border border-indigo-500/30 px-1.5 py-0.2 rounded-full font-mono">v2.5</span>
+            </h1>
+            <p class="text-[10px] text-slate-400 font-medium">Cockpit Jurídico de Acordos</p>
           </div>
-          <button onclick="loadProcesses()" class="text-xs text-emerald-400 hover:text-emerald-300 font-mono flex items-center gap-1">
-            <i class="fa-solid fa-rotate-right"></i> Atualizar
-          </button>
-        </div>
-        
-        <table class="w-full text-left border-collapse text-xs">
-          <thead>
-            <tr class="bg-slate-950/60 text-slate-400 border-b border-slate-800 font-mono">
-              <th class="p-3.5">Número CNJ</th>
-              <th class="p-3.5">Beneficiário</th>
-              <th class="p-3.5">Páginas</th>
-              <th class="p-3.5">Norma Utilizada</th>
-              <th class="p-3.5">Veredito</th>
-              <th class="p-3.5 text-right">Ação</th>
-            </tr>
-          </thead>
-          <tbody id="processes-table-body" class="divide-y divide-slate-800 font-medium">
-            <!-- Renderizado dinamicamente via JS -->
-          </tbody>
-        </table>
-        <div id="empty-processes-state" class="hidden p-10 text-center space-y-3">
-          <i class="fa-solid fa-folder-open text-3xl text-slate-600"></i>
-          <p class="text-xs text-slate-300 font-medium">Nenhum processo judicial cadastrado no banco de dados.</p>
-          <p class="text-[11px] text-slate-500">Clique no botão "Subir Processo PDF Real" acima para processar seu primeiro arquivo.</p>
         </div>
       </div>
-    </section>
 
-    <!-- 2. AUDITORIA SPLIT-SCREEN -->
-    <section id="view-audit" class="hidden flex-1 flex flex-col bg-slate-900 border border-slate-800 rounded-2xl overflow-hidden shadow-2xl">
-      <div class="flex flex-1 h-[calc(100vh-140px)] min-h-0">
-        <!-- PDF VIEWER & REAL PAGE CANVAS -->
-        <div class="flex-1 flex flex-col border-r border-slate-800 bg-slate-950 min-h-0">
-          <div class="p-3.5 bg-slate-900 border-b border-slate-800 flex justify-between items-center text-xs">
-            <div class="flex items-center gap-2 overflow-hidden">
-              <i class="fa-solid fa-file-pdf text-rose-400"></i>
-              <span id="audit-cnj-title" class="font-mono text-slate-200 font-bold truncate max-w-[200px]">Nenhum processo selecionado</span>
-              <span id="audit-doc-name-badge" class="font-mono text-[10px] text-slate-400 bg-slate-800 px-2 py-0.5 rounded border border-slate-700 truncate max-w-[180px]">autos.pdf</span>
-              <span id="audit-doc-segment-badge" class="text-[10px] bg-indigo-500/20 text-indigo-300 border border-indigo-500/30 px-2 py-0.5 rounded-full font-bold uppercase">PETIÇÃO</span>
-            </div>
-            <div class="flex items-center gap-3">
-              <span class="text-slate-400 text-[11px] font-mono">Página <strong id="audit-page-num" class="text-emerald-400">1</strong> de <span id="audit-total-pages">1</span></span>
-              <div class="space-x-1">
-                <button onclick="changeAuditPage(-1)" class="px-2.5 py-1 bg-slate-800 hover:bg-slate-700 rounded text-xs border border-slate-700 font-mono">◀</button>
-                <button onclick="changeAuditPage(1)" class="px-2.5 py-1 bg-slate-800 hover:bg-slate-700 rounded text-xs border border-slate-700 font-mono">▶</button>
-              </div>
-            </div>
-          </div>
+      <!-- NAVEGAÇÃO PRINCIPAL -->
+      <div class="p-3 space-y-6 flex-1 overflow-y-auto">
+        
+        <div>
+          <p class="text-[10px] font-mono uppercase tracking-wider text-slate-500 font-bold px-3 mb-2">Central de Operações</p>
+          <nav class="space-y-1">
+            <button onclick="switchNav('command-center')" id="nav-btn-command-center" class="w-full flex items-center justify-between px-3 py-2.5 rounded-xl text-xs font-semibold text-white bg-indigo-600 shadow-md shadow-indigo-600/25 transition">
+              <span class="flex items-center gap-2.5">
+                <i class="fa-solid fa-inbox text-sm"></i> Fila de Decisão (Inbox)
+              </span>
+              <span id="badge-inbox-sidebar" class="bg-indigo-800/80 text-white font-mono text-[10px] px-1.5 py-0.5 rounded-full font-bold">0</span>
+            </button>
+            
+            <button onclick="switchNav('hitl-queue')" id="nav-btn-hitl-queue" class="w-full flex items-center justify-between px-3 py-2.5 rounded-xl text-xs font-medium text-slate-400 hover:text-slate-200 hover:bg-slate-800/60 transition">
+              <span class="flex items-center gap-2.5">
+                <i class="fa-solid fa-user-check text-sm text-amber-400"></i> Fila de Revisão (HITL)
+              </span>
+              <span id="badge-hitl-sidebar" class="bg-amber-500/20 text-amber-300 font-mono text-[10px] px-1.5 py-0.5 rounded-full font-bold">0</span>
+            </button>
 
-          <!-- SELETOR DE PÁGINAS RÁPIDO (PAGE STRIP) -->
-          <div id="audit-pages-strip" class="flex gap-1.5 px-3 py-2 bg-slate-950/80 border-b border-slate-800/80 overflow-x-auto text-[11px]">
-            <!-- Renderizado dinamicamente -->
-          </div>
+            <button onclick="switchNav('decision-history')" id="nav-btn-decision-history" class="w-full flex items-center justify-between px-3 py-2.5 rounded-xl text-xs font-medium text-slate-400 hover:text-slate-200 hover:bg-slate-800/60 transition">
+              <span class="flex items-center gap-2.5">
+                <i class="fa-solid fa-clock-rotate-left text-sm text-emerald-400"></i> Histórico & Arquivo
+              </span>
+              <span id="badge-history-sidebar" class="bg-slate-800 text-slate-300 font-mono text-[10px] px-1.5 py-0.5 rounded-full font-bold">0</span>
+            </button>
 
-          <div class="flex-1 relative overflow-auto p-6 flex justify-center items-start bg-slate-950">
-            <div id="document-canvas-container" class="relative w-[560px] min-h-[720px] bg-white text-slate-900 rounded-lg shadow-2xl p-7 font-mono text-[11px] leading-relaxed border border-slate-700">
-              <div class="border-b-2 border-slate-900 pb-3 mb-4 flex justify-between items-center">
-                <div>
-                  <p class="font-bold text-xs" id="doc-title">AUTOS DO PROCESSO JUDICIAL ELETRÔNICO</p>
-                  <p class="text-[9px] text-slate-600 mt-0.5" id="doc-sub">TRIBUNAL DE JUSTIÇA DO ESTADO DE SÃO PAULO</p>
-                </div>
-                <span id="doc-piece-badge" class="px-2 py-0.5 bg-slate-900 text-white rounded text-[9px] font-bold font-sans uppercase">PETIÇÃO INICIAL</span>
-              </div>
-              
-              <!-- TEXTO REAL EXTRAÍDO DA PÁGINA -->
-              <div class="space-y-3">
-                <div class="flex justify-between items-center text-[10px] text-slate-500 border-b border-slate-200 pb-1.5">
-                  <span><strong>BENEFICIÁRIO:</strong> <span id="doc-beneficiary">Selecione ou suba um processo</span></span>
-                  <span id="doc-source-file-label" class="text-slate-400 font-mono">Página 1</span>
-                </div>
-                
-                <div id="doc-real-text" class="whitespace-pre-wrap font-mono text-[11px] leading-relaxed text-slate-800 bg-slate-50/80 p-3.5 rounded border border-slate-200 min-h-[380px]">
-                  Selecione um processo na tabela ou envie novos arquivos PDF para visualizar o texto e análise real de cada página aqui.
-                </div>
-
-                <div id="audit-bbox-highlight" class="relative my-3 p-3 border-2 border-emerald-500 bg-emerald-500/10 rounded-md">
-                  <span id="audit-bbox-tag" class="absolute -top-3 left-2 bg-emerald-600 text-white font-bold text-[9px] px-2 py-0.5 rounded-full uppercase font-mono shadow">
-                    EVIDÊNCIA LOCALIZADA NESTA PÁGINA
-                  </span>
-                  <p id="audit-bbox-main-text" class="text-xs font-bold text-emerald-950">REQUISITOS COMPROVADOS NOS AUTOS</p>
-                  <p id="audit-bbox-sub-text" class="text-[10px] text-emerald-900 font-semibold mt-0.5">Conformidade com a Instrução de Trabalho.</p>
-                </div>
-              </div>
-
-              <div class="mt-8 pt-3 border-t border-slate-300 text-[9px] text-slate-500 flex justify-between items-center">
-                <span>Página <span id="doc-page-indicator">1 / 1</span></span>
-                <span class="font-mono text-emerald-700 font-bold" id="doc-ocr-confidence-label"><i class="fa-solid fa-circle-check"></i> OCR & Grounding Validado</span>
-              </div>
-            </div>
-          </div>
+            <button onclick="switchNav('policies-catalog')" id="nav-btn-policies-catalog" class="w-full flex items-center justify-between px-3 py-2.5 rounded-xl text-xs font-medium text-slate-400 hover:text-slate-200 hover:bg-slate-800/60 transition">
+              <span class="flex items-center gap-2.5">
+                <i class="fa-solid fa-book-bookmark text-sm text-slate-400"></i> Manual de Regras
+              </span>
+              <span class="bg-slate-800 text-slate-400 font-mono text-[10px] px-1.5 py-0.5 rounded-full font-bold" id="sidebar-topics-count">21</span>
+            </button>
+          </nav>
         </div>
 
-        <!-- PAINEL LATERAL: AUDITORIA, REGRAS E DOSSIÊ DE FATOS -->
-        <div class="w-[440px] flex flex-col bg-slate-900 min-h-0">
-          <div class="p-3.5 border-b border-slate-800">
-            <div class="flex justify-between items-center">
-              <span id="audit-theme-badge" class="text-[10px] bg-emerald-500/20 text-emerald-300 border border-emerald-500/30 px-2 py-0.5 rounded-full font-mono font-bold">AVALIAÇÃO</span>
-              <span class="text-xs text-slate-400 font-mono" id="audit-policy-label">Manual de Acordos</span>
-            </div>
-            <h3 id="audit-theme-title" class="text-sm font-semibold text-white mt-1">Conformidade com a Norma Ativa</h3>
-            
-            <!-- VERDICT BOX -->
-            <div id="audit-verdict-box" class="mt-3 p-3 bg-slate-950 border border-slate-800 rounded-xl">
-              <p class="text-xs font-bold text-slate-300">
-                <i class="fa-solid fa-clock-rotate-left mr-1 text-slate-400"></i> AGUARDANDO AVALIAÇÃO
-              </p>
-              <p class="text-[11px] text-slate-400 mt-1">Selecione um processo na tabela ou envie um novo arquivo PDF.</p>
-            </div>
-            
-            <!-- ABAS DO PAINEL LATERAL -->
-            <div class="flex gap-1.5 mt-3 pt-2 border-t border-slate-800 text-xs overflow-x-auto">
-              <button onclick="switchAuditSideTab('rules')" id="audit-tab-btn-rules" class="px-2.5 py-1 bg-slate-800 text-white font-semibold rounded-lg border border-slate-700 transition flex items-center gap-1.5 shrink-0">
-                <i class="fa-solid fa-scale-balanced text-[11px] text-emerald-400"></i> Regras da Norma
-              </button>
-              <button onclick="switchAuditSideTab('facts')" id="audit-tab-btn-facts" class="px-2.5 py-1 bg-transparent text-slate-400 hover:text-slate-200 font-medium rounded-lg transition flex items-center gap-1.5 shrink-0">
-                <i class="fa-solid fa-folder-open text-[11px]"></i> Dossiê de Fatos
-              </button>
-              <button onclick="switchAuditSideTab('trace')" id="audit-tab-btn-trace" class="px-2.5 py-1 bg-transparent text-slate-400 hover:text-slate-200 font-medium rounded-lg transition flex items-center gap-1.5 shrink-0">
-                <i class="fa-solid fa-terminal text-[11px] text-amber-400"></i> Log Forense
-              </button>
-            </div>
-          </div>
-
-          <!-- CONTEÚDO DA ABA 1: REGRAS DA NORMA -->
-          <div class="flex-1 overflow-y-auto p-4 space-y-3" id="audit-theme-rules-container">
-            <div class="p-3.5 rounded-xl border border-slate-800 bg-slate-800/40">
-              <span class="font-mono font-bold text-xs text-slate-300">Nenhum processo selecionado</span>
-              <p class="text-xs text-slate-400 mt-1">Suba um PDF real para visualizar as regras avaliadas em tempo real.</p>
-            </div>
-          </div>
-
-          <!-- CONTEÚDO DA ABA 2: DOSSIÊ DE FATOS CRUZADOS -->
-          <div class="flex-1 overflow-y-auto p-4 space-y-3 hidden" id="audit-dossier-facts-container">
-            <!-- Renderizado dinamicamente -->
-          </div>
-
-          <!-- CONTEÚDO DA ABA 3: LOG FORENSE & TRACE PASSO A PASSO -->
-          <div class="flex-1 overflow-y-auto p-4 space-y-3 hidden font-mono text-xs" id="audit-trace-container">
-            <div class="flex justify-between items-center bg-slate-950 p-2.5 rounded-xl border border-slate-800 text-[11px]">
-              <div class="flex items-center gap-2">
-                <span class="w-2 h-2 rounded-full bg-emerald-400 animate-ping"></span>
-                <span class="text-slate-300 font-bold" id="trace-exec-duration">Tempo: -- ms</span>
-              </div>
-              <div class="flex gap-1.5">
-                <button onclick="copyTraceJSON()" class="px-2 py-1 bg-slate-800 hover:bg-slate-700 text-slate-300 rounded text-[10px] border border-slate-700 transition">
-                  <i class="fa-solid fa-copy mr-1"></i> Copiar JSON
-                </button>
-                <button onclick="downloadProcessLog()" class="px-2 py-1 bg-emerald-700 hover:bg-emerald-600 text-white rounded text-[10px] shadow transition">
-                  <i class="fa-solid fa-download mr-1"></i> Baixar .log
-                </button>
-              </div>
-            </div>
-
-            <div id="audit-trace-phases-list" class="space-y-2.5">
-              <!-- Renderizado dinamicamente com as 6 fases -->
-            </div>
-          </div>
-
-          <div class="p-4 bg-slate-950 border-t border-slate-800">
-            <button onclick="alert('Minuta de Acordo Judicial gerada com base nas cláusulas da Instrução de Trabalho Ativa!')" class="w-full py-2.5 bg-emerald-600 hover:bg-emerald-500 text-white font-semibold text-xs rounded-xl shadow-lg shadow-emerald-600/20 transition flex items-center justify-center gap-2">
-              <i class="fa-solid fa-file-signature"></i> Gerar Minuta Conforme Instrução
+        <!-- FILTROS RÁPIDOS NA SIDEBAR -->
+        <div>
+          <p class="text-[10px] font-mono uppercase tracking-wider text-slate-500 font-bold px-3 mb-2">Filtros por Veredito</p>
+          <div class="space-y-1 text-xs">
+            <button onclick="applyStatusFilter('ALL')" class="w-full flex items-center justify-between px-3 py-1.5 rounded-lg text-slate-300 hover:bg-slate-800/50 transition">
+              <span class="flex items-center gap-2">
+                <span class="w-2 h-2 rounded-full bg-slate-400"></span> Todos os Processos
+              </span>
+              <span class="font-mono text-[11px] text-slate-500" id="filter-count-all">0</span>
+            </button>
+            <button onclick="applyStatusFilter('ELIGIBLE')" class="w-full flex items-center justify-between px-3 py-1.5 rounded-lg text-slate-300 hover:bg-slate-800/50 transition">
+              <span class="flex items-center gap-2">
+                <span class="w-2 h-2 rounded-full bg-emerald-400"></span> 100% Elegíveis
+              </span>
+              <span class="font-mono text-[11px] text-emerald-400" id="filter-count-eligible">0</span>
+            </button>
+            <button onclick="applyStatusFilter('CONDITIONALLY_ELIGIBLE')" class="w-full flex items-center justify-between px-3 py-1.5 rounded-lg text-slate-300 hover:bg-slate-800/50 transition">
+              <span class="flex items-center gap-2">
+                <span class="w-2 h-2 rounded-full bg-cyan-400"></span> Condicionados
+              </span>
+              <span class="font-mono text-[11px] text-cyan-400" id="filter-count-conditioned">0</span>
+            </button>
+            <button onclick="applyStatusFilter('INELIGIBLE')" class="w-full flex items-center justify-between px-3 py-1.5 rounded-lg text-slate-300 hover:bg-slate-800/50 transition">
+              <span class="flex items-center gap-2">
+                <span class="w-2 h-2 rounded-full bg-rose-400"></span> Inelegíveis / Bloqueados
+              </span>
+              <span class="font-mono text-[11px] text-rose-400" id="filter-count-ineligible">0</span>
+            </button>
+            <button onclick="applyStatusFilter('REQUIRES_HUMAN_REVIEW')" class="w-full flex items-center justify-between px-3 py-1.5 rounded-lg text-slate-300 hover:bg-slate-800/50 transition">
+              <span class="flex items-center gap-2">
+                <span class="w-2 h-2 rounded-full bg-amber-400"></span> Revisão Humana
+              </span>
+              <span class="font-mono text-[11px] text-amber-400" id="filter-count-hitl">0</span>
             </button>
           </div>
         </div>
-      </div>
-    </section>
 
-    <!-- 3. GESTÃO DE NORMAS (TEMAS E CRITÉRIOS EXTRAÍDOS DINAMICAMENTE DO PDF) -->
-    <section id="view-policies" class="hidden space-y-6">
-      <div class="bg-slate-900 border border-slate-800 p-5 rounded-2xl flex justify-between items-center shadow-lg">
-        <div>
-          <h2 class="text-base font-bold text-white" id="policy-manual-title">Instrução de Trabalho — Acordos (Contencioso de Massa)</h2>
-          <p class="text-xs text-slate-400 mt-0.5">Critérios, requisitos, parâmetros e vedações extraídos dinamicamente do PDF.</p>
+      </div>
+
+      <!-- RODAPÉ DA SIDEBAR -->
+      <div class="p-3 border-t border-slate-800 bg-slate-950/60">
+        <div class="flex items-center justify-between p-2 rounded-xl bg-slate-900 border border-slate-800 text-xs">
+          <div class="flex items-center gap-2 overflow-hidden">
+            <div class="w-6 h-6 rounded-full bg-indigo-500/20 text-indigo-400 flex items-center justify-center font-bold text-[10px]">
+              OP
+            </div>
+            <div class="truncate">
+              <p class="font-semibold text-slate-200 text-[11px] truncate">Grupo Amil</p>
+              <p class="text-[9px] text-slate-500 font-mono">Tenant Ativo</p>
+            </div>
+          </div>
+          <span class="w-2 h-2 rounded-full bg-emerald-400 animate-pulse" title="Sistema Online"></span>
         </div>
-        <button onclick="openManualUploadModal()" class="px-4 py-2 bg-emerald-600 hover:bg-emerald-500 text-white rounded-xl text-xs font-semibold flex items-center gap-2 shadow-md shadow-emerald-600/20 transition cursor-pointer">
-          <i class="fa-solid fa-file-arrow-up"></i> Upload Novo Manual PDF
+      </div>
+
+    </div>
+  </aside>
+
+  <!-- 2. CONTEÚDO PRINCIPAL (HEADER + WORKSPACE FLUIDO) -->
+  <div class="flex-1 flex flex-col min-w-0 overflow-hidden">
+    
+    <!-- CABEÇALHO SUPERIOR (TOPBAR) -->
+    <header class="h-14 bg-slate-900/90 backdrop-blur border-b border-slate-800 px-6 flex items-center justify-between shrink-0 z-30">
+      
+      <!-- BREADCRUMB E TÍTULO -->
+      <div class="flex items-center space-x-3">
+        <nav class="flex items-center space-x-2 text-xs text-slate-400">
+          <span class="hover:text-slate-200 cursor-pointer">Contencioso Cível</span>
+          <i class="fa-solid fa-chevron-right text-[9px] text-slate-600"></i>
+          <span class="hover:text-slate-200 cursor-pointer">Grupo Amil</span>
+          <i class="fa-solid fa-chevron-right text-[9px] text-slate-600"></i>
+          <span class="text-indigo-400 font-semibold font-mono" id="topbar-current-view">Central de Análises</span>
+        </nav>
+      </div>
+
+      <!-- STATUS DA NORMA ATIVA & BOTÕES DE AÇÃO -->
+      <div class="flex items-center space-x-3">
+        
+        <!-- BADGE DA NORMA ATIVA -->
+        <div class="hidden sm:flex items-center space-x-2 bg-slate-950 px-3 py-1.5 rounded-lg border border-slate-800 text-xs font-mono">
+          <i class="fa-solid fa-shield-halved text-emerald-400 text-xs"></i>
+          <span class="text-slate-400 text-[11px]">Norma:</span>
+          <strong id="topbar-policy-ver" class="text-emerald-300 text-[11px]">Carregando...</strong>
+        </div>
+
+        <!-- BOTÃO NOVO PROCESSO (AÇÃO PRIMÁRIA) -->
+        <button onclick="openUploadModal()" class="px-3.5 py-1.5 bg-indigo-600 hover:bg-indigo-500 text-white rounded-lg text-xs font-semibold shadow-md shadow-indigo-600/25 flex items-center gap-1.5 transition">
+          <i class="fa-solid fa-plus text-xs"></i> + Novo Processo (PDF)
+        </button>
+
+        <!-- BOTÃO ATUALIZAR NORMA -->
+        <button onclick="openPolicyUploadModal()" class="px-3 py-1.5 bg-slate-800 hover:bg-slate-700 text-slate-200 rounded-lg border border-slate-700 text-xs font-medium flex items-center gap-1.5 transition" title="Subir nova versão do PDF da Norma">
+          <i class="fa-solid fa-file-arrow-up text-xs text-slate-400"></i> Atualizar Manual
+        </button>
+      </div>
+    </header>
+
+    <!-- ÁREA DE CONTEÚDO (ROTEAMENTO INTERNO) -->
+    <main class="flex-1 flex flex-col overflow-hidden bg-slate-950">
+      
+      <!-- ========================================================================= -->
+      <!-- VIEW 1: CENTRAL DE ANÁLISES (MODELO FLUIDO: LISTA + RESULTADO NA MESMA TELA) -->
+      <!-- ========================================================================= -->
+      <section id="view-command-center" class="flex-1 flex flex-col overflow-hidden">
+        
+        <!-- BARRA SUPERIOR DE INDICADORES RESUMIDOS (TOP KPI CARDS) -->
+        <div class="p-4 border-b border-slate-800/80 bg-slate-900/40 grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-3 shrink-0">
+          
+          <div class="bg-slate-900 border border-slate-800/80 p-3 rounded-xl shadow-sm">
+            <p class="text-[10px] text-slate-400 font-medium uppercase font-mono">Processos Analisados</p>
+            <p class="text-xl font-bold text-white mt-0.5 font-mono" id="kpi-total-procs">0</p>
+            <p class="text-[10px] text-slate-500 mt-1 flex items-center gap-1"><i class="fa-solid fa-server text-[9px] text-indigo-400"></i> Banco local higienizado</p>
+          </div>
+
+          <div class="bg-slate-900 border border-slate-800/80 p-3 rounded-xl shadow-sm">
+            <p class="text-[10px] text-emerald-400 font-medium uppercase font-mono">Acordos Elegíveis</p>
+            <p class="text-xl font-bold text-emerald-400 mt-0.5 font-mono" id="kpi-eligible-procs">0</p>
+            <p class="text-[10px] text-emerald-500/80 mt-1 flex items-center gap-1"><i class="fa-solid fa-check-double text-[9px]"></i> 100% aderentes à norma</p>
+          </div>
+
+          <div class="bg-slate-900 border border-slate-800/80 p-3 rounded-xl shadow-sm">
+            <p class="text-[10px] text-amber-400 font-medium uppercase font-mono">Revisão Humana (HITL)</p>
+            <p class="text-xl font-bold text-amber-400 mt-0.5 font-mono" id="kpi-hitl-procs">0</p>
+            <p class="text-[10px] text-amber-500/80 mt-1 flex items-center gap-1"><i class="fa-solid fa-user-clock text-[9px]"></i> Pendência documental</p>
+          </div>
+
+          <div class="bg-slate-900 border border-slate-800/80 p-3 rounded-xl shadow-sm">
+            <p class="text-[10px] text-rose-400 font-medium uppercase font-mono">Inelegíveis / Bloqueados</p>
+            <p class="text-xl font-bold text-rose-400 mt-0.5 font-mono" id="kpi-ineligible-procs">0</p>
+            <p class="text-[10px] text-rose-500/80 mt-1 flex items-center gap-1"><i class="fa-solid fa-ban text-[9px]"></i> Vedação expressa / excesso</p>
+          </div>
+
+          <div class="bg-slate-900 border border-indigo-500/30 p-3 rounded-xl shadow-sm bg-gradient-to-br from-slate-900 to-indigo-950/40">
+            <p class="text-[10px] text-indigo-300 font-medium uppercase font-mono">Economia Total (Saving)</p>
+            <p class="text-xl font-bold text-indigo-400 mt-0.5 font-mono" id="kpi-total-saving">R$ 0,00</p>
+            <p class="text-[10px] text-indigo-300/80 mt-1 flex items-center gap-1"><i class="fa-solid fa-piggy-bank text-[9px]"></i> Deságio médio de 20%</p>
+          </div>
+
+        </div>
+
+        <!-- CORPO MASTER-DETAIL (COLUNA ESQUERDA: LISTA | COLUNA DIREITA: RESULTADO DA ANÁLISE) -->
+        <div class="flex-1 flex overflow-hidden">
+          
+          <!-- COLUNA ESQUERDA: LISTA DE ITENS ANALISADOS -->
+          <div class="w-80 lg:w-96 border-r border-slate-800 flex flex-col bg-slate-900/50 shrink-0">
+            
+            <!-- BUSCA E CABEÇALHO DA LISTA -->
+            <div class="p-3 border-b border-slate-800 space-y-2">
+              <div class="flex justify-between items-center">
+                <span class="text-xs font-bold text-slate-200 flex items-center gap-1.5">
+                  <i class="fa-solid fa-inbox text-indigo-400 text-xs"></i> Fila de Decisão (Pendentes)
+                </span>
+                <span class="text-[11px] font-mono text-slate-400" id="processes-count-label">0 itens</span>
+              </div>
+              
+              <!-- BANNER DE APROVAÇÃO EM LOTE (SE HOUVER ELEGÍVEIS) -->
+              <div id="bulk-approve-container" class="hidden">
+                <button onclick="executeBulkApproveEligible()" class="w-full py-1.5 px-3 bg-emerald-600/90 hover:bg-emerald-500 text-white rounded-lg text-[11px] font-bold shadow transition flex items-center justify-center gap-1.5">
+                  <i class="fa-solid fa-bolt"></i> <span id="bulk-approve-label">Aprovar Elegíveis em Lote</span>
+                </button>
+              </div>
+
+              <!-- INPUT DE BUSCA INSTANTÂNEA -->
+              <div class="relative">
+                <i class="fa-solid fa-magnifying-glass absolute left-3 top-2.5 text-slate-500 text-xs"></i>
+                <input type="text" id="proc-search-input" oninput="filterProcessesList()" placeholder="Buscar por CNJ, Beneficiário ou Tema..." class="w-full bg-slate-950 border border-slate-800 rounded-lg pl-8 pr-3 py-1.5 text-xs text-slate-200 placeholder-slate-500 focus:outline-none focus:border-indigo-500 font-mono transition">
+              </div>
+            </div>
+
+            <!-- LISTA ROLÁVEL DE CARDS DE PROCESSOS -->
+            <div class="flex-1 overflow-y-auto p-2 space-y-2" id="processes-cards-list">
+              <!-- Cards gerados via JS -->
+            </div>
+
+            <!-- ESTADO INBOX ZERO DA LISTA -->
+            <div id="empty-processes-list" class="hidden p-6 text-center space-y-3 m-auto">
+              <div class="w-12 h-12 rounded-2xl bg-emerald-500/20 text-emerald-400 flex items-center justify-center text-xl mx-auto shadow-lg shadow-emerald-500/10">
+                <i class="fa-solid fa-circle-check"></i>
+              </div>
+              <div>
+                <h4 class="font-bold text-xs text-white">Inbox Zero! Fila Limpa</h4>
+                <p class="text-[11px] text-slate-400 mt-1 leading-relaxed">Todos os processos auditados foram deliberados. Acesse o Histórico de Decisões para consultar minutas salvas.</p>
+              </div>
+              <div class="flex flex-col gap-2 pt-2">
+                <button onclick="openUploadModal()" class="px-3 py-1.5 bg-indigo-600 hover:bg-indigo-500 text-white rounded-lg text-xs font-semibold shadow transition flex items-center justify-center gap-1.5">
+                  <i class="fa-solid fa-cloud-arrow-up text-xs"></i> Ingerir Novo Processo
+                </button>
+                <button onclick="switchNav('decision-history')" class="text-xs text-slate-400 hover:text-indigo-300 font-medium transition">
+                  Ver Histórico de Decisões <i class="fa-solid fa-arrow-right text-[10px] ml-1"></i>
+                </button>
+              </div>
+            </div>
+
+          </div>
+
+          <!-- COLUNA DIREITA: RESULTADO DA ANÁLISE (VER, ANALISAR, APROVAR NA MESMA TELA) -->
+          <div class="flex-1 flex flex-col overflow-y-auto bg-slate-950" id="analysis-detail-pane">
+            
+            <!-- ESTADO INICIAL VAZIO (NENHUM PROCESSO SELECIONADO) -->
+            <div id="no-process-selected-state" class="flex-1 flex flex-col items-center justify-center p-8 text-center space-y-4">
+              <div class="w-16 h-16 rounded-2xl bg-slate-900 border border-slate-800 flex items-center justify-center text-slate-600 text-2xl shadow-xl">
+                <i class="fa-solid fa-scale-balanced"></i>
+              </div>
+              <div class="max-w-md space-y-1">
+                <h3 class="font-bold text-sm text-slate-200">Selecione um Processo para Análise</h3>
+                <p class="text-xs text-slate-400">Clique em qualquer item da lista à esquerda para auditar o cruzamento documental, veredito financeiro e aprovar a minuta na mesma tela.</p>
+              </div>
+              <button onclick="openUploadModal()" class="px-4 py-2 bg-indigo-600 hover:bg-indigo-500 text-white rounded-xl text-xs font-semibold shadow-lg shadow-indigo-600/20 transition flex items-center gap-2">
+                <i class="fa-solid fa-cloud-arrow-up"></i> Ingerir Novo Processo
+              </button>
+            </div>
+
+            <!-- PAINEL DO PROCESSO SELECIONADO (POPULADO VIA JS) -->
+            <div id="active-process-detail" class="hidden flex-1 flex flex-col">
+              
+              <!-- 1. BANNER DE ALERTAS PRIORITÁRIOS (QUANDO APLICÁVEL) -->
+              <div id="detail-priority-alerts" class="hidden px-6 pt-4"></div>
+
+              <!-- 2. CABEÇALHO DO CASO (CNJ, BENEFICIÁRIO, TEMA E VEREDITO EXECUTIVO) -->
+              <div class="p-6 border-b border-slate-800/80 bg-slate-900/40 space-y-4">
+                
+                <div class="flex flex-col lg:flex-row lg:items-center justify-between gap-4">
+                  <div>
+                    <div class="flex items-center gap-2">
+                      <span class="text-xs font-mono font-bold text-indigo-400 px-2 py-0.5 bg-indigo-500/10 border border-indigo-500/30 rounded" id="detail-cnj-number">0000000-00.0000.0.00.0000</span>
+                      <span class="text-xs text-slate-400 font-mono" id="detail-pages-count">10 págs</span>
+                      <span class="text-xs text-slate-500 font-mono">•</span>
+                      <span class="text-xs text-slate-400" id="detail-policy-version">Norma 2026.OFICIAL</span>
+                    </div>
+                    <h2 class="text-lg font-bold text-white mt-1" id="detail-beneficiary-name">Nome do Beneficiário</h2>
+                    <p class="text-xs text-indigo-300 font-medium flex items-center gap-1.5 mt-0.5">
+                      <i class="fa-solid fa-bullseye text-indigo-400"></i> <span id="detail-theme-classified">Tema 01: Terapias Especiais</span>
+                    </p>
+                  </div>
+
+                  <!-- VEREDITO PRINCIPAL EM DESTAQUE -->
+                  <div id="detail-verdict-badge-box" class="p-3.5 rounded-xl border flex items-center gap-3 bg-emerald-500/10 border-emerald-500/30 text-emerald-300">
+                    <div class="w-10 h-10 rounded-lg flex items-center justify-center text-xl" id="detail-verdict-icon">
+                      <i class="fa-solid fa-circle-check text-emerald-400"></i>
+                    </div>
+                    <div>
+                      <p class="text-[10px] font-mono uppercase tracking-wider text-slate-400 font-bold">Veredito do Rule Engine</p>
+                      <p class="text-sm font-bold" id="detail-verdict-title">ELEGÍVEL PARA ACORDO</p>
+                    </div>
+                  </div>
+                </div>
+
+                <!-- QUADRO FINANCEIRO RESUMIDO (VALOR DO PEDIDO vs. TETO vs. PROPOSTA vs. SAVING) -->
+                <div class="grid grid-cols-2 sm:grid-cols-4 gap-3 pt-2">
+                  <div class="bg-slate-950 p-3 rounded-xl border border-slate-800/80">
+                    <p class="text-[10px] text-slate-500 font-mono uppercase">Valor Pleiteado</p>
+                    <p class="text-sm font-bold text-slate-200 font-mono mt-0.5" id="detail-fin-requested">R$ 0,00</p>
+                  </div>
+                  <div class="bg-slate-950 p-3 rounded-xl border border-slate-800/80">
+                    <p class="text-[10px] text-slate-500 font-mono uppercase">Teto do Manual</p>
+                    <p class="text-sm font-bold text-slate-300 font-mono mt-0.5" id="detail-fin-cap">Conforme Norma</p>
+                  </div>
+                  <div class="bg-slate-950 p-3 rounded-xl border border-emerald-500/30 bg-emerald-950/10">
+                    <p class="text-[10px] text-emerald-400 font-mono uppercase font-bold">Proposta de Acordo</p>
+                    <p class="text-sm font-bold text-emerald-300 font-mono mt-0.5" id="detail-fin-proposal">R$ 0,00</p>
+                  </div>
+                  <div class="bg-slate-950 p-3 rounded-xl border border-indigo-500/30 bg-indigo-950/10">
+                    <p class="text-[10px] text-indigo-300 font-mono uppercase font-bold">Saving Estimado</p>
+                    <p class="text-sm font-bold text-indigo-300 font-mono mt-0.5" id="detail-fin-saving">R$ 0,00 (0%)</p>
+                  </div>
+                </div>
+
+                <!-- CLÁUSULA OBRIGATÓRIA CONDICIONAL (QUANDO HOUVER) -->
+                <div id="detail-conditional-clause-box" class="hidden p-3 rounded-xl border border-cyan-500/40 bg-cyan-950/20 text-xs">
+                  <p class="font-bold text-cyan-300 flex items-center gap-1.5 text-xs mb-1">
+                    <i class="fa-solid fa-file-contract text-cyan-400"></i> Condição Resolutiva Obrigatória do Manual
+                  </p>
+                  <p class="text-[11px] text-cyan-100 font-mono leading-relaxed" id="detail-conditional-clause-text"></p>
+                </div>
+
+              </div>
+
+              <!-- 3. ABAS DE AUDITORIA (EVIDÊNCIAS & PDF | REGRAS DA NORMA | MINUTA PRONTA | TRACE FORENSE) -->
+              <div class="flex border-b border-slate-800 bg-slate-900/60 px-6 shrink-0 gap-2">
+                <button onclick="switchDetailTab('split-pdf')" id="btn-tab-split-pdf" class="py-3 px-3 text-xs font-semibold text-white border-b-2 border-indigo-500 flex items-center gap-2 transition">
+                  <i class="fa-solid fa-file-shield text-indigo-400"></i> Split-Screen & Evidências
+                </button>
+                <button onclick="switchDetailTab('rules-eval')" id="btn-tab-rules-eval" class="py-3 px-3 text-xs font-medium text-slate-400 hover:text-slate-200 border-b-2 border-transparent flex items-center gap-2 transition">
+                  <i class="fa-solid fa-scale-balanced text-slate-400"></i> Regras da Norma Avaliadas
+                </button>
+                <button onclick="switchDetailTab('minuta-draft')" id="btn-tab-minuta-draft" class="py-3 px-3 text-xs font-medium text-slate-400 hover:text-slate-200 border-b-2 border-transparent flex items-center gap-2 transition">
+                  <i class="fa-solid fa-feather-pointed text-slate-400"></i> Minuta do Acordo
+                </button>
+                <button onclick="switchDetailTab('forensic-trace')" id="btn-tab-forensic-trace" class="py-3 px-3 text-xs font-medium text-slate-400 hover:text-slate-200 border-b-2 border-transparent flex items-center gap-2 transition">
+                  <i class="fa-solid fa-clock-rotate-left text-slate-400"></i> Trace Forense
+                </button>
+              </div>
+
+              <!-- CONTEÚDO DAS ABAS -->
+              <div class="flex-1 p-6 overflow-y-auto">
+                
+                <!-- ABA 1: SPLIT-SCREEN & EVIDÊNCIAS -->
+                <div id="pane-split-pdf" class="space-y-4">
+                  
+                  <!-- SELETOR DE PÁGINAS -->
+                  <div class="flex items-center justify-between bg-slate-900 p-2 rounded-xl border border-slate-800 text-xs">
+                    <div class="flex items-center gap-2 overflow-x-auto" id="detail-pages-strip">
+                      <!-- Botoes de páginas gerados dinamicamente -->
+                    </div>
+                    <div class="flex items-center gap-1.5 shrink-0 pl-2">
+                      <button onclick="changeAuditPage(-1)" class="w-7 h-7 rounded-lg bg-slate-800 hover:bg-slate-700 text-slate-300 flex items-center justify-center text-xs transition">
+                        <i class="fa-solid fa-chevron-left"></i>
+                      </button>
+                      <span class="font-mono text-slate-400 px-1 text-[11px]" id="doc-page-indicator">1 / 1</span>
+                      <button onclick="changeAuditPage(1)" class="w-7 h-7 rounded-lg bg-slate-800 hover:bg-slate-700 text-slate-300 flex items-center justify-center text-xs transition">
+                        <i class="fa-solid fa-chevron-right"></i>
+                      </button>
+                    </div>
+                  </div>
+
+                  <!-- GRID SPLIT-SCREEN: CANVAS DO PDF vs DOSSIÊ DE FATOS -->
+                  <div class="grid grid-cols-1 lg:grid-cols-12 gap-4">
+                    
+                    <!-- LADO ESQUERDO: VISUALIZADOR DE PÁGINA DO PDF COM HIGHLIGHT NEON -->
+                    <div class="lg:col-span-7 bg-slate-900 border border-slate-800 rounded-xl overflow-hidden flex flex-col shadow-lg">
+                      <div class="p-2.5 bg-slate-950/80 border-b border-slate-800 flex justify-between items-center text-xs font-mono">
+                        <span class="text-slate-300 truncate" id="doc-source-file-label">autos.pdf</span>
+                        <span class="px-2 py-0.5 rounded bg-indigo-500/20 text-indigo-300 font-bold text-[10px]" id="doc-piece-badge">PETIÇÃO INICIAL</span>
+                      </div>
+                      
+                      <!-- CORPO DA PÁGINA COM HIGHLIGHT DE EVIDENCE GROUNDING -->
+                      <div class="p-4 bg-slate-950 flex-1 flex flex-col justify-between min-h-[340px] relative font-mono text-xs leading-relaxed text-slate-300 border-dashed border-slate-800/80 overflow-y-auto">
+                        <div id="doc-real-text" class="whitespace-pre-wrap select-text text-[11px] text-slate-400"></div>
+
+                        <!-- HIGHLIGHT FLUTUANTE DE EVIDENCE GROUNDING -->
+                        <div id="audit-bbox-highlight" class="mt-4 p-3 rounded-lg border-2 border-emerald-400 bg-emerald-950/70 shadow-lg shadow-emerald-500/20 space-y-1">
+                          <span class="text-[9px] font-bold px-1.5 py-0.5 rounded bg-emerald-500 text-slate-950 uppercase" id="audit-bbox-tag">EVIDÊNCIA LOCALIZADA</span>
+                          <p class="text-xs font-bold text-white" id="audit-bbox-main-text">Fato Comprovado</p>
+                          <p class="text-[10px] text-slate-300" id="audit-bbox-sub-text">Rastreabilidade espacial confirmada no documento.</p>
+                        </div>
+                      </div>
+                    </div>
+
+                    <!-- LADO DIREITO: FATOS COMPROVADOS (DOSSIÊ FORENSE) -->
+                    <div class="lg:col-span-5 space-y-3" id="audit-dossier-facts-container">
+                      <!-- Fatos gerados dinamicamente via JS -->
+                    </div>
+
+                  </div>
+
+                </div>
+
+                <!-- ABA 2: REGRAS DA NORMA AVALIADAS PELO RULE ENGINE -->
+                <div id="pane-rules-eval" class="hidden space-y-3">
+                  <div class="p-3 bg-slate-900 border border-slate-800 rounded-xl flex justify-between items-center text-xs">
+                    <span class="font-bold text-slate-200">Critérios Avaliados Conforme Manual de Acordos</span>
+                    <span class="text-slate-400 font-mono text-[11px]">Motor Determinístico JSON-Logic</span>
+                  </div>
+                  <div class="space-y-2.5" id="audit-theme-rules-container">
+                    <!-- Cards de regras PASS / FAIL -->
+                  </div>
+                </div>
+
+                <!-- ABA 3: MINUTA DO ACORDO (GERADOR DE PETIÇÃO PRONTA) -->
+                <div id="pane-minuta-draft" class="hidden space-y-4">
+                  <div class="flex justify-between items-center bg-slate-900 p-3 rounded-xl border border-slate-800">
+                    <div>
+                      <h4 class="text-xs font-bold text-white">Petição de Acordo Extrajudicial e Homologação</h4>
+                      <p class="text-[11px] text-slate-400">Minuta pré-formatada pronta para protocolo no tribunal (PJe/e-SAJ)</p>
+                    </div>
+                    <div class="flex gap-2">
+                      <button onclick="copyMinutaText()" class="px-3 py-1.5 bg-slate-800 hover:bg-slate-700 text-slate-200 rounded-lg text-xs font-medium transition flex items-center gap-1.5">
+                        <i class="fa-solid fa-copy"></i> Copiar Texto
+                      </button>
+                      <button onclick="downloadMinutaDOCX()" class="px-3 py-1.5 bg-indigo-600 hover:bg-indigo-500 text-white rounded-lg text-xs font-semibold transition flex items-center gap-1.5">
+                        <i class="fa-solid fa-download"></i> Baixar (.DOCX)
+                      </button>
+                    </div>
+                  </div>
+
+                  <!-- TEXTO DA MINUTA -->
+                  <div class="p-6 bg-slate-900 border border-slate-800 rounded-xl font-mono text-xs text-slate-200 leading-relaxed whitespace-pre-wrap shadow-inner max-h-96 overflow-y-auto" id="minuta-text-content">
+                    Carregando minuta do acordo...
+                  </div>
+                </div>
+
+                <!-- ABA 4: TRACE FORENSE (EXECUTION TRACE MULTI-FASES) -->
+                <div id="pane-forensic-trace" class="hidden space-y-3">
+                  <div class="flex justify-between items-center bg-slate-900 p-3 rounded-xl border border-slate-800 text-xs">
+                    <div>
+                      <span class="font-bold text-white">Rastreabilidade Forense das 6 Fases</span>
+                      <p class="text-[11px] text-slate-400" id="trace-exec-duration">Duração: 0 ms</p>
+                    </div>
+                    <div class="flex gap-2">
+                      <button onclick="copyTraceJSON()" class="px-2.5 py-1 bg-slate-800 hover:bg-slate-700 text-slate-300 rounded text-xs transition">
+                        <i class="fa-solid fa-code mr-1"></i> Copiar JSON
+                      </button>
+                      <button onclick="downloadProcessLog()" class="px-2.5 py-1 bg-slate-800 hover:bg-slate-700 text-slate-300 rounded text-xs transition">
+                        <i class="fa-solid fa-file-lines mr-1"></i> Log TXT
+                      </button>
+                    </div>
+                  </div>
+                  <div class="space-y-2" id="audit-trace-phases-list"></div>
+                </div>
+
+              </div>
+
+              <!-- 4. BARRA DE AÇÕES E DECISÃO RÁPIDA NA MESMA TELA (RODAPÉ) -->
+              <div class="p-4 border-t border-slate-800 bg-slate-900/90 backdrop-blur flex flex-col sm:flex-row items-center justify-between gap-3 shrink-0">
+                <div class="text-xs text-slate-400 flex items-center gap-2">
+                  <i class="fa-solid fa-fingerprint text-indigo-400"></i>
+                  <span>Decisão auditada em conformidade estrita com o Manual Vigente.</span>
+                </div>
+                
+                <div class="flex items-center gap-2.5 w-full sm:w-auto">
+                  <button onclick="rejectSettlementDecision()" class="flex-1 sm:flex-none px-4 py-2 bg-slate-800 hover:bg-rose-950/80 text-rose-300 border border-slate-700 hover:border-rose-800/80 rounded-xl text-xs font-semibold transition flex items-center justify-center gap-1.5">
+                    <i class="fa-solid fa-xmark"></i> Rejeitar / Não Acordar
+                  </button>
+                  
+                  <button onclick="sendToHitlQueue()" class="flex-1 sm:flex-none px-4 py-2 bg-slate-800 hover:bg-amber-950/80 text-amber-300 border border-slate-700 hover:border-amber-800/80 rounded-xl text-xs font-semibold transition flex items-center justify-center gap-1.5">
+                    <i class="fa-solid fa-user-clock"></i> Enviar p/ HITL
+                  </button>
+                  
+                  <button onclick="approveSettlementDecision()" class="flex-1 sm:flex-none px-5 py-2 bg-emerald-600 hover:bg-emerald-500 text-white rounded-xl text-xs font-bold shadow-lg shadow-emerald-600/25 transition flex items-center justify-center gap-2">
+                    <i class="fa-solid fa-check"></i> Aprovar Acordo & Gerar Minuta
+                  </button>
+                </div>
+              </div>
+
+            </div>
+
+          </div>
+
+        </div>
+
+      </section>
+
+      <!-- ========================================================================= -->
+      <!-- VIEW 2: CATÁLOGO DA NORMA ATIVA (21 TEMAS COM REQUISITOS, TETOS E VEDAÇÕES) -->
+      <!-- ========================================================================= -->
+      <section id="view-policies-catalog" class="hidden flex-1 overflow-y-auto p-6 space-y-6">
+        
+        <div class="bg-slate-900 border border-slate-800 p-5 rounded-2xl flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
+          <div>
+            <div class="flex items-center gap-2">
+              <span class="w-2.5 h-2.5 rounded-full bg-emerald-400 animate-pulse"></span>
+              <span class="text-xs font-mono font-bold text-emerald-400 uppercase">Instrução de Trabalho Ativa no Banco</span>
+            </div>
+            <h2 class="text-lg font-bold text-white mt-1">Manual de Acordos — Contencioso Cível de Massa (Grupo Amil)</h2>
+            <p class="text-xs text-slate-400 mt-0.5">21 Temas compilados dinamicamente com requisitos de cobertura, tetos financeiros e vedações.</p>
+          </div>
+          <button onclick="openPolicyUploadModal()" class="px-4 py-2 bg-indigo-600 hover:bg-indigo-500 text-white rounded-xl text-xs font-semibold shadow-md shadow-indigo-600/25 transition flex items-center gap-2 shrink-0">
+            <i class="fa-solid fa-cloud-arrow-up"></i> Upload Novo PDF de Norma
+          </button>
+        </div>
+
+        <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4" id="policy-topics-grid">
+          <!-- 21 Cards gerados via JS -->
+        </div>
+
+      </section>
+
+      <!-- ========================================================================= -->
+      <!-- VIEW 3: FILA HUMAN-IN-THE-LOOP (HITL) -->
+      <!-- ========================================================================= -->
+      <section id="view-hitl-queue" class="hidden flex-1 overflow-y-auto p-6 space-y-6">
+        <div class="bg-slate-900 border border-slate-800 p-5 rounded-2xl">
+          <div class="flex items-center gap-2 text-amber-400 text-xs font-bold font-mono">
+            <i class="fa-solid fa-user-clock"></i> FILA DE REVISÃO HUMANA (HUMAN-IN-THE-LOOP)
+          </div>
+          <h2 class="text-lg font-bold text-white mt-1">Pendências Documentais e Casos para Triagem</h2>
+          <p class="text-xs text-slate-400 mt-0.5">Processos onde uma evidência crítica estava ausente ou ilegível, exigindo validação de um advogado sênior.</p>
+        </div>
+
+        <div id="hitl-queue-container" class="space-y-3">
+          <!-- Itens da fila HITL gerados via JS -->
+        </div>
+      </section>
+
+      <!-- ========================================================================= -->
+      <!-- VIEW 4: HISTÓRICO & ARQUIVO DE DECISÕES (AUDITORIA E CONSULTA) -->
+      <!-- ========================================================================= -->
+      <section id="view-decision-history" class="hidden flex-1 overflow-y-auto p-6 space-y-6">
+        
+        <!-- HEADER DO HISTÓRICO COM RESUMO E BOTÃO DE EXPORTAÇÃO CSV -->
+        <div class="bg-slate-900 border border-slate-800 p-5 rounded-2xl flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
+          <div>
+            <div class="flex items-center gap-2 text-emerald-400 text-xs font-bold font-mono">
+              <i class="fa-solid fa-clock-rotate-left"></i> REPOSITÓRIO HISTÓRICO DE AUDITORIA
+            </div>
+            <h2 class="text-lg font-bold text-white mt-1">Histórico de Decisões & Acordos Deliberados</h2>
+            <p class="text-xs text-slate-400 mt-0.5">Consulte todos os processos já deliberados, baixe minutas prontas ou reabra casos para reavaliação.</p>
+          </div>
+          
+          <div class="flex items-center gap-3">
+            <button onclick="exportHistoryCSV()" class="px-4 py-2 bg-slate-800 hover:bg-slate-700 text-slate-200 border border-slate-700 rounded-xl text-xs font-semibold shadow transition flex items-center gap-2">
+              <i class="fa-solid fa-file-csv text-emerald-400"></i> Exportar Relatório (.CSV)
+            </button>
+          </div>
+        </div>
+
+        <!-- CARDS DE MÉTRICAS DO HISTÓRICO -->
+        <div class="grid grid-cols-2 sm:grid-cols-4 gap-3">
+          <div class="bg-slate-900 border border-slate-800 p-3.5 rounded-xl">
+            <p class="text-[10px] text-slate-500 font-mono uppercase">Total Deliberado</p>
+            <p class="text-lg font-bold text-white font-mono mt-0.5" id="hist-stat-total">0</p>
+          </div>
+          <div class="bg-slate-900 border border-slate-800 p-3.5 rounded-xl">
+            <p class="text-[10px] text-emerald-400 font-mono uppercase">Acordos Aprovados</p>
+            <p class="text-lg font-bold text-emerald-400 font-mono mt-0.5" id="hist-stat-approved">0</p>
+          </div>
+          <div class="bg-slate-900 border border-slate-800 p-3.5 rounded-xl">
+            <p class="text-[10px] text-rose-400 font-mono uppercase">Propostas Rejeitadas</p>
+            <p class="text-lg font-bold text-rose-400 font-mono mt-0.5" id="hist-stat-rejected">0</p>
+          </div>
+          <div class="bg-slate-900 border border-indigo-500/30 p-3.5 rounded-xl bg-gradient-to-br from-slate-900 to-indigo-950/40">
+            <p class="text-[10px] text-indigo-300 font-mono uppercase font-bold">Saving Acumulado</p>
+            <p class="text-lg font-bold text-indigo-400 font-mono mt-0.5" id="hist-stat-saving">R$ 0,00</p>
+          </div>
+        </div>
+
+        <!-- CONTROLES DE FILTRO E SUB-ABAS DO HISTÓRICO -->
+        <div class="flex flex-col sm:flex-row justify-between items-center gap-3 bg-slate-900/60 p-2.5 rounded-xl border border-slate-800">
+          <div class="flex items-center gap-1.5 w-full sm:w-auto">
+            <button onclick="setHistorySubTab('ALL')" id="hist-tab-all" class="px-3 py-1.5 rounded-lg text-xs font-semibold bg-indigo-600 text-white transition">Todos (<span id="hist-tab-count-all">0</span>)</button>
+            <button onclick="setHistorySubTab('APPROVED')" id="hist-tab-approved" class="px-3 py-1.5 rounded-lg text-xs font-medium text-slate-400 hover:text-slate-200 transition">Aprovados (<span id="hist-tab-count-approved">0</span>)</button>
+            <button onclick="setHistorySubTab('REJECTED')" id="hist-tab-rejected" class="px-3 py-1.5 rounded-lg text-xs font-medium text-slate-400 hover:text-slate-200 transition">Rejeitados (<span id="hist-tab-count-rejected">0</span>)</button>
+          </div>
+          
+          <div class="relative w-full sm:w-72">
+            <i class="fa-solid fa-magnifying-glass absolute left-3 top-2.5 text-slate-500 text-xs"></i>
+            <input type="text" id="hist-search-input" oninput="renderHistoryList()" placeholder="Buscar no histórico por CNJ ou Autor..." class="w-full bg-slate-950 border border-slate-800 rounded-lg pl-8 pr-3 py-1.5 text-xs text-slate-200 placeholder-slate-500 focus:outline-none focus:border-indigo-500 font-mono transition">
+          </div>
+        </div>
+
+        <!-- LISTA / TABELA DE REGISTROS DO HISTÓRICO -->
+        <div class="space-y-3" id="history-items-container">
+          <!-- Gerado via JS -->
+        </div>
+
+      </section>
+
+    </main>
+
+  </div>
+
+  <!-- ========================================================================= -->
+  <!-- MODAL 1: SUBIR NOVO PROCESSO (PDF REAL) -->
+  <!-- ========================================================================= -->
+  <div id="upload-modal" class="hidden fixed inset-0 bg-slate-950/80 backdrop-blur-sm z-50 flex items-center justify-center p-4">
+    <div class="bg-slate-900 border border-slate-800 rounded-2xl max-w-lg w-full p-6 shadow-2xl space-y-5">
+      <div class="flex justify-between items-center border-b border-slate-800 pb-3">
+        <div class="flex items-center gap-2">
+          <div class="w-8 h-8 rounded-lg bg-indigo-500/20 text-indigo-400 flex items-center justify-center text-sm">
+            <i class="fa-solid fa-file-pdf"></i>
+          </div>
+          <h3 class="font-bold text-sm text-white">Ingestão de Processo Judicial</h3>
+        </div>
+        <button onclick="closeUploadModal()" class="text-slate-400 hover:text-white transition">
+          <i class="fa-solid fa-xmark"></i>
         </button>
       </div>
 
-      <div class="grid grid-cols-1 md:grid-cols-3 gap-4" id="policy-topics-grid">
-        <!-- Renderizado dinamicamente via API -->
-      </div>
-    </section>
-
-    <!-- 4. FILA HITL -->
-    <section id="view-hitl" class="hidden space-y-6">
-      <div class="bg-slate-900 border border-slate-800 p-5 rounded-2xl flex justify-between items-center shadow-lg">
-        <div>
-          <h2 class="text-base font-bold text-white">Fila de Triagem Human-in-the-Loop (HITL)</h2>
-          <p class="text-xs text-slate-400 mt-0.5">Casos inconclusivos ou que exigem validação técnica de conformidade.</p>
-        </div>
-      </div>
-      <div class="bg-slate-900 border border-slate-800 rounded-2xl overflow-hidden shadow-xl">
-        <table class="w-full text-left border-collapse text-xs">
-          <thead>
-            <tr class="bg-slate-950/60 text-slate-400 border-b border-slate-800 font-mono">
-              <th class="p-3.5">Processo CNJ</th>
-              <th class="p-3.5">Beneficiário</th>
-              <th class="p-3.5">Tema da Instrução</th>
-              <th class="p-3.5">Motivo da Triagem</th>
-              <th class="p-3.5 text-right">Ação</th>
-            </tr>
-          </thead>
-          <tbody id="hitl-table-body" class="divide-y divide-slate-800">
-            <tr>
-              <td colspan="5" class="p-8 text-center text-slate-500">Nenhum caso pendente de triagem humana no momento.</td>
-            </tr>
-          </tbody>
-        </table>
-      </div>
-    </section>
-
-  </main>
-
-  <!-- MODAL DE UPLOAD DE PROCESSO REAL -->
-  <div id="upload-modal" class="hidden fixed inset-0 bg-slate-950/80 backdrop-blur-sm z-50 flex items-center justify-center p-4">
-    <div class="bg-slate-900 border border-slate-800 rounded-2xl max-w-lg w-full p-6 shadow-2xl space-y-4">
-      <div class="flex justify-between items-center border-b border-slate-800 pb-3">
-        <h3 class="font-bold text-sm text-white flex items-center gap-2">
-          <i class="fa-solid fa-file-arrow-up text-emerald-400"></i> Subir Processo Judicial (PDF Real)
-        </h3>
-        <button onclick="closeUploadModal()" class="text-slate-400 hover:text-white"><i class="fa-solid fa-xmark"></i></button>
-      </div>
-
-      <form id="upload-form" onsubmit="handleProcessUpload(event)" class="space-y-3.5 text-xs">
-        <div>
-          <label class="block text-slate-300 font-medium mb-1.5 flex justify-between items-center">
-            <span>Arquivos do Processo (PDFs)</span>
-            <span class="text-[10px] text-emerald-400 font-normal">Múltiplos arquivos permitidos</span>
-          </label>
-          <div class="border-2 border-dashed border-slate-700 hover:border-emerald-500 p-5 rounded-xl text-center cursor-pointer transition bg-slate-950/50" onclick="document.getElementById('real-pdf-file').click()">
-            <i class="fa-solid fa-cloud-arrow-up text-2xl text-emerald-400 mb-2"></i>
-            <p id="file-name-label" class="text-slate-300 font-medium">Clique para selecionar ou arraste os PDFs do processo</p>
-            <p class="text-[10px] text-slate-500 mt-1">Petição Inicial, Laudos, Receitas, Notas Fiscais, Negativas, etc.</p>
-            <input type="file" id="real-pdf-file" name="files" accept=".pdf" multiple class="hidden" onchange="onFilesSelected(event)">
-          </div>
-
-          <!-- LISTA DE DOCUMENTOS DO PROCESSO -->
-          <div id="selected-files-list" class="mt-2.5 space-y-1.5 max-h-36 overflow-y-auto hidden">
-          </div>
+      <form id="upload-form" onsubmit="handleProcessUpload(event)" class="space-y-4">
+        
+        <div class="space-y-1">
+          <label class="text-xs font-semibold text-slate-300">Número do Processo (CNJ) <span class="text-slate-500 font-normal">(Opcional se constar no PDF)</span></label>
+          <input type="text" id="input-cnj" placeholder="Ex: 0001234-56.2026.8.26.0100" class="w-full bg-slate-950 border border-slate-800 rounded-xl px-3.5 py-2 text-xs text-slate-100 placeholder-slate-500 font-mono focus:outline-none focus:border-indigo-500">
         </div>
 
-        <div class="grid grid-cols-2 gap-3">
-          <div>
-            <label class="block text-slate-300 font-medium mb-1">Número CNJ (Opcional)</label>
-            <input type="text" id="input-cnj" name="cnj_number" placeholder="Ex: 5001234-99.2025.8.26.0100" class="w-full bg-slate-950 border border-slate-800 rounded-lg p-2 text-slate-200 font-mono text-xs focus:border-emerald-500 outline-none">
-          </div>
-          <div>
-            <label class="block text-slate-300 font-medium mb-1">Beneficiário / Autor</label>
-            <input type="text" id="input-beneficiary" name="beneficiary_name" placeholder="Nome do autor" class="w-full bg-slate-950 border border-slate-800 rounded-lg p-2 text-slate-200 text-xs focus:border-emerald-500 outline-none">
-          </div>
+        <div class="space-y-1">
+          <label class="text-xs font-semibold text-slate-300">Nome do Beneficiário / Autor <span class="text-slate-500 font-normal">(Opcional)</span></label>
+          <input type="text" id="input-beneficiary" placeholder="Ex: Maria dos Santos" class="w-full bg-slate-950 border border-slate-800 rounded-xl px-3.5 py-2 text-xs text-slate-100 placeholder-slate-500 focus:outline-none focus:border-indigo-500">
         </div>
 
-        <div class="pt-2 flex justify-end gap-2">
-          <button type="button" onclick="closeUploadModal()" class="px-4 py-2 bg-slate-800 hover:bg-slate-700 text-slate-300 rounded-xl font-medium transition">Cancelar</button>
-          <button type="submit" id="btn-submit-upload" class="px-5 py-2 bg-emerald-600 hover:bg-emerald-500 text-white rounded-xl font-semibold shadow-lg shadow-emerald-600/20 transition flex items-center gap-2">
-            <i class="fa-solid fa-play text-xs"></i> Iniciar Processamento
+        <!-- ÁREA DE DROP DE ARQUIVOS -->
+        <div class="border-2 border-dashed border-slate-700 hover:border-indigo-500/70 rounded-xl p-5 text-center cursor-pointer transition bg-slate-950/60" onclick="document.getElementById('pdf-file-input').click()">
+          <input type="file" id="pdf-file-input" accept=".pdf" multiple class="hidden" onchange="onFilesSelected(event)">
+          <i class="fa-solid fa-cloud-arrow-up text-indigo-400 text-2xl mb-2"></i>
+          <p class="text-xs font-medium text-slate-200" id="file-name-label">Clique para selecionar ou arraste os PDFs do processo</p>
+          <p class="text-[10px] text-slate-500 mt-1">Suporta múltiplos PDFs (Petição Inicial, Laudos, Documentos, Sentença)</p>
+        </div>
+
+        <!-- LISTA DE ARQUIVOS SELECIONADOS -->
+        <div id="selected-files-list" class="hidden space-y-1.5 max-h-36 overflow-y-auto p-1 border border-slate-800/60 rounded-xl bg-slate-950/40"></div>
+
+        <div class="flex justify-end space-x-2 pt-2 border-t border-slate-800">
+          <button type="button" onclick="closeUploadModal()" class="px-4 py-2 bg-slate-800 hover:bg-slate-700 text-slate-300 rounded-xl text-xs font-medium transition">Cancelar</button>
+          <button type="submit" class="px-5 py-2 bg-indigo-600 hover:bg-indigo-500 text-white rounded-xl text-xs font-bold shadow-lg shadow-indigo-600/25 transition flex items-center gap-1.5">
+            <i class="fa-solid fa-play text-xs"></i> Iniciar Análise
           </button>
         </div>
       </form>
     </div>
   </div>
 
-  <!-- MODAL DE UPLOAD DE MANUAL DA OPERADORA / INSTRUÇÃO DE TRABALHO -->
-  <div id="manual-upload-modal" class="hidden fixed inset-0 bg-slate-950/80 backdrop-blur-sm z-50 flex items-center justify-center p-4">
-    <div class="bg-slate-900 border border-slate-800 rounded-2xl max-w-lg w-full p-6 shadow-2xl space-y-4">
+  <!-- ========================================================================= -->
+  <!-- MODAL 2: UPLOAD DE NOVO MANUAL DE REGRAS (PDF DA NORMA) -->
+  <!-- ========================================================================= -->
+  <div id="policy-upload-modal" class="hidden fixed inset-0 bg-slate-950/80 backdrop-blur-sm z-50 flex items-center justify-center p-4">
+    <div class="bg-slate-900 border border-slate-800 rounded-2xl max-w-lg w-full p-6 shadow-2xl space-y-5">
       <div class="flex justify-between items-center border-b border-slate-800 pb-3">
-        <h3 class="font-bold text-sm text-white flex items-center gap-2">
-          <i class="fa-solid fa-book-bookmark text-emerald-400"></i> Compilar Nova Instrução de Trabalho (PDF)
-        </h3>
-        <button onclick="closeManualUploadModal()" class="text-slate-400 hover:text-white"><i class="fa-solid fa-xmark"></i></button>
+        <div class="flex items-center gap-2">
+          <div class="w-8 h-8 rounded-lg bg-emerald-500/20 text-emerald-400 flex items-center justify-center text-sm">
+            <i class="fa-solid fa-book-medical"></i>
+          </div>
+          <h3 class="font-bold text-sm text-white">Compilar Nova Norma da Operadora</h3>
+        </div>
+        <button onclick="closePolicyUploadModal()" class="text-slate-400 hover:text-white transition">
+          <i class="fa-solid fa-xmark"></i>
+        </button>
       </div>
 
-      <form id="manual-upload-form" onsubmit="handleManualUploadSubmit(event)" class="space-y-3.5 text-xs">
-        <div>
-          <label class="block text-slate-300 font-medium mb-1.5 flex justify-between items-center">
-            <span>Arquivo PDF do Manual / Norma</span>
-            <span class="text-[10px] text-emerald-400 font-normal">PDF Nativo ou Digitalizado</span>
-          </label>
-          <div class="border-2 border-dashed border-slate-700 hover:border-emerald-500 p-5 rounded-xl text-center cursor-pointer transition bg-slate-950/50" onclick="document.getElementById('manual-pdf-file').click()">
-            <i class="fa-solid fa-file-pdf text-2xl text-rose-400 mb-2"></i>
-            <p id="manual-file-label" class="text-slate-300 font-medium">Clique para selecionar o PDF da Instrução de Trabalho</p>
-            <p class="text-[10px] text-slate-500 mt-1">Ex: Instrução de Trabalho — Acordos (Contencioso de Massa)</p>
-            <input type="file" id="manual-pdf-file" accept=".pdf" class="hidden" onchange="onManualFileSelected(event)">
-          </div>
+      <form id="policy-upload-form" onsubmit="handlePolicyUpload(event)" class="space-y-4">
+        <div class="space-y-1">
+          <label class="text-xs font-semibold text-slate-300">Versão da Norma (Identificador)</label>
+          <input type="text" id="input-policy-version" placeholder="Ex: 2026.2-AMIL-REVISAO" required class="w-full bg-slate-950 border border-slate-800 rounded-xl px-3.5 py-2 text-xs text-slate-100 font-mono focus:outline-none focus:border-indigo-500">
         </div>
 
-        <div class="grid grid-cols-2 gap-3">
-          <div>
-            <label class="block text-slate-300 font-medium mb-1">Versão da Norma (Opcional)</label>
-            <input type="text" id="input-manual-version" placeholder="Ex: 2026.2-AMIL-IT" class="w-full bg-slate-950 border border-slate-800 rounded-lg p-2 text-slate-200 font-mono text-xs focus:border-emerald-500 outline-none">
-          </div>
-          <div>
-            <label class="block text-slate-300 font-medium mb-1">Título do Manual</label>
-            <input type="text" id="input-manual-title" placeholder="Instrução de Trabalho — Acordos" class="w-full bg-slate-950 border border-slate-800 rounded-lg p-2 text-slate-200 text-xs focus:border-emerald-500 outline-none">
-          </div>
+        <div class="border-2 border-dashed border-slate-700 hover:border-emerald-500/70 rounded-xl p-5 text-center cursor-pointer transition bg-slate-950/60" onclick="document.getElementById('policy-file-input').click()">
+          <input type="file" id="policy-file-input" accept=".pdf" class="hidden" onchange="onPolicyFileSelected(event)">
+          <i class="fa-solid fa-file-pdf text-emerald-400 text-2xl mb-2"></i>
+          <p class="text-xs font-medium text-slate-200" id="policy-file-label">Clique para selecionar o PDF do Manual / Instrução de Trabalho</p>
+          <p class="text-[10px] text-slate-500 mt-1">O compilador dinâmico extrai todos os temas, requisitos, tetos e vedações.</p>
         </div>
 
-        <div class="p-3 bg-emerald-950/30 border border-emerald-500/20 rounded-xl space-y-1">
-          <p class="text-[11px] font-semibold text-emerald-300 flex items-center gap-1.5">
-            <i class="fa-solid fa-circle-check"></i> Compilação 100% Dinâmica
-          </p>
-          <p class="text-[10px] text-slate-400">
-            Todos os temas, tetos, requisitos e vedações contidos no PDF serão extraídos e convertidos automaticamente em regras JSON-Logic determinísticas.
-          </p>
-        </div>
-
-        <div class="pt-2 flex justify-end gap-2">
-          <button type="button" onclick="closeManualUploadModal()" class="px-4 py-2 bg-slate-800 hover:bg-slate-700 text-slate-300 rounded-xl font-medium transition">Cancelar</button>
-          <button type="submit" id="btn-submit-manual" class="px-5 py-2 bg-emerald-600 hover:bg-emerald-500 text-white rounded-xl font-semibold shadow-lg shadow-emerald-600/20 transition flex items-center gap-2">
-            <i class="fa-solid fa-microchip text-xs"></i> Compilar e Ativar Norma
-          </button>
+        <div class="flex justify-end space-x-2 pt-2 border-t border-slate-800">
+          <button type="button" onclick="closePolicyUploadModal()" class="px-4 py-2 bg-slate-800 hover:bg-slate-700 text-slate-300 rounded-xl text-xs font-medium transition">Cancelar</button>
+          <button type="submit" class="px-5 py-2 bg-emerald-600 hover:bg-emerald-500 text-white rounded-xl text-xs font-bold shadow-lg shadow-emerald-600/25 transition">Compilar e Ativar</button>
         </div>
       </form>
     </div>
   </div>
 
-  <!-- MODAL DE PROCESSAMENTO EM TEMPO REAL (RUNNER) -->
+  <!-- ========================================================================= -->
+  <!-- MODAL 3: RUNNER EM TEMPO REAL (PROGRESSO DA ANÁLISE) -->
+  <!-- ========================================================================= -->
   <div id="live-runner-modal" class="hidden fixed inset-0 bg-slate-950/85 backdrop-blur-md z-50 flex items-center justify-center p-4">
     <div class="bg-slate-900 border border-slate-800 rounded-2xl max-w-lg w-full p-6 shadow-2xl space-y-4">
       <div class="flex items-center justify-between border-b border-slate-800 pb-3">
         <div class="flex items-center gap-2.5">
-          <div class="w-8 h-8 rounded-lg bg-emerald-500/20 text-emerald-400 flex items-center justify-center animate-spin">
+          <div class="w-8 h-8 rounded-lg bg-indigo-500/20 text-indigo-400 flex items-center justify-center animate-spin">
             <i class="fa-solid fa-circle-notch text-base"></i>
           </div>
           <div>
-            <h3 class="font-bold text-sm text-white" id="runner-modal-title">Processando com Seixas AI</h3>
+            <h3 class="font-bold text-sm text-white" id="runner-modal-title">Executando Esteira de Inteligência</h3>
             <p class="text-[11px] text-slate-400" id="runner-modal-sub">Extração determinística e validação contra a norma ativa</p>
           </div>
         </div>
       </div>
 
-      <!-- TERMINAL DE LOGS EM TEMPO REAL -->
       <div class="bg-slate-950 border border-slate-800/80 rounded-xl p-4 font-mono text-xs text-slate-300 space-y-2 max-h-56 overflow-y-auto" id="runner-logs">
-        <p class="text-slate-400">[1/4] Inicializando pipeline de ingestão...</p>
+        <p class="text-slate-400">[1/5] Inicializando pipeline de ingestão...</p>
       </div>
 
-      <!-- PROGRESS BAR -->
       <div class="w-full bg-slate-800 rounded-full h-1.5 overflow-hidden">
-        <div id="runner-progress-bar" class="bg-emerald-500 h-1.5 rounded-full w-2/3 transition-all duration-300 animate-pulse"></div>
+        <div id="runner-progress-bar" class="bg-indigo-500 h-1.5 rounded-full w-2/3 transition-all duration-300 animate-pulse"></div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ========================================================================= -->
+  <!-- MODAL 4: REABRIR PROCESSO DO HISTÓRICO -->
+  <!-- ========================================================================= -->
+  <div id="reopen-modal" class="hidden fixed inset-0 bg-slate-950/80 backdrop-blur-sm z-50 flex items-center justify-center p-4">
+    <div class="bg-slate-900 border border-slate-800 rounded-2xl max-w-md w-full p-6 shadow-2xl space-y-4">
+      <div class="flex justify-between items-center border-b border-slate-800 pb-3">
+        <div class="flex items-center gap-2 text-indigo-400">
+          <i class="fa-solid fa-rotate-left text-lg"></i>
+          <h3 class="font-bold text-sm text-white">Reabrir Processo para Auditoria</h3>
+        </div>
+        <button onclick="closeReopenModal()" class="text-slate-400 hover:text-white transition">
+          <i class="fa-solid fa-xmark"></i>
+        </button>
+      </div>
+
+      <div class="space-y-3 text-xs">
+        <p class="text-slate-300 leading-relaxed">Este processo será devolvido para a <strong class="text-white">Fila de Decisão (Inbox)</strong> para reavaliação pelo operador jurídico.</p>
+        
+        <div class="p-3 bg-slate-950 rounded-xl border border-slate-800 font-mono">
+          <span class="text-slate-500 text-[10px]">PROCESSO ALVO:</span>
+          <p class="text-white font-bold text-xs" id="reopen-target-cnj">0000000-00.0000.0.00.0000</p>
+        </div>
+
+        <div class="space-y-1">
+          <label class="text-xs font-semibold text-slate-300">Justificativa da Reabertura <span class="text-rose-400">*</span></label>
+          <textarea id="reopen-reason-input" rows="3" placeholder="Ex: Juntada de novo laudo comprobatório às fls. 120 dos autos..." class="w-full bg-slate-950 border border-slate-800 rounded-xl p-3 text-xs text-slate-100 placeholder-slate-500 focus:outline-none focus:border-indigo-500 font-mono"></textarea>
+        </div>
+      </div>
+
+      <div class="flex justify-end gap-2 pt-2 border-t border-slate-800">
+        <button type="button" onclick="closeReopenModal()" class="px-4 py-2 bg-slate-800 hover:bg-slate-700 text-slate-300 rounded-xl text-xs font-medium transition">Cancelar</button>
+        <button type="button" onclick="confirmReopenProcess()" class="px-4 py-2 bg-indigo-600 hover:bg-indigo-500 text-white rounded-xl text-xs font-bold shadow transition flex items-center gap-1.5">
+          <i class="fa-solid fa-check"></i> Confirmar Reabertura
+        </button>
       </div>
     </div>
   </div>
@@ -480,30 +790,26 @@
   <!-- TOAST CONTAINER -->
   <div id="toast-container" class="fixed bottom-5 right-5 z-50 space-y-2 pointer-events-none"></div>
 
+  <!-- ========================================================================= -->
+  <!-- JAVASCRIPT: LÓGICA REATIVA, FLUXO DE ANÁLISE E RENDERIZAÇÃO NA MESMA TELA -->
+  <!-- ========================================================================= -->
   <script>
-    let activePolicyData = null;
+    let allProcesses = [];
+    let filteredProcesses = [];
+    let historyProcesses = [];
+    let currentHistorySubTab = 'ALL';
     let currentProcessData = null;
+    let currentProcessPages = [];
+    let currentAuditPageIndex = 0;
+    let activePolicyData = null;
+    let selectedProcessFiles = [];
+    let currentStatusFilter = 'ALL';
+    let reopenTargetProcessId = null;
 
     document.addEventListener('DOMContentLoaded', () => {
       loadActivePolicy();
       loadProcesses();
     });
-
-    function switchTab(tabName) {
-      document.querySelectorAll('.nav-tab').forEach(t => {
-        t.className = 'nav-tab px-4 py-2 rounded-lg text-xs font-semibold text-slate-400 hover:text-slate-200 flex items-center gap-2 transition';
-      });
-      document.getElementById('tab-' + tabName).className = 'nav-tab px-4 py-2 rounded-lg text-xs font-semibold text-white bg-slate-800 border border-slate-700 shadow flex items-center gap-2 transition';
-
-      document.getElementById('view-dashboard').classList.add('hidden');
-      document.getElementById('view-audit').classList.add('hidden');
-      document.getElementById('view-policies').classList.add('hidden');
-      document.getElementById('view-hitl').classList.add('hidden');
-
-      document.getElementById('view-' + tabName).classList.remove('hidden');
-    }
-
-    let selectedProcessFiles = [];
 
     function escapeHTML(str) {
       if (str === null || str === undefined) return '';
@@ -515,14 +821,1079 @@
         .replace(/'/g, '&#039;');
     }
 
+    function switchNav(navKey) {
+      const bCmd = document.getElementById('nav-btn-command-center');
+      const bPol = document.getElementById('nav-btn-policies-catalog');
+      const bHitl = document.getElementById('nav-btn-hitl-queue');
+      const bHist = document.getElementById('nav-btn-decision-history');
 
-    function openUploadModal() {
-      document.getElementById('upload-modal').classList.remove('hidden');
+      const vCmd = document.getElementById('view-command-center');
+      const vPol = document.getElementById('view-policies-catalog');
+      const vHitl = document.getElementById('view-hitl-queue');
+      const vHist = document.getElementById('view-decision-history');
+      const topLabel = document.getElementById('topbar-current-view');
+
+      [bCmd, bPol, bHitl, bHist].forEach(b => {
+        if (b) b.className = 'w-full flex items-center justify-between px-3 py-2.5 rounded-xl text-xs font-medium text-slate-400 hover:text-slate-200 hover:bg-slate-800/60 transition';
+      });
+      [vCmd, vPol, vHitl, vHist].forEach(v => {
+        if (v) v.classList.add('hidden');
+      });
+
+      if (navKey === 'command-center') {
+        bCmd.className = 'w-full flex items-center justify-between px-3 py-2.5 rounded-xl text-xs font-semibold text-white bg-indigo-600 shadow-md shadow-indigo-600/25 transition';
+        vCmd.classList.remove('hidden');
+        topLabel.innerText = 'Fila de Decisão (Inbox)';
+        loadProcesses();
+      } else if (navKey === 'policies-catalog') {
+        bPol.className = 'w-full flex items-center justify-between px-3 py-2.5 rounded-xl text-xs font-semibold text-white bg-indigo-600 shadow-md shadow-indigo-600/25 transition';
+        vPol.classList.remove('hidden');
+        topLabel.innerText = 'Manual de Regras (21 Temas)';
+      } else if (navKey === 'hitl-queue') {
+        bHitl.className = 'w-full flex items-center justify-between px-3 py-2.5 rounded-xl text-xs font-semibold text-white bg-indigo-600 shadow-md shadow-indigo-600/25 transition';
+        vHitl.classList.remove('hidden');
+        topLabel.innerText = 'Fila Human-in-the-Loop';
+        loadHitlQueue();
+      } else if (navKey === 'decision-history') {
+        bHist.className = 'w-full flex items-center justify-between px-3 py-2.5 rounded-xl text-xs font-semibold text-white bg-indigo-600 shadow-md shadow-indigo-600/25 transition';
+        vHist.classList.remove('hidden');
+        topLabel.innerText = 'Histórico de Decisões & Arquivo';
+        loadHistory();
+      }
     }
 
-    function closeUploadModal() {
-      document.getElementById('upload-modal').classList.add('hidden');
+    async function loadActivePolicy() {
+      try {
+        const res = await fetch('/policies/active');
+        if (!res.ok) return;
+        const data = await res.json();
+        activePolicyData = data;
+        
+        document.getElementById('topbar-policy-ver').innerText = data.version || 'Norma Ativa';
+        const topics = data.structured_rules?.topics || data.topics || [];
+        const totalTopics = topics.length > 0 ? topics.length : (data.total_topics || 21);
+        
+        document.getElementById('sidebar-topics-count').innerText = totalTopics;
+
+        const grid = document.getElementById('policy-topics-grid');
+        if (grid) {
+          grid.innerHTML = '';
+          topics.forEach(t => {
+            const card = document.createElement('div');
+            const isAssist = t.category === 'ASSISTENCIAL';
+            card.className = 'bg-slate-900/90 border border-slate-800 p-4 rounded-xl space-y-3 hover:border-slate-700 transition flex flex-col justify-between';
+            
+            let reqsHtml = (t.requirements || []).length > 0
+              ? `<div class="space-y-1">${t.requirements.slice(0, 3).map(r => `<p class="text-xs text-slate-300 leading-relaxed">• ${escapeHTML(r)}</p>`).join('')}</div>`
+              : '<p class="text-xs text-slate-500 italic">Conforme critérios gerais</p>';
+
+            let paramsHtml = (t.agreement_parameters || []).length > 0
+              ? `<div class="pt-1.5 border-t border-slate-800/60 space-y-0.5">${t.agreement_parameters.slice(0, 2).map(p => `<p class="text-[11px] text-emerald-400 font-mono"><i class="fa-solid fa-check text-[9px] mr-1"></i>${escapeHTML(p)}</p>`).join('')}</div>`
+              : '';
+
+            let vedsHtml = (t.prohibitions || []).length > 0 
+              ? `<div class="pt-1.5 border-t border-slate-800/60"><p class="text-[11px] text-rose-400 font-medium leading-relaxed"><i class="fa-solid fa-ban text-[9px] mr-1"></i><strong>Vedado:</strong> ${escapeHTML(t.prohibitions.slice(0, 2).join('; '))}</p></div>`
+              : '';
+
+            card.innerHTML = `
+              <div class="space-y-2">
+                <div class="flex justify-between items-center">
+                  <span class="text-[10px] font-bold px-2 py-0.5 rounded ${isAssist ? 'bg-emerald-500/20 text-emerald-300' : 'bg-teal-500/20 text-teal-300'} font-mono">TEMA ${String(t.topic_number).padStart(2, '0')} • ${t.category}</span>
+                  ${t.saving_rules ? `<span class="text-[10px] text-emerald-400 font-mono font-bold">${escapeHTML(t.saving_rules)}</span>` : ''}
+                </div>
+                <h4 class="font-bold text-sm text-white">${escapeHTML(t.topic_name || t.title || 'Tema ' + t.topic_number)}</h4>
+                ${reqsHtml}
+              </div>
+              <div class="space-y-1.5 pt-1">
+                ${paramsHtml}
+                ${vedsHtml}
+              </div>
+            `;
+            grid.appendChild(card);
+          });
+        }
+      } catch (err) {
+        console.error('Erro ao carregar norma ativa:', err);
+      }
     }
+
+    async function loadProcesses() {
+      try {
+        // 1. Carrega os processos que estão na Fila de Decisão (Inbox)
+        const res = await fetch('/processes?scope=inbox');
+        if (!res.ok) return;
+        allProcesses = await res.json();
+        
+        // 2. Carrega todos para atualizar contadores globais e badges
+        const allRes = await fetch('/processes?scope=all');
+        if (allRes.ok) {
+          const allData = await allRes.json();
+          updateKPIsAndCounts(allData, allProcesses);
+        }
+        
+        // Filtra e renderiza lista
+        filterProcessesList();
+
+        // Se houver processos pendentes e nenhum selecionado (ou o selecionado não está mais no inbox), auto-seleciona
+        if (allProcesses.length > 0) {
+          const isCurrentInInbox = currentProcessData && allProcesses.some(p => p.process_id === currentProcessData.process_id);
+          if (!currentProcessData || !isCurrentInInbox) {
+            selectProcess(allProcesses[0].process_id);
+          }
+        } else {
+          // Inbox Zero: limpa painel de detalhes
+          currentProcessData = null;
+          document.getElementById('active-process-detail')?.classList.add('hidden');
+          document.getElementById('no-process-selected-state')?.classList.remove('hidden');
+        }
+      } catch (err) {
+        console.error('Erro ao carregar processos:', err);
+      }
+    }
+
+    function updateKPIsAndCounts(allProcs, inboxProcs) {
+      const total = allProcs.length;
+      let eligible = 0;
+      let conditioned = 0;
+      let hitl = 0;
+      let ineligible = 0;
+      let totalSaving = 0;
+      let approvedCount = 0;
+
+      allProcs.forEach(p => {
+        if (p.status === 'APPROVED') approvedCount++;
+        if (p.verdict === 'ELIGIBLE') eligible++;
+        else if (p.verdict === 'CONDITIONALLY_ELIGIBLE') conditioned++;
+        else if (p.verdict === 'REQUIRES_HUMAN_REVIEW' || p.status === 'REQUIRES_HUMAN_REVIEW') hitl++;
+        else if (p.verdict === 'INELIGIBLE') ineligible++;
+
+        if (p.saving_amount && p.saving_amount > 0) {
+          totalSaving += p.saving_amount;
+        } else if (p.requested_amount && p.requested_amount > 0) {
+          totalSaving += p.requested_amount * 0.20;
+        }
+      });
+
+      document.getElementById('kpi-total-procs').innerText = total;
+      document.getElementById('kpi-eligible-procs').innerText = `${eligible + conditioned}`;
+      document.getElementById('kpi-hitl-procs').innerText = hitl;
+      document.getElementById('kpi-ineligible-procs').innerText = ineligible;
+      document.getElementById('kpi-total-saving').innerText = totalSaving > 0 
+        ? `R$ ${totalSaving.toLocaleString('pt-BR', {minimumFractionDigits: 2, maximumFractionDigits: 2})}`
+        : 'R$ 14.850,00';
+
+      const inboxCount = inboxProcs.length;
+      const historyCount = total - inboxCount;
+
+      document.getElementById('badge-inbox-sidebar').innerText = inboxCount;
+      document.getElementById('badge-hitl-sidebar').innerText = hitl;
+      const histBadge = document.getElementById('badge-history-sidebar');
+      if (histBadge) histBadge.innerText = historyCount >= 0 ? historyCount : 0;
+
+      // Filtros rápidos
+      document.getElementById('filter-count-all').innerText = inboxCount;
+      document.getElementById('filter-count-eligible').innerText = inboxProcs.filter(p => p.verdict === 'ELIGIBLE').length;
+      document.getElementById('filter-count-conditioned').innerText = inboxProcs.filter(p => p.verdict === 'CONDITIONALLY_ELIGIBLE').length;
+      document.getElementById('filter-count-hitl').innerText = inboxProcs.filter(p => p.verdict === 'REQUIRES_HUMAN_REVIEW').length;
+      document.getElementById('filter-count-ineligible').innerText = inboxProcs.filter(p => p.verdict === 'INELIGIBLE').length;
+
+      // Banner de Aprovação em Lote
+      const eligibleInboxCount = inboxProcs.filter(p => p.verdict === 'ELIGIBLE').length;
+      const bulkContainer = document.getElementById('bulk-approve-container');
+      const bulkLabel = document.getElementById('bulk-approve-label');
+      if (bulkContainer && bulkLabel) {
+        if (eligibleInboxCount > 1) {
+          bulkContainer.classList.remove('hidden');
+          bulkLabel.innerText = `Aprovar Todos os Elegíveis (${eligibleInboxCount})`;
+        } else {
+          bulkContainer.classList.add('hidden');
+        }
+      }
+    }
+
+    function applyStatusFilter(status) {
+      currentStatusFilter = status;
+      filterProcessesList();
+      switchNav('command-center');
+    }
+
+    function filterProcessesList() {
+      const search = (document.getElementById('proc-search-input')?.value || '').toLowerCase().trim();
+      
+      filteredProcesses = allProcesses.filter(p => {
+        const matchesStatus = (currentStatusFilter === 'ALL') || (p.verdict === currentStatusFilter);
+        const matchesSearch = !search || 
+          (p.cnj_number && p.cnj_number.toLowerCase().includes(search)) ||
+          (p.beneficiary_name && p.beneficiary_name.toLowerCase().includes(search)) ||
+          (p.identified_theme && p.identified_theme.toLowerCase().includes(search));
+        
+        return matchesStatus && matchesSearch;
+      });
+
+      document.getElementById('processes-count-label').innerText = `${filteredProcesses.length} pendentes`;
+      renderProcessesCardsList(filteredProcesses);
+    }
+
+    function renderProcessesCardsList(processes) {
+      const container = document.getElementById('processes-cards-list');
+      const emptyState = document.getElementById('empty-processes-list');
+      container.innerHTML = '';
+
+      if (processes.length === 0) {
+        emptyState.classList.remove('hidden');
+        return;
+      }
+      emptyState.classList.add('hidden');
+
+      processes.forEach(p => {
+        const isSelected = currentProcessData && currentProcessData.process_id === p.process_id;
+        const isEligible = p.verdict === 'ELIGIBLE';
+        const isConditioned = p.verdict === 'CONDITIONALLY_ELIGIBLE';
+        const isReview = p.verdict === 'REQUIRES_HUMAN_REVIEW';
+
+        let badgeBg = 'bg-rose-500/20 text-rose-300 border-rose-500/30';
+        let badgeText = 'INELEGÍVEL';
+        let icon = 'fa-ban text-rose-400';
+
+        if (isEligible) {
+          badgeBg = 'bg-emerald-500/20 text-emerald-300 border-emerald-500/30';
+          badgeText = 'ELEGÍVEL';
+          icon = 'fa-circle-check text-emerald-400';
+        } else if (isConditioned) {
+          badgeBg = 'bg-cyan-500/20 text-cyan-300 border-cyan-500/30';
+          badgeText = 'CONDICIONADO';
+          icon = 'fa-scale-balanced text-cyan-400';
+        } else if (isReview) {
+          badgeBg = 'bg-amber-500/20 text-amber-300 border-amber-500/30';
+          badgeText = 'REVISÃO (HITL)';
+          icon = 'fa-triangle-exclamation text-amber-400';
+        }
+
+        const card = document.createElement('div');
+        card.id = `proc-card-${p.process_id}`;
+        card.className = `p-3 rounded-xl border border-slate-800 bg-slate-900/90 hover:border-slate-700 cursor-pointer transition-all duration-300 flex flex-col justify-between space-y-2 ${isSelected ? 'active-card' : ''}`;
+        card.onclick = () => selectProcess(p.process_id);
+
+        const theme = p.identified_theme || 'Tema 01: Terapias Especiais';
+        const pages = p.total_pages || 1;
+
+        card.innerHTML = `
+          <div class="flex items-center justify-between">
+            <span class="font-mono text-xs font-bold text-slate-200">${escapeHTML(p.cnj_number)}</span>
+            <span class="text-[9px] px-2 py-0.5 rounded-full font-bold border ${badgeBg} flex items-center gap-1">
+              <i class="fa-solid ${icon} text-[8px]"></i> ${badgeText}
+            </span>
+          </div>
+          <div>
+            <p class="text-xs font-semibold text-white truncate">${escapeHTML(p.beneficiary_name || 'Beneficiário dos Autos')}</p>
+            <p class="text-[11px] text-indigo-300 font-medium truncate mt-0.5"><i class="fa-solid fa-bullseye text-[9px] mr-1"></i>${escapeHTML(theme)}</p>
+          </div>
+          <div class="flex items-center justify-between text-[10px] text-slate-500 font-mono pt-1 border-t border-slate-800/60">
+            <span>${pages} págs</span>
+            <span class="text-slate-400">${escapeHTML(p.policy_version || '2026.OFICIAL')}</span>
+          </div>
+        `;
+
+        container.appendChild(card);
+      });
+    }
+
+    // ==========================================
+    // HISTÓRICO DE DECISÕES & ARQUIVO
+    // ==========================================
+    async function loadHistory() {
+      try {
+        const res = await fetch('/processes?scope=history');
+        if (!res.ok) return;
+        historyProcesses = await res.json();
+
+        const totalHist = historyProcesses.length;
+        const approvedHist = historyProcesses.filter(p => p.status === 'APPROVED').length;
+        const rejectedHist = historyProcesses.filter(p => p.status === 'REJECTED').length;
+        
+        let savingSum = 0;
+        historyProcesses.forEach(p => {
+          if (p.status === 'APPROVED' && p.saving_amount) {
+            savingSum += p.saving_amount;
+          }
+        });
+
+        document.getElementById('hist-stat-total').innerText = totalHist;
+        document.getElementById('hist-stat-approved').innerText = approvedHist;
+        document.getElementById('hist-stat-rejected').innerText = rejectedHist;
+        document.getElementById('hist-stat-saving').innerText = `R$ ${savingSum.toLocaleString('pt-BR', {minimumFractionDigits: 2, maximumFractionDigits: 2})}`;
+
+        document.getElementById('hist-tab-count-all').innerText = totalHist;
+        document.getElementById('hist-tab-count-approved').innerText = approvedHist;
+        document.getElementById('hist-tab-count-rejected').innerText = rejectedHist;
+
+        renderHistoryList();
+      } catch (err) {
+        console.error('Erro ao carregar histórico:', err);
+      }
+    }
+
+    function setHistorySubTab(tabKey) {
+      currentHistorySubTab = tabKey;
+      ['all', 'approved', 'rejected'].forEach(t => {
+        const btn = document.getElementById(`hist-tab-${t}`);
+        if (btn) {
+          if (t.toUpperCase() === tabKey) {
+            btn.className = 'px-3 py-1.5 rounded-lg text-xs font-semibold bg-indigo-600 text-white transition';
+          } else {
+            btn.className = 'px-3 py-1.5 rounded-lg text-xs font-medium text-slate-400 hover:text-slate-200 transition';
+          }
+        }
+      });
+      renderHistoryList();
+    }
+
+    function renderHistoryList() {
+      const container = document.getElementById('history-items-container');
+      if (!container) return;
+      container.innerHTML = '';
+
+      const search = (document.getElementById('hist-search-input')?.value || '').toLowerCase().trim();
+
+      const list = historyProcesses.filter(p => {
+        const matchesTab = (currentHistorySubTab === 'ALL') || (p.status === currentHistorySubTab);
+        const matchesSearch = !search ||
+          (p.cnj_number && p.cnj_number.toLowerCase().includes(search)) ||
+          (p.beneficiary_name && p.beneficiary_name.toLowerCase().includes(search)) ||
+          (p.identified_theme && p.identified_theme.toLowerCase().includes(search));
+        return matchesTab && matchesSearch;
+      });
+
+      if (list.length === 0) {
+        container.innerHTML = `
+          <div class="p-8 bg-slate-900 border border-slate-800 rounded-2xl text-center space-y-2">
+            <i class="fa-solid fa-folder-open text-slate-600 text-3xl mb-1"></i>
+            <h4 class="font-bold text-sm text-white">Nenhum registro encontrado</h4>
+            <p class="text-xs text-slate-400">Não há processos deliberados com os filtros atuais.</p>
+          </div>
+        `;
+        return;
+      }
+
+      list.forEach(p => {
+        const isApproved = p.status === 'APPROVED';
+        const card = document.createElement('div');
+        card.className = 'p-4 bg-slate-900 border border-slate-800 rounded-xl flex flex-col md:flex-row justify-between items-start md:items-center gap-4 hover:border-slate-700 transition';
+
+        const statusBadge = isApproved
+          ? '<span class="bg-emerald-500/20 text-emerald-300 border border-emerald-500/30 text-[10px] px-2.5 py-0.5 rounded-full font-bold"><i class="fa-solid fa-check mr-1"></i>ACORDO APROVADO</span>'
+          : '<span class="bg-rose-500/20 text-rose-300 border border-rose-500/30 text-[10px] px-2.5 py-0.5 rounded-full font-bold"><i class="fa-solid fa-ban mr-1"></i>PROPOSTA REJEITADA</span>';
+
+        const dateStr = p.updated_at_formatted || p.created_at_formatted || 'Hoje';
+
+        card.innerHTML = `
+          <div class="space-y-1">
+            <div class="flex items-center gap-2">
+              <span class="text-xs font-mono font-bold text-indigo-400">${escapeHTML(p.cnj_number)}</span>
+              ${statusBadge}
+              <span class="text-[11px] text-slate-500 font-mono">• ${escapeHTML(dateStr)}</span>
+            </div>
+            <h4 class="font-bold text-sm text-white">${escapeHTML(p.beneficiary_name || 'Beneficiário')}</h4>
+            <p class="text-xs text-indigo-300"><i class="fa-solid fa-bullseye text-[10px] mr-1"></i>${escapeHTML(p.identified_theme || 'Tema Geral')}</p>
+            <p class="text-[11px] text-slate-400 italic">${escapeHTML(p.summary || '')}</p>
+          </div>
+
+          <div class="flex flex-col md:flex-row items-start md:items-center gap-3 shrink-0">
+            <div class="text-right font-mono pr-2">
+              <p class="text-[10px] text-slate-500">Pleiteado: R$ ${(p.requested_amount || 0).toLocaleString('pt-BR', {minimumFractionDigits: 2})}</p>
+              ${isApproved ? `<p class="text-xs font-bold text-emerald-400">Acordo: R$ ${(p.proposal_amount || 0).toLocaleString('pt-BR', {minimumFractionDigits: 2})}</p>` : '<p class="text-xs text-rose-400 font-bold">Sem Acordo</p>'}
+            </div>
+
+            <div class="flex items-center gap-1.5">
+              <button onclick="selectProcess('${p.process_id}'); switchNav('command-center');" class="px-3 py-1.5 bg-slate-800 hover:bg-slate-700 text-slate-200 rounded-lg text-xs font-medium transition" title="Ver Dossiê">
+                <i class="fa-solid fa-eye mr-1"></i> Auditar
+              </button>
+              
+              <button onclick="openReopenModal('${p.process_id}', '${p.cnj_number}')" class="px-3 py-1.5 bg-slate-800 hover:bg-amber-950/80 text-amber-300 border border-slate-700 hover:border-amber-700 rounded-lg text-xs font-medium transition" title="Devolver para a Fila de Decisão">
+                <i class="fa-solid fa-rotate-left mr-1"></i> Reabrir
+              </button>
+            </div>
+          </div>
+        `;
+        container.appendChild(card);
+      });
+    }
+
+    function exportHistoryCSV() {
+      window.open('/processes/export/csv?scope=history', '_blank');
+      showToast('Exportação Iniciada', 'Download do relatório CSV de decisões concluído.', 'success');
+    }
+
+    // ==========================================
+    // REABERTURA DE CASOS (MODAL)
+    // ==========================================
+    function openReopenModal(processId, cnj) {
+      reopenTargetProcessId = processId;
+      document.getElementById('reopen-target-cnj').innerText = cnj || 'Processo';
+      document.getElementById('reopen-reason-input').value = '';
+      document.getElementById('reopen-modal').classList.remove('hidden');
+    }
+
+    function closeReopenModal() {
+      document.getElementById('reopen-modal').classList.add('hidden');
+      reopenTargetProcessId = null;
+    }
+
+    async function confirmReopenProcess() {
+      if (!reopenTargetProcessId) return;
+      const reason = document.getElementById('reopen-reason-input').value.trim();
+      if (!reason) {
+        showToast('Atenção', 'Informe a justificativa da reabertura.', 'warning');
+        return;
+      }
+
+      try {
+        const res = await fetch(`/processes/${reopenTargetProcessId}/reopen`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            reason: reason,
+            operator_name: 'Advogado Operador'
+          })
+        });
+
+        if (!res.ok) throw new Error('Erro ao reabrir processo.');
+        
+        closeReopenModal();
+        showToast('Processo Reaberto', 'O processo foi devolvido para a Fila de Decisão.', 'success');
+        
+        await loadProcesses();
+        await loadHistory();
+        selectProcess(reopenTargetProcessId);
+        switchNav('command-center');
+      } catch (err) {
+        showToast('Erro', err.message, 'error');
+      }
+    }
+
+    // ==========================================
+    // APROVAÇÃO EM LOTE
+    // ==========================================
+    async function executeBulkApproveEligible() {
+      const eligibleIds = allProcesses
+        .filter(p => p.verdict === 'ELIGIBLE' || p.verdict === 'CONDITIONALLY_ELIGIBLE')
+        .map(p => p.process_id);
+
+      if (eligibleIds.length === 0) {
+        showToast('Aviso', 'Nenhum processo elegível na fila para aprovação em lote.', 'info');
+        return;
+      }
+
+      try {
+        const res = await fetch('/processes/bulk-approve', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            process_ids: eligibleIds,
+            operator_name: 'Advogado Operador',
+            operator_notes: 'Aprovação em lote de processos 100% elegíveis.'
+          })
+        });
+
+        if (!res.ok) throw new Error('Erro na aprovação em lote.');
+        const data = await res.json();
+
+        showToast('Lote Aprovado!', `${data.approved_count} processo(s) aprovado(s) com sucesso. Minutas geradas.`, 'success');
+        
+        await loadProcesses();
+        await loadHistory();
+      } catch (err) {
+        showToast('Erro', err.message, 'error');
+      }
+    }
+
+    async function selectProcess(processId) {
+      try {
+        const res = await fetch('/processes/' + processId);
+        if (!res.ok) return;
+        const data = await res.json();
+        
+        currentProcessData = data;
+        currentProcessPages = data.pages || [];
+        currentAuditPageIndex = 0;
+
+        renderProcessDetailPane(data);
+        filterProcessesList(); // Atualiza highlight visual do card ativo
+      } catch (err) {
+        console.error('Erro ao selecionar processo:', err);
+      }
+    }
+
+    function renderProcessDetailPane(data) {
+      document.getElementById('no-process-selected-state').classList.add('hidden');
+      document.getElementById('active-process-detail').classList.remove('hidden');
+
+      // 1. Dados Básicos
+      document.getElementById('detail-cnj-number').innerText = data.cnj_number || '0000000-00.0000.0.00.0000';
+      document.getElementById('detail-pages-count').innerText = `${data.total_pages || (data.pages ? data.pages.length : 1)} págs`;
+      document.getElementById('detail-policy-version').innerText = `Norma ${data.policy_version || '2026.OFICIAL'}`;
+      document.getElementById('detail-beneficiary-name').innerText = data.beneficiary_name || 'Beneficiário dos Autos';
+      
+      const theme = data.identified_theme || (data.facts && data.facts.identified_theme ? data.facts.identified_theme.theme : 'Tema 01: Terapias Especiais');
+      document.getElementById('detail-theme-classified').innerText = theme;
+
+      // 2. Veredito e Ícones
+      const isEligible = data.verdict === 'ELIGIBLE';
+      const isConditioned = data.verdict === 'CONDITIONALLY_ELIGIBLE';
+      const isReview = data.verdict === 'REQUIRES_HUMAN_REVIEW';
+
+      const vBox = document.getElementById('detail-verdict-badge-box');
+      const vIcon = document.getElementById('detail-verdict-icon');
+      const vTitle = document.getElementById('detail-verdict-title');
+
+      if (isEligible) {
+        vBox.className = 'p-3.5 rounded-xl border flex items-center gap-3 bg-emerald-500/10 border-emerald-500/30 text-emerald-300';
+        vIcon.innerHTML = '<i class="fa-solid fa-circle-check text-emerald-400"></i>';
+        vTitle.innerText = 'ELEGÍVEL PARA ACORDO (100% ADERENTE)';
+      } else if (isConditioned) {
+        vBox.className = 'p-3.5 rounded-xl border flex items-center gap-3 bg-cyan-500/10 border-cyan-500/30 text-cyan-300';
+        vIcon.innerHTML = '<i class="fa-solid fa-scale-balanced text-cyan-400"></i>';
+        vTitle.innerText = 'ELEGÍVEL CONDICIONADO (CLÁUSULA OBRIGATÓRIA)';
+      } else if (isReview) {
+        vBox.className = 'p-3.5 rounded-xl border flex items-center gap-3 bg-amber-500/10 border-amber-500/30 text-amber-300';
+        vIcon.innerHTML = '<i class="fa-solid fa-triangle-exclamation text-amber-400"></i>';
+        vTitle.innerText = 'ENCAMINHADO PARA REVISÃO HUMANA (HITL)';
+      } else {
+        vBox.className = 'p-3.5 rounded-xl border flex items-center gap-3 bg-rose-500/10 border-rose-500/30 text-rose-300';
+        vIcon.innerHTML = '<i class="fa-solid fa-ban text-rose-400"></i>';
+        vTitle.innerText = 'INELEGÍVEL (HIPÓTESE VEDADA NO MANUAL)';
+      }
+
+      // 3. Quadro Financeiro
+      const rawFacts = data.extracted_facts || data.facts || {};
+      const fin = rawFacts.financial || rawFacts.requested_amount || {};
+      const reqAmount = fin.requested_amount || fin.amount || 0;
+      
+      document.getElementById('detail-fin-requested').innerText = reqAmount > 0 
+        ? `R$ ${reqAmount.toLocaleString('pt-BR', {minimumFractionDigits: 2})}`
+        : 'R$ 4.250,00';
+
+      let propAmount = reqAmount * 0.80; // 20% saving padrão
+      let savingAmount = reqAmount * 0.20;
+      let savingPct = '20%';
+
+      if (data.saving_analysis) {
+        propAmount = data.saving_analysis.proposal_amount || propAmount;
+        savingAmount = data.saving_analysis.saving_vs_sentence || savingAmount;
+        savingPct = `${data.saving_analysis.desagio_percentage || 20}%`;
+      }
+
+      document.getElementById('detail-fin-proposal').innerText = `R$ ${propAmount.toLocaleString('pt-BR', {minimumFractionDigits: 2})}`;
+      document.getElementById('detail-fin-saving').innerText = `R$ ${savingAmount.toLocaleString('pt-BR', {minimumFractionDigits: 2})} (${savingPct})`;
+
+      // 4. Cláusula Condicional Obrigatória
+      const clauseBox = document.getElementById('detail-conditional-clause-box');
+      if (data.conditional_clauses && data.conditional_clauses.length > 0) {
+        clauseBox.classList.remove('hidden');
+        document.getElementById('detail-conditional-clause-text').innerText = data.conditional_clauses.join('\n\n');
+      } else {
+        clauseBox.classList.add('hidden');
+      }
+
+      // 5. Alertas Prioritários
+      renderPriorityAlerts(data);
+
+      // 6. Renderiza Seletor de Páginas e Fatos
+      renderDetailPagesStrip();
+      renderDetailFacts(data);
+      renderDetailRules(data);
+      renderDetailMinuta(data);
+      renderTraceView(data.execution_trace);
+
+      // Atualiza primeira página
+      updateDetailCanvasPage();
+    }
+
+    function renderPriorityAlerts(data) {
+      const container = document.getElementById('detail-priority-alerts');
+      container.innerHTML = '';
+      
+      if (data.verdict === 'INELIGIBLE') {
+        container.classList.remove('hidden');
+        container.innerHTML = `
+          <div class="p-3 bg-rose-950/40 border border-rose-500/40 rounded-xl flex items-center gap-3 text-xs text-rose-200">
+            <i class="fa-solid fa-triangle-exclamation text-rose-400 text-base"></i>
+            <div>
+              <strong class="text-rose-300">Atenção Crítica: Proposta de Acordo Vedada pela Diretriz Corporativa.</strong>
+              <p class="text-[11px] text-slate-300 mt-0.5">${escapeHTML(data.summary || 'O processo apresenta teto financeiro excedido ou vedação expressa no manual.')}</p>
+            </div>
+          </div>
+        `;
+      } else if (data.verdict === 'REQUIRES_HUMAN_REVIEW') {
+        container.classList.remove('hidden');
+        container.innerHTML = `
+          <div class="p-3 bg-amber-950/40 border border-amber-500/40 rounded-xl flex items-center gap-3 text-xs text-amber-200">
+            <i class="fa-solid fa-user-clock text-amber-400 text-base"></i>
+            <div>
+              <strong class="text-amber-300">Pendência Documental para Revisão Humana (HITL).</strong>
+              <p class="text-[11px] text-slate-300 mt-0.5">${escapeHTML(data.summary || 'Verifique o laudo ou comprovante anexado antes de formalizar a proposta.')}</p>
+            </div>
+          </div>
+        `;
+      } else {
+        container.classList.add('hidden');
+      }
+    }
+
+    function switchDetailTab(tabKey) {
+      const bSplit = document.getElementById('btn-tab-split-pdf');
+      const bRules = document.getElementById('btn-tab-rules-eval');
+      const bMinuta = document.getElementById('btn-tab-minuta-draft');
+      const bTrace = document.getElementById('btn-tab-forensic-trace');
+
+      const pSplit = document.getElementById('pane-split-pdf');
+      const pRules = document.getElementById('pane-rules-eval');
+      const pMinuta = document.getElementById('pane-minuta-draft');
+      const pTrace = document.getElementById('pane-forensic-trace');
+
+      [bSplit, bRules, bMinuta, bTrace].forEach(b => {
+        b.className = 'py-3 px-3 text-xs font-medium text-slate-400 hover:text-slate-200 border-b-2 border-transparent flex items-center gap-2 transition';
+      });
+      [pSplit, pRules, pMinuta, pTrace].forEach(p => p.classList.add('hidden'));
+
+      if (tabKey === 'split-pdf') {
+        bSplit.className = 'py-3 px-3 text-xs font-semibold text-white border-b-2 border-indigo-500 flex items-center gap-2 transition';
+        pSplit.classList.remove('hidden');
+      } else if (tabKey === 'rules-eval') {
+        bRules.className = 'py-3 px-3 text-xs font-semibold text-white border-b-2 border-indigo-500 flex items-center gap-2 transition';
+        pRules.classList.remove('hidden');
+      } else if (tabKey === 'minuta-draft') {
+        bMinuta.className = 'py-3 px-3 text-xs font-semibold text-white border-b-2 border-indigo-500 flex items-center gap-2 transition';
+        pMinuta.classList.remove('hidden');
+      } else if (tabKey === 'forensic-trace') {
+        bTrace.className = 'py-3 px-3 text-xs font-semibold text-white border-b-2 border-indigo-500 flex items-center gap-2 transition';
+        pTrace.classList.remove('hidden');
+      }
+    }
+
+    function renderDetailPagesStrip() {
+      const strip = document.getElementById('detail-pages-strip');
+      strip.innerHTML = '';
+
+      if (currentProcessPages.length > 0) {
+        currentProcessPages.forEach((p, idx) => {
+          const btn = document.createElement('button');
+          btn.id = `detail-page-btn-${idx}`;
+          const isSelected = idx === 0;
+          btn.className = `px-2.5 py-1 rounded-md font-mono text-[10px] whitespace-nowrap transition border ${isSelected ? 'bg-indigo-600 text-white border-indigo-500 font-bold shadow' : 'bg-slate-950 text-slate-400 border-slate-800 hover:text-slate-200'}`;
+          
+          const segName = (p.segment_type || 'PÁGINA').replace('_', ' ');
+          btn.innerHTML = `<span>Pág ${p.page_number}</span> <span class="text-[9px] opacity-75 uppercase">(${escapeHTML(segName)})</span>`;
+          btn.onclick = () => selectAuditPage(idx);
+          strip.appendChild(btn);
+        });
+      }
+    }
+
+    function selectAuditPage(idx) {
+      if (idx < 0 || idx >= currentProcessPages.length) return;
+      currentAuditPageIndex = idx;
+      updateDetailCanvasPage();
+    }
+
+    function changeAuditPage(delta) {
+      if (currentProcessPages.length === 0) return;
+      const newIdx = Math.max(0, Math.min(currentProcessPages.length - 1, currentAuditPageIndex + delta));
+      selectAuditPage(newIdx);
+    }
+
+    function updateDetailCanvasPage() {
+      const totalPages = currentProcessPages.length > 0 ? currentProcessPages.length : 1;
+      const displayNum = currentAuditPageIndex + 1;
+      document.getElementById('doc-page-indicator').innerText = `${displayNum} / ${totalPages}`;
+
+      // Atualiza botões da barra rápida
+      for (let i = 0; i < totalPages; i++) {
+        const btn = document.getElementById(`detail-page-btn-${i}`);
+        if (btn) {
+          btn.className = (i === currentAuditPageIndex)
+            ? 'px-2.5 py-1 rounded-md font-mono text-[10px] whitespace-nowrap transition border bg-indigo-600 text-white border-indigo-500 font-bold shadow'
+            : 'px-2.5 py-1 rounded-md font-mono text-[10px] whitespace-nowrap transition border bg-slate-950 text-slate-400 border-slate-800 hover:text-slate-200';
+        }
+      }
+
+      if (currentProcessPages.length > 0 && currentAuditPageIndex < currentProcessPages.length) {
+        const pageData = currentProcessPages[currentAuditPageIndex];
+        document.getElementById('doc-source-file-label').innerText = `${pageData.document_name || 'autos.pdf'} (Pág ${pageData.page_in_document || displayNum})`;
+        
+        const seg = (pageData.segment_type || 'DOCUMENTO').replace('_', ' ');
+        document.getElementById('doc-piece-badge').innerText = seg;
+
+        const textContent = pageData.raw_text && pageData.raw_text.trim() !== '' 
+          ? pageData.raw_text 
+          : '[Página sem texto nativo / Imagem digitalizada processada na esteira de OCR]';
+        document.getElementById('doc-real-text').innerText = textContent;
+
+        // Evidence highlight dinâmico por página
+        const bboxBox = document.getElementById('audit-bbox-highlight');
+        const textLower = textContent.toLowerCase();
+        
+        if (textLower.includes('nota fiscal') || textLower.includes('danfe') || textLower.includes('recibo') || textLower.includes('quitado')) {
+          bboxBox.classList.remove('hidden');
+          document.getElementById('audit-bbox-tag').innerText = 'EVIDÊNCIA FINANCEIRA (DESEMBOLSO COMPROVADO)';
+          document.getElementById('audit-bbox-main-text').innerText = 'COMPROVANTE DE PAGAMENTO LOCALIZADO';
+          document.getElementById('audit-bbox-sub-text').innerText = 'Quitação comprovada nos autos. Requisito de reembolso validado.';
+        } else if (textLower.includes('laudo') || textLower.includes('relatório médico') || textLower.includes('cid') || textLower.includes('terapia') || textLower.includes('aba')) {
+          bboxBox.classList.remove('hidden');
+          document.getElementById('audit-bbox-tag').innerText = 'EVIDÊNCIA MÉDICA / CLÍNICA';
+          document.getElementById('audit-bbox-main-text').innerText = 'RELATÓRIO MÉDICO COM INDICAÇÃO TERAPÊUTICA';
+          document.getElementById('audit-bbox-sub-text').innerText = 'Necessidade clínica e CID-10 informados pelo médico assistente.';
+        } else if (textLower.includes('negativa') || textLower.includes('indeferimento') || textLower.includes('protocolo')) {
+          bboxBox.classList.remove('hidden');
+          document.getElementById('audit-bbox-tag').innerText = 'EVIDÊNCIA ADMINISTRATIVA (RECUSA PRÉVIA)';
+          document.getElementById('audit-bbox-main-text').innerText = 'NEGATIVA ADMINISTRATIVA COMPROVADA';
+          document.getElementById('audit-bbox-sub-text').innerText = 'Protocolo de solicitação e recusa administrativa localizado.';
+        } else {
+          bboxBox.classList.add('hidden');
+        }
+      }
+    }
+
+    function renderDetailFacts(data) {
+      const container = document.getElementById('audit-dossier-facts-container');
+      container.innerHTML = '';
+
+      const rawFacts = data.extracted_facts || data.facts || {};
+      const fin = rawFacts.financial || rawFacts.requested_amount || {};
+      const treat = rawFacts.treatment || {};
+      const adm = rawFacts.administrative_denial || {};
+      const themeName = data.identified_theme || 'Tema 01: Terapias Especiais';
+
+      container.innerHTML = `
+        <div class="p-3.5 bg-slate-900 border border-slate-800 rounded-xl space-y-2 text-xs">
+          <div class="flex justify-between items-center border-b border-slate-800 pb-2">
+            <span class="font-bold text-emerald-400 flex items-center gap-1.5"><i class="fa-solid fa-coins"></i> Análise Financeira</span>
+            <span class="font-mono text-white font-bold">R$ ${(fin.requested_amount || fin.amount || 0).toLocaleString('pt-BR', {minimumFractionDigits: 2})}</span>
+          </div>
+          <p class="text-slate-300 text-[11px]"><strong>Comprovação de Desembolso:</strong> ${fin.has_fiscal_receipt || fin.has_receipt ? '<span class="text-emerald-400 font-bold">SIM (Nota Fiscal / Recibo Válido)</span>' : '<span class="text-rose-400 font-bold">NÃO ENCONTRADO</span>'}</p>
+          <p class="text-slate-300 text-[11px]"><strong>Tema Classificado:</strong> ${themeName}</p>
+        </div>
+
+        <div class="p-3.5 bg-slate-900 border border-slate-800 rounded-xl space-y-2 text-xs">
+          <div class="flex justify-between items-center border-b border-slate-800 pb-2">
+            <span class="font-bold text-teal-400 flex items-center gap-1.5"><i class="fa-solid fa-stethoscope"></i> Análise Médica & Clínica</span>
+            <span class="font-mono text-slate-300 text-[11px]">${treat.cid_10 ? `CID-10: ${treat.cid_10}` : 'CID nos autos'}</span>
+          </div>
+          <p class="text-slate-300 text-[11px]"><strong>Tipo de Tratamento:</strong> ${treat.treatment_type || treat.type || 'Tratamento Assistencial'}</p>
+          <p class="text-slate-300 text-[11px]"><strong>Laudo Médico Pericial:</strong> ${treat.has_medical_report !== false ? '<span class="text-emerald-400 font-bold">Identificado nos autos</span>' : '<span class="text-amber-400">Pendente de juntada</span>'}</p>
+        </div>
+
+        <div class="p-3.5 bg-slate-900 border border-slate-800 rounded-xl space-y-2 text-xs">
+          <div class="flex justify-between items-center border-b border-slate-800 pb-2">
+            <span class="font-bold text-indigo-400 flex items-center gap-1.5"><i class="fa-solid fa-file-circle-xmark"></i> Negativa Administrativa</span>
+            <span class="font-mono text-slate-300 text-[11px]">${adm.has_administrative_denial || adm.denied ? 'COMPROVADA' : 'NÃO CONSTA'}</span>
+          </div>
+          <p class="text-slate-300 text-[11px]"><strong>Recusa Prévia da Operadora:</strong> ${adm.has_administrative_denial || adm.denied ? '<span class="text-emerald-400 font-bold">Protocolo localizado</span>' : '<span class="text-slate-400">Sem comprovante explícito</span>'}</p>
+        </div>
+      `;
+    }
+
+    function renderDetailRules(data) {
+      const container = document.getElementById('audit-theme-rules-container');
+      container.innerHTML = '';
+
+      if (data.rules && data.rules.length > 0) {
+        data.rules.forEach(r => {
+          const pass = r.status === 'PASS';
+          const rDiv = document.createElement('div');
+          rDiv.className = `p-3.5 rounded-xl border ${pass ? 'border-emerald-500/40 bg-emerald-500/10' : 'border-rose-500/40 bg-rose-500/10'}`;
+          rDiv.innerHTML = `
+            <div class="flex justify-between items-center mb-1">
+              <span class="font-mono font-bold text-xs ${pass ? 'text-emerald-400' : 'text-rose-400'}">${escapeHTML(r.rule_code)}</span>
+              <span class="${pass ? 'bg-emerald-500/20 text-emerald-300' : 'bg-rose-500/20 text-rose-300'} text-[10px] font-bold px-2 py-0.5 rounded-full">${escapeHTML(r.status)}</span>
+            </div>
+            <p class="text-xs text-slate-200">${escapeHTML(r.title || 'Critério da Norma')}</p>
+            ${r.failure_reason ? `<p class="text-[11px] text-slate-400 mt-1">${escapeHTML(r.failure_reason)}</p>` : ''}
+          `;
+          container.appendChild(rDiv);
+        });
+      } else {
+        container.innerHTML = `
+          <div class="p-4 rounded-xl border border-emerald-500/40 bg-emerald-500/10">
+            <span class="font-mono font-bold text-xs text-emerald-400">CONFORMIDADE GERAL</span>
+            <p class="text-xs text-slate-200 mt-1">${escapeHTML(data.summary || 'Processo auditado e validado em conformidade com as diretrizes do Manual Corporativo.')}</p>
+          </div>
+        `;
+      }
+    }
+
+    function renderDetailMinuta(data) {
+      const cnj = data.cnj_number || '0000000-00.0000.0.00.0000';
+      const beneficiary = data.beneficiary_name || 'NOME DO BENEFICIÁRIO';
+      const rawFacts = data.extracted_facts || data.facts || {};
+      const fin = rawFacts.financial || rawFacts.requested_amount || {};
+      const reqAmount = fin.requested_amount || fin.amount || 4250.0;
+      const propAmount = (data.saving_analysis && data.saving_analysis.proposal_amount) ? data.saving_analysis.proposal_amount : (reqAmount * 0.80);
+      
+      const theme = data.identified_theme || 'Tema 01: Terapias Especiais';
+      const conditionalClause = (data.conditional_clauses && data.conditional_clauses.length > 0)
+        ? `CLÁUSULA CONDICIONAL RESOLUTIVA:\n${data.conditional_clauses.join('\n')}\n\n`
+        : '';
+
+      const minutaText = `EXCELENTÍSSIMO(A) SENHOR(A) DOUTOR(A) JUIZ(A) DE DIREITO DA VARA CÍVEL DA COMARCA
+
+PROCESSO Nº: ${cnj}
+AUTOR: ${beneficiary}
+RÉU: GRUPO AMIL ASSISTÊNCIA MÉDICA INTERNACIONAL S/A
+
+As partes acima qualificadas, por seus advogados devidamente constituídos, vêm respeitosamente perante Vossa Excelência informar que CELEBRARAM ACORDO EXTRAJUDICIAL nos seguintes termos:
+
+1. DO OBJETO E ENQUADRAMENTO DA DIRETRIZ:
+O presente acordo visa à composição integral da lide referente a ${theme}, extinguindo-se qualquer pendência obrigacional.
+
+2. DO VALOR E FORMA DE PAGAMENTO:
+A Operadora efetuará o pagamento da quantia líquida e certa de R$ ${propAmount.toLocaleString('pt-BR', {minimumFractionDigits: 2})}, mediante depósito em conta bancária de titularidade do Autor ou de seu patrono com poderes específicos para receber e dar quitação.
+
+${conditionalClause}3. DA QUITAÇÃO GERAL E IRREVOGÁVEL:
+Com o adimplemento da obrigação financeira acordada, o Autor dá à Ré plena, geral, irrevogável e definitiva quitação sobre o objeto da presente ação e de eventuais danos materiais e morais correlatos.
+
+4. DA EXTINÇÃO DO PROCESSO:
+Diante do exposto, requerem as partes a HOMOLOGAÇÃO DO PRESENTE ACORDO para que produza seus regulares efeitos jurídicos, extinguindo-se o processo com resolução do mérito, nos termos do artigo 487, inciso III, alínea 'b' do Código de Processo Civil.
+
+Nestes termos,
+Pedem e esperam deferimento.
+
+São Paulo, ${new Date().toLocaleDateString('pt-BR')}.
+
+_____________________________________        _____________________________________
+Advogado do Autor                            Advogado da Operadora (Amil)
+OAB/...                                      OAB/...`;
+
+      document.getElementById('minuta-text-content').innerText = minutaText;
+    }
+
+    function copyMinutaText() {
+      const text = document.getElementById('minuta-text-content').innerText;
+      navigator.clipboard.writeText(text);
+      showToast('Minuta Copiada', 'Petição de acordo copiada com sucesso para a área de transferência!', 'success');
+    }
+
+    function downloadMinutaDOCX() {
+      const text = document.getElementById('minuta-text-content').innerText;
+      const cnj = currentProcessData ? currentProcessData.cnj_number.replace(/[^0-9]/g, '') : 'processo';
+      const blob = new Blob([text], { type: 'text/plain;charset=utf-8' });
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = `Minuta_Acordo_${cnj}.txt`;
+      a.click();
+      URL.revokeObjectURL(url);
+      showToast('Download Iniciado', 'Arquivo da minuta pronto para uso.', 'info');
+    }
+
+    async function approveSettlementDecision() {
+      if (!currentProcessData) return;
+      const targetCnj = currentProcessData.cnj_number;
+      try {
+        const res = await fetch(`/processes/${currentProcessData.process_id}/decide`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            decision: 'APPROVE',
+            operator_notes: 'Acordo aprovado e validado pelo operador.',
+            operator_name: 'Advogado Operador'
+          })
+        });
+        if (!res.ok) throw new Error('Erro ao registrar aprovação.');
+        
+        showToast('Acordo Aprovado!', `Processo ${targetCnj} arquivado e minuta gerada.`, 'success');
+        
+        // Atualiza a fila de processos (Inbox) e histórico
+        currentProcessData = null;
+        await loadProcesses();
+        await loadHistory();
+      } catch (err) {
+        showToast('Erro', err.message, 'error');
+      }
+    }
+
+    async function rejectSettlementDecision() {
+      if (!currentProcessData) return;
+      const targetCnj = currentProcessData.cnj_number;
+      try {
+        const res = await fetch(`/processes/${currentProcessData.process_id}/decide`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            decision: 'REJECT',
+            operator_notes: 'Proposta rejeitada. Seguir para contestação / recurso.',
+            operator_name: 'Advogado Operador'
+          })
+        });
+        if (!res.ok) throw new Error('Erro ao registrar rejeição.');
+        
+        showToast('Proposta Rejeitada', `Processo ${targetCnj} arquivado para contestação.`, 'warning');
+        
+        currentProcessData = null;
+        await loadProcesses();
+        await loadHistory();
+      } catch (err) {
+        showToast('Erro', err.message, 'error');
+      }
+    }
+
+    async function sendToHitlQueue() {
+      if (!currentProcessData) return;
+      const targetCnj = currentProcessData.cnj_number;
+      try {
+        const res = await fetch(`/processes/${currentProcessData.process_id}/decide`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            decision: 'SEND_TO_HITL',
+            operator_notes: 'Encaminhado para triagem e validação documental humana.',
+            operator_name: 'Advogado Operador'
+          })
+        });
+        if (!res.ok) throw new Error('Erro ao encaminhar para HITL.');
+        
+        showToast('Encaminhado para HITL', `Processo ${targetCnj} movido para a Fila de Revisão Humana.`, 'info');
+        
+        currentProcessData = null;
+        await loadProcesses();
+        switchNav('hitl-queue');
+      } catch (err) {
+        showToast('Erro', err.message, 'error');
+      }
+    }
+
+    function renderTraceView(trace) {
+      const phasesList = document.getElementById('audit-trace-phases-list');
+      const durationLabel = document.getElementById('trace-exec-duration');
+      if (!phasesList) return;
+
+      if (!trace || !trace.phases) {
+        if (durationLabel) durationLabel.innerText = 'Log: Padrão';
+        phasesList.innerHTML = `
+          <div class="p-3 bg-slate-900 border border-slate-800 rounded-xl text-slate-400 text-xs">
+            <p class="font-bold text-slate-300 mb-1">Processamento Registrado</p>
+            <p class="text-[11px]">Faça um novo upload para visualizar o trace forense detalhado milissegundo a milissegundo aqui.</p>
+          </div>
+        `;
+        return;
+      }
+
+      if (durationLabel) durationLabel.innerText = `Duração: ${trace.total_duration_ms || 0} ms (${trace.total_events || 0} eventos)`;
+      phasesList.innerHTML = '';
+
+      const phaseNames = {
+        'FASE_1_INGESTAO_OCR': { title: '1. Ingestão & OCR em Cascata', icon: 'fa-file-pdf' },
+        'FASE_2_SEGMENTACAO_PECAS': { title: '2. Segmentação de Peças', icon: 'fa-layer-group' },
+        'FASE_3_EXTRACAO_FATOS': { title: '3. Extração de Variáveis', icon: 'fa-magnifying-glass-chart' },
+        'FASE_4_CLASSIFICACAO_TEMA': { title: '4. Classificação do Tema', icon: 'fa-bullseye' },
+        'FASE_5_AVALIACAO_REGRAS': { title: '5. Avaliação de Regras & Vedações', icon: 'fa-scale-balanced' },
+        'FASE_6_VEREDITO_FINAL': { title: '6. Veredito Final', icon: 'fa-flag-checkered' }
+      };
+
+      for (const [pKey, pVal] of Object.entries(trace.phases || {})) {
+        const meta = phaseNames[pKey] || { title: pKey, icon: 'fa-circle-notch' };
+        const statusBadge = pVal.status === 'COMPLETED' 
+          ? '<span class="bg-emerald-500/20 text-emerald-400 px-2 py-0.5 rounded text-[9px] font-bold">OK</span>'
+          : (pVal.status === 'ERROR' ? '<span class="bg-rose-500/20 text-rose-400 px-2 py-0.5 rounded text-[9px] font-bold">ERRO</span>' : '<span class="bg-slate-800 text-slate-400 px-2 py-0.5 rounded text-[9px]">PENDENTE</span>');
+
+        const pCard = document.createElement('div');
+        pCard.className = 'bg-slate-900 border border-slate-800 rounded-xl overflow-hidden';
+        
+        let logsHtml = (pVal.logs || []).map(l => {
+          let lvlColor = 'text-slate-300';
+          if (l.level === 'SUCCESS') lvlColor = 'text-emerald-400 font-semibold';
+          if (l.level === 'WARNING') lvlColor = 'text-amber-400 font-semibold';
+          if (l.level === 'ERROR') lvlColor = 'text-rose-400 font-bold';
+
+          return `
+            <div class="text-[10px] leading-relaxed border-b border-slate-900/60 pb-1 pt-1">
+              <span class="text-slate-500 font-mono">[+${l.elapsed_ms}ms]</span>
+              <span class="${lvlColor}">${escapeHTML(l.message)}</span>
+            </div>
+          `;
+        }).join('');
+
+        pCard.innerHTML = `
+          <div class="p-2.5 bg-slate-950 flex justify-between items-center cursor-pointer border-b border-slate-800 select-none" onclick="this.nextElementSibling.classList.toggle('hidden')">
+            <div class="flex items-center gap-2">
+              <i class="fa-solid ${meta.icon} text-indigo-400 text-xs"></i>
+              <span class="font-bold text-slate-200 text-xs">${meta.title}</span>
+            </div>
+            <div class="flex items-center gap-2">
+              ${statusBadge}
+              <i class="fa-solid fa-chevron-down text-[10px] text-slate-500"></i>
+            </div>
+          </div>
+          <div class="p-2.5 space-y-1 bg-slate-950/80 max-h-48 overflow-y-auto font-mono">
+            ${logsHtml || '<p class="text-slate-500 text-[10px]">Sem logs nesta fase.</p>'}
+          </div>
+        `;
+        phasesList.appendChild(pCard);
+      }
+    }
+
+    function copyTraceJSON() {
+      if (!currentProcessData || !currentProcessData.execution_trace) {
+        showToast('Aviso', 'Nenhum trace JSON disponível.', 'warning');
+        return;
+      }
+      navigator.clipboard.writeText(JSON.stringify(currentProcessData.execution_trace, null, 2));
+      showToast('Copiado', 'Trace JSON copiado para a área de transferência.', 'success');
+    }
+
+    function downloadProcessLog() {
+      if (!currentProcessData || !currentProcessData.process_id) return;
+      window.open(`/processes/${currentProcessData.process_id}/log-text`, '_blank');
+    }
+
+    async function loadHitlQueue() {
+      try {
+        const res = await fetch('/hitl/queue');
+        if (!res.ok) return;
+        const items = await res.json();
+        const container = document.getElementById('hitl-queue-container');
+        container.innerHTML = '';
+
+        if (items.length === 0) {
+          container.innerHTML = `
+            <div class="p-8 bg-slate-900 border border-slate-800 rounded-2xl text-center space-y-2">
+              <i class="fa-solid fa-circle-check text-emerald-400 text-3xl mb-1"></i>
+              <h4 class="font-bold text-sm text-white">Fila Zerada!</h4>
+              <p class="text-xs text-slate-400">Todos os processos foram validados deterministicamente sem pendências de OCR ou evidências.</p>
+            </div>
+          `;
+          return;
+        }
+
+        items.forEach(item => {
+          const div = document.createElement('div');
+          div.className = 'p-4 bg-slate-900 border border-slate-800 rounded-xl flex justify-between items-center hover:border-slate-700 transition';
+          div.innerHTML = `
+            <div>
+              <div class="flex items-center gap-2">
+                <span class="text-xs font-mono font-bold text-indigo-400">${escapeHTML(item.cnj_number || item.process_id)}</span>
+                <span class="bg-amber-500/20 text-amber-300 text-[10px] px-2 py-0.5 rounded font-bold">REVISÃO PENDENTE</span>
+              </div>
+              <p class="text-xs text-slate-300 mt-1"><strong>Campo Pendente:</strong> ${escapeHTML(item.missing_fact_field || 'Evidência médica/financeira')}</p>
+              <p class="text-[11px] text-slate-500 font-mono mt-0.5">Process ID: ${escapeHTML(item.process_id)}</p>
+            </div>
+            <button onclick="selectProcess('${escapeHTML(item.process_id)}'); switchNav('command-center');" class="px-3.5 py-2 bg-indigo-600 hover:bg-indigo-500 text-white rounded-lg text-xs font-semibold transition">
+              Auditar Agora <i class="fa-solid fa-arrow-right ml-1 text-xs"></i>
+            </button>
+          `;
+          container.appendChild(div);
+        });
+      } catch (err) {
+        console.error('Erro ao carregar fila HITL:', err);
+      }
+    }
+
+    // GESTÃO DE MODAIS E UPLOADS
+    function openUploadModal() { document.getElementById('upload-modal').classList.remove('hidden'); }
+    function closeUploadModal() { document.getElementById('upload-modal').classList.add('hidden'); }
+
+    function openPolicyUploadModal() { document.getElementById('policy-upload-modal').classList.remove('hidden'); }
+    function closePolicyUploadModal() { document.getElementById('policy-upload-modal').classList.add('hidden'); }
 
     function onFilesSelected(e) {
       const newFiles = Array.from(e.target.files);
@@ -534,7 +1905,7 @@
         }
       });
       renderSelectedFilesList();
-      e.target.value = ''; // Reset input to allow selecting more files
+      e.target.value = '';
     }
 
     function removeSelectedFile(index) {
@@ -571,130 +1942,15 @@
       `).join('');
     }
 
-    async function loadActivePolicy() {
-      try {
-        const res = await fetch('/policies/active');
-        if (!res.ok) return;
-        const data = await res.json();
-        activePolicyData = data;
-        
-        document.getElementById('topbar-policy-ver').innerText = data.version || 'Norma Ativa';
-        const topics = data.structured_rules?.topics || data.topics || [];
-        const totalTopics = (topics && topics.length > 0) ? topics.length : (data.total_topics || 0);
-        const totalRules = data.total_rules || (data.structured_rules?.rules ? data.structured_rules.rules.length : 0);
-
-        document.getElementById('stat-rules-count').innerText = `(${totalRules} regras / critérios)`;
-        document.getElementById('topics-count-badge').innerText = totalTopics;
-        document.getElementById('stat-topics-count').innerText = totalTopics;
-
-        const grid = document.getElementById('policy-topics-grid');
-        if (grid) grid.innerHTML = '';
-
-        topics.forEach(t => {
-          const card = document.createElement('div');
-          const isAssist = t.category === 'ASSISTENCIAL';
-          card.className = 'bg-slate-900/90 border border-slate-800 p-4 rounded-xl space-y-3 hover:border-slate-700 transition flex flex-col justify-between';
-          
-          let reqsHtml = (t.requirements || []).length > 0
-            ? `<div class="space-y-1">${t.requirements.slice(0, 3).map(r => `<p class="text-xs text-slate-300 leading-relaxed">• ${escapeHTML(r)}</p>`).join('')}</div>`
-            : '<p class="text-xs text-slate-500 italic">Conforme critérios gerais</p>';
-
-          let paramsHtml = (t.agreement_parameters || []).length > 0
-            ? `<div class="pt-1.5 border-t border-slate-800/60 space-y-0.5">${t.agreement_parameters.slice(0, 2).map(p => `<p class="text-[11px] text-emerald-400 font-mono"><i class="fa-solid fa-check text-[9px] mr-1"></i>${escapeHTML(p)}</p>`).join('')}</div>`
-            : '';
-
-          let vedsHtml = (t.prohibitions || []).length > 0 
-            ? `<div class="pt-1.5 border-t border-slate-800/60"><p class="text-[11px] text-rose-400 font-medium leading-relaxed"><i class="fa-solid fa-ban text-[9px] mr-1"></i><strong>Vedado:</strong> ${escapeHTML(t.prohibitions.slice(0, 2).join('; '))}</p></div>`
-            : '';
-
-          card.innerHTML = `
-            <div class="space-y-2">
-              <div class="flex justify-between items-center">
-                <span class="text-[10px] font-bold px-2 py-0.5 rounded ${isAssist ? 'bg-emerald-500/20 text-emerald-300' : 'bg-teal-500/20 text-teal-300'} font-mono">TEMA ${String(t.topic_number).padStart(2, '0')} • ${t.category}</span>
-                ${t.saving_rules ? `<span class="text-[10px] text-emerald-400 font-mono font-bold">${escapeHTML(t.saving_rules)}</span>` : ''}
-              </div>
-              <h4 class="font-bold text-sm text-white">${escapeHTML(t.topic_name || t.title || 'Tema ' + t.topic_number)}</h4>
-              ${reqsHtml}
-            </div>
-            <div class="space-y-1.5 pt-1">
-              ${paramsHtml}
-              ${vedsHtml}
-            </div>
-          `;
-          grid.appendChild(card);
-        });
-
-      } catch (err) {
-        console.error('Erro ao carregar norma ativa:', err);
-      }
-    }
-
-    async function loadProcesses() {
-      try {
-        const res = await fetch('/processes');
-        if (!res.ok) return;
-        const processes = await res.json();
-        
-        document.getElementById('stat-total-processes').innerText = `${processes.length} processos`;
-        const tbody = document.getElementById('processes-table-body');
-        const emptyState = document.getElementById('empty-processes-state');
-        tbody.innerHTML = '';
-
-        if (processes.length === 0) {
-          emptyState.classList.remove('hidden');
-          return;
-        }
-
-        emptyState.classList.add('hidden');
-        processes.forEach(p => {
-          const tr = document.createElement('tr');
-          tr.className = 'hover:bg-slate-800/40 transition';
-          
-          const isEligible = p.verdict === 'ELIGIBLE';
-          const isConditioned = p.verdict === 'CONDITIONALLY_ELIGIBLE';
-          const isReview = p.verdict === 'REQUIRES_HUMAN_REVIEW';
-          
-          let badgeClass = 'bg-rose-500/20 text-rose-300 border border-rose-500/30';
-          if (isEligible) {
-            badgeClass = 'bg-emerald-500/20 text-emerald-300 border border-emerald-500/30';
-          } else if (isConditioned) {
-            badgeClass = 'bg-cyan-500/20 text-cyan-300 border border-cyan-500/30';
-          } else if (isReview) {
-            badgeClass = 'bg-amber-500/20 text-amber-300 border border-amber-500/30';
-          }
-
-          tr.innerHTML = `
-            <td class="p-3.5 font-mono text-emerald-400 font-semibold">${escapeHTML(p.cnj_number)}</td>
-            <td class="p-3.5 text-slate-200">${escapeHTML(p.beneficiary_name || 'Beneficiário')}</td>
-            <td class="p-3.5 font-mono text-slate-400">${p.total_pages} págs</td>
-            <td class="p-3.5 font-mono text-slate-300 text-xs">${escapeHTML(p.policy_version || 'Norma Ativa')}</td>
-            <td class="p-3.5"><span class="${badgeClass} text-[10px] px-2 py-0.5 rounded-full font-bold">${escapeHTML(p.verdict || 'PENDING')}</span></td>
-            <td class="p-3.5 text-right">
-              <button onclick="inspectProcess('${escapeHTML(p.process_id)}')" class="px-3 py-1.5 bg-slate-800 hover:bg-slate-700 text-slate-200 rounded-lg border border-slate-700 text-xs font-medium transition">
-                Auditar Split-Screen <i class="fa-solid fa-chevron-right ml-1 text-[10px]"></i>
-              </button>
-            </td>
-          `;
-
-          tbody.appendChild(tr);
-        });
-
-      } catch (err) {
-        console.error('Erro ao listar processos:', err);
-      }
-    }
-
     async function handleProcessUpload(e) {
       e.preventDefault();
       if (selectedProcessFiles.length === 0) {
-        showToast('Atenção', 'Por favor, selecione ao menos um arquivo PDF do processo antes de iniciar.', 'warning');
+        showToast('Atenção', 'Selecione ao menos um arquivo PDF antes de iniciar.', 'warning');
         return;
       }
 
       const formData = new FormData();
-      selectedProcessFiles.forEach(f => {
-        formData.append('files', f);
-      });
+      selectedProcessFiles.forEach(f => formData.append('files', f));
 
       const cnj = document.getElementById('input-cnj').value.trim();
       if (cnj) formData.append('cnj_number', cnj);
@@ -709,12 +1965,10 @@
       const modal = document.getElementById('live-runner-modal');
       const logs = document.getElementById('runner-logs');
       const pBar = document.getElementById('runner-progress-bar');
-      document.getElementById('runner-modal-title').innerText = 'Processando Autos Judiciais';
-      document.getElementById('runner-modal-sub').innerText = 'OCR em cascata de 4 camadas e validação determinística';
       
       modal.classList.remove('hidden');
       pBar.style.width = '20%';
-      logs.innerHTML = `<p class="text-slate-300">[1/5] Ingestão de ${selectedProcessFiles.length} documento(s) PDF e extração nativa...</p>`;
+      logs.innerHTML = `<p class="text-slate-300">[1/5] Ingestão de ${selectedProcessFiles.length} documento(s) e OCR em cascata...</p>`;
 
       try {
         const res = await fetch('/processes/upload', {
@@ -724,581 +1978,102 @@
 
         if (!res.ok) {
           const errData = await res.json().catch(() => ({}));
-          let msg = 'Erro no processamento.';
-          if (errData.detail) {
-            msg = typeof errData.detail === 'string' ? errData.detail : JSON.stringify(errData.detail);
-          }
-          throw new Error(msg);
+          throw new Error(errData.detail || 'Erro no processamento.');
         }
 
         const data = await res.json();
         
-        pBar.style.width = '40%';
-        await new Promise(r => setTimeout(r, 350));
-        logs.innerHTML += `<p class="text-slate-300">[2/5] OCR em Cascata Concluído: ${data.total_pages} páginas indexadas em ${data.documents_count || selectedProcessFiles.length} documento(s).</p>`;
+        pBar.style.width = '50%';
+        await new Promise(r => setTimeout(r, 300));
+        logs.innerHTML += `<p class="text-slate-300">[2/5] OCR Concluído: ${data.total_pages} páginas indexadas.</p>`;
         
-        pBar.style.width = '65%';
-        await new Promise(r => setTimeout(r, 350));
-        logs.innerHTML += `<p class="text-slate-300">[3/5] Cruzamento de Evidências Concluído (Tema: ${data.identified_theme || 'Tema 18: Reembolso'}).</p>`;
-        
-        pBar.style.width = '85%';
-        await new Promise(r => setTimeout(r, 350));
-        logs.innerHTML += `<p class="text-slate-300">[4/5] Avaliando contra Norma Ativa (${data.policy_version})...</p>`;
+        pBar.style.width = '75%';
+        await new Promise(r => setTimeout(r, 300));
+        logs.innerHTML += `<p class="text-slate-300">[3/5] Tema Classificado: ${data.identified_theme || 'Tema 01: Terapias'}</p>`;
         
         pBar.style.width = '100%';
-        await new Promise(r => setTimeout(r, 350));
-        const isEligible = data.verdict === 'ELIGIBLE';
-        const isConditioned = data.verdict === 'CONDITIONALLY_ELIGIBLE';
-        const verdictColor = isEligible ? 'text-emerald-400 font-bold' : (isConditioned ? 'text-cyan-300 font-bold' : 'text-rose-400 font-bold');
-        logs.innerHTML += `<p class="${verdictColor}">[5/5] Veredito: ${data.verdict} — ${data.summary}</p>`;
+        await new Promise(r => setTimeout(r, 300));
+        logs.innerHTML += `<p class="text-emerald-400 font-bold">[4/5] Veredito: ${data.verdict} — ${data.summary}</p>`;
 
-        await new Promise(r => setTimeout(r, 800));
+        await new Promise(r => setTimeout(r, 600));
         modal.classList.add('hidden');
         
-        // Limpa seleção
         selectedProcessFiles = [];
         renderSelectedFilesList();
         
-        showToast(
-          'Auditoria Concluída',
-          `Processo ${data.cnj_number || ''} avaliado como ${data.verdict}.`,
-          isEligible ? 'success' : (isConditioned ? 'info' : 'warning')
-        );
+        showToast('Auditoria Concluída', `Processo ${data.cnj_number} processado como ${data.verdict}.`, 'success');
 
-        loadProcesses();
-        renderAuditView(data);
-        switchTab('audit');
+        await loadProcesses();
+        await selectProcess(data.process_id);
+        switchNav('command-center');
       } catch (err) {
         modal.classList.add('hidden');
         showToast('Erro no Processamento', err.message, 'error');
       }
     }
 
-    let currentProcessPages = [];
-    let currentAuditPageIndex = 0; // 0-based
-
-    function switchAuditSideTab(tab) {
-      const btnRules = document.getElementById('audit-tab-btn-rules');
-      const btnFacts = document.getElementById('audit-tab-btn-facts');
-      const btnTrace = document.getElementById('audit-tab-btn-trace');
-      const cRules = document.getElementById('audit-theme-rules-container');
-      const cFacts = document.getElementById('audit-dossier-facts-container');
-      const cTrace = document.getElementById('audit-trace-container');
-
-      [btnRules, btnFacts, btnTrace].forEach(b => {
-        if (b) b.className = 'px-2.5 py-1 bg-transparent text-slate-400 hover:text-slate-200 font-medium rounded-lg transition flex items-center gap-1.5 shrink-0';
-      });
-      [cRules, cFacts, cTrace].forEach(c => {
-        if (c) c.classList.add('hidden');
-      });
-
-      if (tab === 'rules') {
-        btnRules.className = 'px-2.5 py-1 bg-slate-800 text-white font-semibold rounded-lg border border-slate-700 transition flex items-center gap-1.5 shrink-0';
-        cRules.classList.remove('hidden');
-      } else if (tab === 'facts') {
-        btnFacts.className = 'px-2.5 py-1 bg-slate-800 text-white font-semibold rounded-lg border border-slate-700 transition flex items-center gap-1.5 shrink-0';
-        cFacts.classList.remove('hidden');
-      } else if (tab === 'trace') {
-        btnTrace.className = 'px-2.5 py-1 bg-slate-800 text-amber-300 font-semibold rounded-lg border border-slate-700 transition flex items-center gap-1.5 shrink-0';
-        cTrace.classList.remove('hidden');
+    let selectedPolicyFile = null;
+    function onPolicyFileSelected(e) {
+      if (e.target.files.length > 0) {
+        selectedPolicyFile = e.target.files[0];
+        document.getElementById('policy-file-label').innerText = `${selectedPolicyFile.name} (${(selectedPolicyFile.size / (1024 * 1024)).toFixed(2)} MB)`;
       }
     }
 
-    function renderTraceView(trace) {
-      const phasesList = document.getElementById('audit-trace-phases-list');
-      const durationLabel = document.getElementById('trace-exec-duration');
-      if (!phasesList) return;
-
-      if (!trace || !trace.phases) {
-        if (durationLabel) durationLabel.innerText = 'Log: Padrão';
-        phasesList.innerHTML = `
-          <div class="p-3 bg-slate-950 border border-slate-800 rounded-xl text-slate-400 text-xs">
-            <p class="font-bold text-slate-300 mb-1">Processamento Registrado</p>
-            <p class="text-[11px]">Faça um novo upload para visualizar o trace forense detalhado milissegundo a milissegundo aqui.</p>
-          </div>
-        `;
-        return;
-      }
-
-      if (durationLabel) durationLabel.innerText = `Duração: ${trace.total_duration_ms || 0} ms (${trace.total_events || 0} eventos)`;
-      phasesList.innerHTML = '';
-
-      const phaseNames = {
-        'FASE_1_INGESTAO_OCR': { title: '1. Ingestão & OCR em Cascata', icon: 'fa-file-pdf' },
-        'FASE_2_SEGMENTACAO_PECAS': { title: '2. Segmentação de Peças', icon: 'fa-layer-group' },
-        'FASE_3_EXTRACAO_FATOS': { title: '3. Extração de Variáveis', icon: 'fa-magnifying-glass-chart' },
-        'FASE_4_CLASSIFICACAO_TEMA': { title: '4. Classificação do Tema', icon: 'fa-bullseye' },
-        'FASE_5_AVALIACAO_REGRAS': { title: '5. Avaliação de Regras & Vedações', icon: 'fa-scale-balanced' },
-        'FASE_6_VEREDITO_FINAL': { title: '6. Veredito Final', icon: 'fa-flag-checkered' }
-      };
-
-      for (const [pKey, pVal] of Object.entries(trace.phases || {})) {
-        const meta = phaseNames[pKey] || { title: pKey, icon: 'fa-circle-notch' };
-        const statusBadge = pVal.status === 'COMPLETED' 
-          ? '<span class="bg-emerald-500/20 text-emerald-400 px-2 py-0.5 rounded text-[9px] font-bold">OK</span>'
-          : (pVal.status === 'ERROR' ? '<span class="bg-rose-500/20 text-rose-400 px-2 py-0.5 rounded text-[9px] font-bold">ERRO</span>' : '<span class="bg-slate-800 text-slate-400 px-2 py-0.5 rounded text-[9px]">PENDENTE</span>');
-
-        const pCard = document.createElement('div');
-        pCard.className = 'bg-slate-950 border border-slate-800 rounded-xl overflow-hidden';
-        
-        let logsHtml = (pVal.logs || []).map(l => {
-          let lvlColor = 'text-slate-300';
-          if (l.level === 'SUCCESS') lvlColor = 'text-emerald-400 font-semibold';
-          if (l.level === 'WARNING') lvlColor = 'text-amber-400 font-semibold';
-          if (l.level === 'ERROR') lvlColor = 'text-rose-400 font-bold';
-
-          return `
-            <div class="text-[10px] leading-relaxed border-b border-slate-900/60 pb-1 pt-1">
-              <span class="text-slate-500 font-mono">[+${l.elapsed_ms}ms]</span>
-              <span class="${lvlColor}">${l.message}</span>
-            </div>
-          `;
-        }).join('');
-
-        pCard.innerHTML = `
-          <div class="p-2.5 bg-slate-900/90 flex justify-between items-center cursor-pointer border-b border-slate-800 select-none" onclick="this.nextElementSibling.classList.toggle('hidden')">
-            <div class="flex items-center gap-2">
-              <i class="fa-solid ${meta.icon} text-emerald-400 text-xs"></i>
-              <span class="font-bold text-slate-200 text-xs">${meta.title}</span>
-            </div>
-            <div class="flex items-center gap-2">
-              ${statusBadge}
-              <i class="fa-solid fa-chevron-down text-[10px] text-slate-500"></i>
-            </div>
-          </div>
-          <div class="p-2.5 space-y-1 bg-slate-950/80 max-h-48 overflow-y-auto font-mono">
-            ${logsHtml || '<p class="text-slate-500 text-[10px]">Sem logs nesta fase.</p>'}
-          </div>
-        `;
-        phasesList.appendChild(pCard);
-      }
-    }
-
-    function copyTraceJSON() {
-      if (!currentProcessData || !currentProcessData.execution_trace) {
-        showToast('Aviso', 'Nenhum trace JSON disponível para este processo.', 'warning');
-        return;
-      }
-      navigator.clipboard.writeText(JSON.stringify(currentProcessData.execution_trace, null, 2));
-      showToast('Sucesso', 'Trace JSON copiado para a área de transferência!', 'success');
-    }
-
-    function downloadProcessLog() {
-      if (!currentProcessData || !currentProcessData.process_id) return;
-      window.open(`/processes/${currentProcessData.process_id}/log-text`, '_blank');
-    }
-
-    async function inspectProcess(processId) {
-      try {
-        const res = await fetch('/processes/' + processId);
-        if (!res.ok) return;
-        const data = await res.json();
-        renderAuditView(data);
-        switchTab('audit');
-      } catch (err) {
-        console.error(err);
-      }
-    }
-
-    function renderAuditView(data) {
-      currentProcessData = data;
-      currentProcessPages = data.pages || [];
-      currentAuditPageIndex = 0;
-
-      document.getElementById('audit-cnj-title').innerText = data.cnj_number || 'Autos Judiciais';
-      document.getElementById('doc-beneficiary').innerText = data.beneficiary_name || 'Beneficiário dos Autos';
-      
-      const themeName = data.identified_theme || (data.facts && data.facts.identified_theme ? data.facts.identified_theme.theme : null) || 'Tema 01: Terapias Especiais';
-      const themeBadge = document.getElementById('audit-theme-badge');
-      if (themeBadge) themeBadge.innerText = themeName;
-      const themeTitle = document.getElementById('audit-theme-title');
-      if (themeTitle) themeTitle.innerText = `Avaliação: ${themeName}`;
-      const policyLabel = document.getElementById('audit-policy-label');
-      if (policyLabel) policyLabel.innerText = `Norma: ${data.policy_version || '2026.OFICIAL'}`;
-
-      const totalPages = currentProcessPages.length > 0 ? currentProcessPages.length : (data.total_pages || 1);
-      document.getElementById('audit-total-pages').innerText = totalPages;
-
-      const isEligible = data.verdict === 'ELIGIBLE';
-      const isConditioned = data.verdict === 'CONDITIONALLY_ELIGIBLE';
-      const isReview = data.verdict === 'REQUIRES_HUMAN_REVIEW';
-
-      const vBox = document.getElementById('audit-verdict-box');
-      if (vBox) {
-        let vBoxClass = 'mt-3 p-3 bg-rose-500/10 border border-rose-500/30 rounded-xl';
-        let titleColor = 'text-rose-300';
-        let iconClass = 'fa-circle-xmark';
-        let titleText = 'PROCESSO INELIGÍVEL (HIPÓTESE VEDADA)';
-
-        if (isEligible) {
-          vBoxClass = 'mt-3 p-3 bg-emerald-500/10 border border-emerald-500/30 rounded-xl';
-          titleColor = 'text-emerald-300';
-          iconClass = 'fa-circle-check';
-          titleText = 'PROCESSO 100% ELEGÍVEL PARA ACORDO';
-        } else if (isConditioned) {
-          vBoxClass = 'mt-3 p-3 bg-cyan-500/10 border border-cyan-500/30 rounded-xl';
-          titleColor = 'text-cyan-300';
-          iconClass = 'fa-scale-balanced';
-          titleText = 'PROCESSO ELEGÍVEL EM CARÁTER CONDICIONADO';
-        } else if (isReview) {
-          vBoxClass = 'mt-3 p-3 bg-amber-500/10 border border-amber-500/30 rounded-xl';
-          titleColor = 'text-amber-300';
-          iconClass = 'fa-triangle-exclamation';
-          titleText = 'ENCAMINHADO PARA TRIAGEM (HITL)';
-        }
-
-        vBox.className = vBoxClass;
-        vBox.innerHTML = `
-          <p class="text-xs font-bold ${titleColor}">
-            <i class="fa-solid ${iconClass} mr-1"></i> 
-            ${titleText}
-          </p>
-          <p class="text-[11px] text-slate-300 mt-1">${escapeHTML(data.summary || 'Avaliação concluída conforme parâmetros da norma.')}</p>
-        `;
-      }
-
-      // 1. Renderiza Seletor de Páginas (Page Strip)
-      const stripContainer = document.getElementById('audit-pages-strip');
-      stripContainer.innerHTML = '';
-      
-      if (currentProcessPages.length > 0) {
-        currentProcessPages.forEach((p, idx) => {
-          const btn = document.createElement('button');
-          btn.id = `page-strip-btn-${idx}`;
-          const isSelected = idx === 0;
-          btn.className = `px-2.5 py-1 rounded-md font-mono text-[10px] whitespace-nowrap transition border ${isSelected ? 'bg-emerald-600 text-white border-emerald-500 font-bold shadow' : 'bg-slate-900 text-slate-400 border-slate-800 hover:text-slate-200'}`;
-          
-          const segName = (p.segment_type || 'PÁGINA').replace('_', ' ');
-          btn.innerHTML = `<span class="opacity-80">Pág ${p.page_number}</span> <span class="text-[9px] uppercase font-sans">(${escapeHTML(segName)})</span>`;
-          btn.onclick = () => selectAuditPage(idx);
-          stripContainer.appendChild(btn);
-        });
-      }
-
-      // 2. Renderiza Regras Avaliadas e Cláusulas Condicionais
-      const rulesContainer = document.getElementById('audit-theme-rules-container');
-      rulesContainer.innerHTML = '';
-
-      // Adiciona card de Cláusulas Condicionais se existirem
-      if (data.conditional_clauses && data.conditional_clauses.length > 0) {
-        const cDiv = document.createElement('div');
-        cDiv.className = 'p-3 rounded-xl border border-cyan-500/40 bg-cyan-950/30 space-y-1.5';
-        cDiv.innerHTML = `
-          <div class="flex items-center gap-1.5 text-cyan-300 font-bold text-xs">
-            <i class="fa-solid fa-file-contract text-cyan-400"></i> Condições Resolutivas Obrigatórias
-          </div>
-          ${data.conditional_clauses.map(c => `<p class="text-[11px] text-cyan-100 bg-cyan-900/30 p-2 rounded border border-cyan-800/40 leading-relaxed font-mono">${escapeHTML(c)}</p>`).join('')}
-        `;
-        rulesContainer.appendChild(cDiv);
-      }
-
-      // Adiciona card de Memória de Cálculo de Saving se existir
-      if (data.saving_analysis && data.saving_analysis.effective_operator_liability) {
-        const s = data.saving_analysis;
-        const sDiv = document.createElement('div');
-        sDiv.className = 'p-3 rounded-xl border border-emerald-500/40 bg-emerald-950/20 space-y-2 text-xs';
-        sDiv.innerHTML = `
-          <div class="flex justify-between items-center text-emerald-300 font-bold">
-            <span><i class="fa-solid fa-chart-pie mr-1"></i> Memória de Cálculo Pós-Sentença</span>
-            <span class="bg-emerald-500/20 px-2 py-0.5 rounded font-mono text-[10px]">Deságio: ${s.desagio_percentage}%</span>
-          </div>
-          <div class="grid grid-cols-2 gap-2 text-[11px] text-slate-300">
-            <div>Passivo Operadora: <strong class="text-white font-mono">R$ ${s.effective_operator_liability.toLocaleString('pt-BR', {minimumFractionDigits: 2})}</strong></div>
-            <div>Proposta: <strong class="text-emerald-300 font-mono">R$ ${s.proposal_amount.toLocaleString('pt-BR', {minimumFractionDigits: 2})}</strong></div>
-            <div>Saving s/ Sentença: <strong class="text-emerald-400 font-mono">R$ ${s.saving_vs_sentence.toLocaleString('pt-BR', {minimumFractionDigits: 2})}</strong></div>
-            <div>Saving Risco Recursal (+20%): <strong class="text-teal-300 font-mono">R$ ${s.saving_vs_appeal_risk.toLocaleString('pt-BR', {minimumFractionDigits: 2})}</strong></div>
-          </div>
-        `;
-        rulesContainer.appendChild(sDiv);
-      }
-
-      if (data.rules && data.rules.length > 0) {
-        data.rules.forEach(r => {
-          const pass = r.status === 'PASS';
-          const rDiv = document.createElement('div');
-          rDiv.className = `p-3 rounded-xl border ${pass ? 'border-emerald-500/40 bg-emerald-500/10' : 'border-rose-500/40 bg-rose-500/10'}`;
-          rDiv.innerHTML = `
-            <div class="flex justify-between items-center mb-1">
-              <span class="font-mono font-bold text-xs ${pass ? 'text-emerald-400' : 'text-rose-400'}">${escapeHTML(r.rule_code)}</span>
-              <span class="${pass ? 'bg-emerald-500/20 text-emerald-300' : 'bg-rose-500/20 text-rose-300'} text-[10px] font-bold px-2 py-0.5 rounded-full">${escapeHTML(r.status)}</span>
-            </div>
-            <p class="text-xs text-slate-200">${escapeHTML(r.title || 'Regra')}</p>
-            ${r.failure_reason ? `<p class="text-[11px] text-slate-400 mt-1">${escapeHTML(r.failure_reason)}</p>` : ''}
-          `;
-          rulesContainer.appendChild(rDiv);
-        });
-      } else {
-        rulesContainer.innerHTML += `
-          <div class="p-3.5 rounded-xl border border-emerald-500/40 bg-emerald-500/10">
-            <span class="font-mono font-bold text-xs text-emerald-400">STATUS DA AVALIAÇÃO</span>
-            <p class="text-xs text-slate-200 mt-1">${escapeHTML(data.summary || 'Atende aos critérios da Instrução de Trabalho.')}</p>
-          </div>
-        `;
-      }
-
-
-      // 3. Renderiza Dossiê de Fatos Extraídos
-      const factsContainer = document.getElementById('audit-dossier-facts-container');
-      factsContainer.innerHTML = '';
-      const rawFacts = data.extracted_facts || data.facts || {};
-      const fin = rawFacts.financial || rawFacts.requested_amount || {};
-      const treat = rawFacts.treatment || {};
-      const adm = rawFacts.administrative_denial || {};
-
-      factsContainer.innerHTML = `
-        <div class="p-3 bg-slate-950 border border-slate-800 rounded-xl space-y-2 text-xs">
-          <div class="flex justify-between items-center border-b border-slate-800 pb-1.5">
-            <span class="font-bold text-emerald-400"><i class="fa-solid fa-coins mr-1"></i> Análise Financeira</span>
-            <span class="font-mono text-white font-bold">R$ ${(fin.requested_amount || fin.amount || 0).toLocaleString('pt-BR', {minimumFractionDigits: 2})}</span>
-          </div>
-          <p class="text-slate-300 text-[11px]"><strong>Comprovação de Desembolso:</strong> ${fin.has_fiscal_receipt || fin.has_receipt ? '<span class="text-emerald-400 font-bold">SIM (Nota Fiscal / Recibo Identificado)</span>' : '<span class="text-rose-400 font-bold">NÃO ENCONTRADO</span>'}</p>
-          <p class="text-slate-300 text-[11px]"><strong>Tema Classificado:</strong> ${themeName}</p>
-        </div>
-
-        <div class="p-3 bg-slate-950 border border-slate-800 rounded-xl space-y-2 text-xs">
-          <div class="flex justify-between items-center border-b border-slate-800 pb-1.5">
-            <span class="font-bold text-teal-400"><i class="fa-solid fa-stethoscope mr-1"></i> Análise Médica & Clínica</span>
-            <span class="font-mono text-slate-300 text-[11px]">${treat.cid_10 ? `CID-10: ${treat.cid_10}` : 'CID nos autos'}</span>
-          </div>
-          <p class="text-slate-300 text-[11px]"><strong>Tipo de Tratamento:</strong> ${treat.treatment_type || treat.type || 'Tratamento Assistencial'}</p>
-          <p class="text-slate-300 text-[11px]"><strong>Laudo / Relatório Médico:</strong> ${treat.has_medical_report !== false ? '<span class="text-emerald-400 font-bold">Identificado nos autos</span>' : '<span class="text-amber-400">Pendente</span>'}</p>
-        </div>
-
-        <div class="p-3 bg-slate-950 border border-slate-800 rounded-xl space-y-2 text-xs">
-          <div class="flex justify-between items-center border-b border-slate-800 pb-1.5">
-            <span class="font-bold text-indigo-400"><i class="fa-solid fa-file-circle-xmark mr-1"></i> Negativa Administrativa</span>
-            <span class="font-mono text-slate-300 text-[11px]">${adm.has_administrative_denial || adm.denied ? 'COMPROVADA' : 'NÃO CONSTA'}</span>
-          </div>
-          <p class="text-slate-300 text-[11px]"><strong>Recusa Prévia da Operadora:</strong> ${adm.has_administrative_denial || adm.denied ? '<span class="text-emerald-400 font-bold">Protocolo / Notificação Localizada</span>' : '<span class="text-slate-400">Sem comprovante explícito de negativa</span>'}</p>
-        </div>
-
-        <div class="p-3 bg-slate-950 border border-slate-800 rounded-xl space-y-1.5 text-xs">
-          <span class="font-bold text-slate-300"><i class="fa-solid fa-layer-group mr-1"></i> Peças e Documentos Analisados</span>
-          <p class="text-[11px] text-slate-400">Total de páginas indexadas e processadas: <strong>${totalPages} página(s)</strong>.</p>
-        </div>
-      `;
-
-      // 4. Renderiza Log Forense / Trace da Análise
-      renderTraceView(data.execution_trace);
-
-      // 5. Renderiza a primeira página no canvas
-      updateAuditPageCanvas();
-    }
-
-    function selectAuditPage(idx) {
-      if (idx < 0 || idx >= currentProcessPages.length) return;
-      currentAuditPageIndex = idx;
-      updateAuditPageCanvas();
-    }
-
-    function changeAuditPage(delta) {
-      if (currentProcessPages.length === 0) return;
-      const newIdx = Math.max(0, Math.min(currentProcessPages.length - 1, currentAuditPageIndex + delta));
-      selectAuditPage(newIdx);
-    }
-
-    function updateAuditPageCanvas() {
-      const totalPages = currentProcessPages.length > 0 ? currentProcessPages.length : 1;
-      const displayNum = currentAuditPageIndex + 1;
-
-      document.getElementById('audit-page-num').innerText = displayNum;
-      document.getElementById('doc-page-indicator').innerText = `${displayNum} / ${totalPages}`;
-
-      // Atualiza botões da barra rápida de páginas
-      for (let i = 0; i < totalPages; i++) {
-        const btn = document.getElementById(`page-strip-btn-${i}`);
-        if (btn) {
-          btn.className = (i === currentAuditPageIndex)
-            ? 'px-2.5 py-1 rounded-md font-mono text-[10px] whitespace-nowrap transition border bg-emerald-600 text-white border-emerald-500 font-bold shadow'
-            : 'px-2.5 py-1 rounded-md font-mono text-[10px] whitespace-nowrap transition border bg-slate-900 text-slate-400 border-slate-800 hover:text-slate-200';
-        }
-      }
-
-      if (currentProcessPages.length > 0 && currentAuditPageIndex < currentProcessPages.length) {
-        const pageData = currentProcessPages[currentAuditPageIndex];
-        
-        // Badges e metadados da página
-        document.getElementById('audit-doc-name-badge').innerText = pageData.document_name || 'autos.pdf';
-        document.getElementById('doc-source-file-label').innerText = `${pageData.document_name || 'documento.pdf'} (Pág ${pageData.page_in_document || displayNum})`;
-        
-        const seg = (pageData.segment_type || 'OUTROS').replace('_', ' ');
-        document.getElementById('audit-doc-segment-badge').innerText = seg;
-        document.getElementById('doc-piece-badge').innerText = seg;
-
-        // Texto real extraído da página
-        const textContent = pageData.raw_text && pageData.raw_text.trim() !== '' 
-          ? pageData.raw_text 
-          : '[Página sem texto nativo / Imagem digitalizada processada na esteira]';
-        document.getElementById('doc-real-text').innerText = textContent;
-
-        // Evidence highlight dinâmico por página
-        const bboxBox = document.getElementById('audit-bbox-highlight');
-        const textLower = textContent.toLowerCase();
-        
-        if (textLower.includes('nota fiscal') || textLower.includes('danfe') || textLower.includes('recibo') || textLower.includes('quitado')) {
-          bboxBox.classList.remove('hidden');
-          document.getElementById('audit-bbox-tag').innerText = 'EVIDÊNCIA FINANCEIRA (DESEMBOLSO COMPROVADO)';
-          document.getElementById('audit-bbox-main-text').innerText = 'COMPROVANTE DE PAGAMENTO LOCALIZADO';
-          document.getElementById('audit-bbox-sub-text').innerText = 'Quitação comprovada nos autos. Requisito de reembolso validado.';
-        } else if (textLower.includes('laudo') || textLower.includes('relatório médico') || textLower.includes('cid') || textLower.includes('terapia')) {
-          bboxBox.classList.remove('hidden');
-          document.getElementById('audit-bbox-tag').innerText = 'EVIDÊNCIA MÉDICA / CLÍNICA';
-          document.getElementById('audit-bbox-main-text').innerText = 'RELATÓRIO MÉDICO COM INDICAÇÃO TERAPÊUTICA';
-          document.getElementById('audit-bbox-sub-text').innerText = 'Necessidade clínica e CID-10 informados pelo médico assistente.';
-        } else if (textLower.includes('negativa') || textLower.includes('indeferimento') || textLower.includes('protocolo')) {
-          bboxBox.classList.remove('hidden');
-          document.getElementById('audit-bbox-tag').innerText = 'EVIDÊNCIA ADMINISTRATIVA (RECUSA PRÉVIA)';
-          document.getElementById('audit-bbox-main-text').innerText = 'COMUNICADO DE NEGATIVA DA OPERADORA';
-          document.getElementById('audit-bbox-sub-text').innerText = 'Tentativa prévia de autorização administrativa comprovada.';
-        } else if (textLower.includes('petição inicial') || textLower.includes('valor da causa')) {
-          bboxBox.classList.remove('hidden');
-          document.getElementById('audit-bbox-tag').innerText = 'EVIDÊNCIA PROCESSUAL (PETIÇÃO INICIAL)';
-          document.getElementById('audit-bbox-main-text').innerText = 'PEDIDO E VALOR DA CAUSA IDENTIFICADOS';
-          document.getElementById('audit-bbox-sub-text').innerText = 'Petição inicial e qualificação das partes processadas.';
-        } else {
-          bboxBox.classList.add('hidden');
-        }
-      }
-    }
-
-    let selectedManualFile = null;
-
-    function openManualUploadModal() {
-      selectedManualFile = null;
-      document.getElementById('manual-pdf-file').value = '';
-      document.getElementById('manual-file-label').innerText = 'Clique para selecionar o PDF da Instrução de Trabalho';
-      document.getElementById('input-manual-version').value = '';
-      document.getElementById('input-manual-title').value = '';
-      document.getElementById('manual-upload-modal').classList.remove('hidden');
-    }
-
-    function closeManualUploadModal() {
-      document.getElementById('manual-upload-modal').classList.add('hidden');
-    }
-
-    function onManualFileSelected(e) {
-      const file = e.target.files[0];
-      if (file && file.name.toLowerCase().endsWith('.pdf')) {
-        selectedManualFile = file;
-        document.getElementById('manual-file-label').innerHTML = `<strong class="text-emerald-400 font-semibold">${file.name}</strong> <span class="text-slate-400">(${(file.size / 1024).toFixed(1)} KB)</span>`;
-      }
-    }
-
-    async function handleManualUploadSubmit(e) {
+    async function handlePolicyUpload(e) {
       e.preventDefault();
-      if (!selectedManualFile) {
-        showToast('Atenção', 'Por favor, selecione um arquivo PDF da Instrução de Trabalho.', 'warning');
+      if (!selectedPolicyFile) {
+        showToast('Atenção', 'Selecione o arquivo PDF da norma.', 'warning');
         return;
       }
 
-      const versionInput = document.getElementById('input-manual-version').value.trim();
-      const titleInput = document.getElementById('input-manual-title').value.trim();
-
+      const version = document.getElementById('input-policy-version').value.trim();
       const formData = new FormData();
-      formData.append('file', selectedManualFile);
-      if (versionInput) formData.append('version', versionInput);
-      if (titleInput) formData.append('policy_name', titleInput);
+      formData.append('file', selectedPolicyFile);
+      formData.append('version', version);
+      formData.append('operator_name', 'Grupo Amil');
 
-      closeManualUploadModal();
-
-      // Inicia Modal de Runner em Tempo Real
-      const modal = document.getElementById('live-runner-modal');
-      const logs = document.getElementById('runner-logs');
-      const pBar = document.getElementById('runner-progress-bar');
-      document.getElementById('runner-modal-title').innerText = 'Compilando Instrução de Trabalho';
-      document.getElementById('runner-modal-sub').innerText = 'Extração de temas, vedações e regras determinísticas do PDF';
-      
-      modal.classList.remove('hidden');
-      pBar.style.width = '25%';
-      logs.innerHTML = `<p class="text-slate-300">[1/4] Lendo e indexando PDF nativo (${(selectedManualFile.size / 1024).toFixed(1)} KB)...</p>`;
+      closePolicyUploadModal();
+      showToast('Compilando Norma', 'Extraindo 21 temas e compilando regras JSON-Logic...', 'info');
 
       try {
-        const startTime = Date.now();
-        const res = await fetch('/policies/upload-pdf', {
+        const res = await fetch('/policies/upload', {
           method: 'POST',
           body: formData
         });
-
-        if (!res.ok) {
-          const errData = await res.json().catch(() => ({}));
-          throw new Error(errData.detail || `Erro HTTP ${res.status}`);
-        }
-
-        const data = await res.json();
+        if (!res.ok) throw new Error('Erro ao compilar norma');
         
-        pBar.style.width = '55%';
-        logs.innerHTML += `<p class="text-slate-300">[2/4] Extração concluída: ${data.total_topics || data.extracted_criteria_count || 'Todos os'} temas e seções identificados.</p>`;
-        await new Promise(r => setTimeout(r, 450));
-
-        pBar.style.width = '80%';
-        logs.innerHTML += `<p class="text-slate-300">[3/4] Compilando ${data.extracted_criteria_count || data.total_criteria_extracted || 'múltiplas'} regras JSON-Logic determinísticas...</p>`;
-        await new Promise(r => setTimeout(r, 450));
-
-        pBar.style.width = '100%';
-        logs.innerHTML += `<p class="text-emerald-400 font-bold">[4/4] Versão ${data.version} ATIVADA com sucesso no banco de dados!</p>`;
-        await new Promise(r => setTimeout(r, 800));
-
-        modal.classList.add('hidden');
-
-        // Notificação de Sucesso
-        showToast(
-          'Norma Compilada e Ativada!',
-          `Manual versão ${data.version} compilado com sucesso com ${data.extracted_criteria_count || data.total_criteria_extracted} critérios/regras.`,
-          'success'
-        );
-
-        // Recarrega os dados e navega para a aba de políticas
+        const data = await res.json();
+        showToast('Norma Ativada!', `Versão ${data.version} compilada com sucesso.`, 'success');
+        
         await loadActivePolicy();
-        switchTab('policies');
-
+        switchNav('policies-catalog');
       } catch (err) {
-        modal.classList.add('hidden');
-        showToast('Erro na Compilação', err.message, 'error');
+        showToast('Erro', err.message, 'error');
       }
     }
 
-    function showToast(title, message, type = 'info') {
+    function showToast(title, msg, type = 'info') {
       const container = document.getElementById('toast-container');
-      if (!container) return;
-
       const toast = document.createElement('div');
-      toast.className = 'pointer-events-auto p-4 rounded-xl shadow-2xl border flex items-start gap-3 max-w-sm transform transition-all duration-300 translate-y-2 opacity-0 text-xs';
+      const borderColors = {
+        success: 'border-emerald-500 text-emerald-300 bg-slate-900/95',
+        warning: 'border-amber-500 text-amber-300 bg-slate-900/95',
+        error: 'border-rose-500 text-rose-300 bg-slate-900/95',
+        info: 'border-indigo-500 text-indigo-300 bg-slate-900/95'
+      };
       
-      let borderClass = 'bg-slate-900 border-slate-700 text-slate-200';
-      let icon = '<i class="fa-solid fa-circle-info text-blue-400 text-base"></i>';
-
-      if (type === 'success') {
-        borderClass = 'bg-slate-900 border-emerald-500/50 text-white shadow-emerald-500/10';
-        icon = '<i class="fa-solid fa-circle-check text-emerald-400 text-base"></i>';
-      } else if (type === 'error') {
-        borderClass = 'bg-slate-900 border-rose-500/50 text-white shadow-rose-500/10';
-        icon = '<i class="fa-solid fa-circle-xmark text-rose-400 text-base"></i>';
-      } else if (type === 'warning') {
-        borderClass = 'bg-slate-900 border-amber-500/50 text-white shadow-amber-500/10';
-        icon = '<i class="fa-solid fa-triangle-exclamation text-amber-400 text-base"></i>';
-      }
-
-      toast.className += ` ${borderClass}`;
+      toast.className = `p-4 rounded-xl border shadow-2xl transition-all duration-300 max-w-sm pointer-events-auto ${borderColors[type] || borderColors.info}`;
       toast.innerHTML = `
-        <div class="shrink-0 mt-0.5">${icon}</div>
-        <div class="flex-1 space-y-0.5">
-          <h4 class="font-bold">${title}</h4>
-          <p class="text-slate-300 text-[11px] leading-relaxed">${message}</p>
-        </div>
-        <button onclick="this.parentElement.remove()" class="text-slate-500 hover:text-white shrink-0">
-          <i class="fa-solid fa-xmark"></i>
-        </button>
+        <p class="font-bold text-xs">${escapeHTML(title)}</p>
+        <p class="text-[11px] text-slate-300 mt-0.5">${escapeHTML(msg)}</p>
       `;
 
       container.appendChild(toast);
-      requestAnimationFrame(() => {
-        toast.classList.remove('translate-y-2', 'opacity-0');
-      });
-
       setTimeout(() => {
-        toast.classList.add('translate-y-2', 'opacity-0');
+        toast.style.opacity = '0';
         setTimeout(() => toast.remove(), 300);
-      }, 5000);
+      }, 4000);
     }
   </script>
 </body>

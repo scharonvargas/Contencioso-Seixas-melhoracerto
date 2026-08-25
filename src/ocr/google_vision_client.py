@@ -22,10 +22,18 @@ class GoogleVisionOCRClient:
     ENDPOINT_URL = "https://vision.googleapis.com/v1/images:annotate"
 
     def __init__(self, api_key: Optional[str] = None):
+        self._explicit_key = api_key
         self.api_key = api_key or getattr(settings, "GOOGLE_VISION_API_KEY", None) or getattr(settings, "GEMINI_API_KEY", None) or os.getenv("GOOGLE_VISION_API_KEY") or os.getenv("GEMINI_API_KEY")
 
     def is_available(self) -> bool:
-        return bool(self.api_key and len(self.api_key.strip()) > 5)
+        if self._explicit_key is not None:
+            return bool(self._explicit_key and len(str(self._explicit_key).strip()) > 5)
+        current_key = getattr(settings, "GOOGLE_VISION_API_KEY", None)
+        if current_key is None or len(str(current_key).strip()) == 0:
+            current_key = getattr(settings, "GEMINI_API_KEY", None)
+        if current_key is None:
+            current_key = self.api_key or ""
+        return bool(current_key and len(str(current_key).strip()) > 5)
 
     def process_image_bytes(self, image_bytes: bytes, width: int = 1, height: int = 1) -> Optional[Dict[str, Any]]:
         """
