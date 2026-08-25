@@ -310,11 +310,37 @@ class ProcessExecutionService:
                 "words_data": p.get("words_data", [])
             })
 
+        # Monta a Matriz de Cruzamento de Documentos e Fatos (Cross-Document Synthesis Matrix)
+        documents_matrix = []
+        for doc_item in documents_summary:
+            d_name = doc_item["filename"]
+            d_pages = [p for p in processed_pages if p.get("document_name") == d_name]
+            d_segments = list(set(p.get("segment_type", "OUTROS") for p in d_pages))
+            
+            contributed_facts = []
+            if case_facts["financial"].get("evidence") and case_facts["financial"]["evidence"].get("document_name") == d_name:
+                contributed_facts.append(f"Financeiro (Valor Pleiteado: R$ {case_facts['financial'].get('requested_amount', 0):,.2f})")
+            if any(rc.get("document_name") == d_name for rc in case_facts["financial"].get("receipts_found", [])):
+                contributed_facts.append("Comprovante / Nota Fiscal de Desembolso")
+            if case_facts["treatment"].get("evidence") and case_facts["treatment"]["evidence"].get("document_name") == d_name:
+                contributed_facts.append(f"Laudo Médico / Diagnóstico (CID {case_facts['treatment'].get('cid_10') or 'Geral'})")
+            if case_facts["administrative_denial"].get("evidence") and case_facts["administrative_denial"]["evidence"].get("document_name") == d_name:
+                contributed_facts.append("Negativa Administrativa da Operadora")
+
+            documents_matrix.append({
+                "document_index": doc_item["document_index"],
+                "document_name": d_name,
+                "pages_count": doc_item["pages_count"],
+                "identified_pieces": d_segments,
+                "contributed_facts": contributed_facts if contributed_facts else ["Peça processual / Documentos anexos"]
+            })
+
         return {
             "process_id": process_id,
             "total_pages": total_pages,
             "documents_count": len(documents_summary),
             "documents_summary": documents_summary,
+            "documents_matrix": documents_matrix,
             "pages": pages_summary,
             "policy_version": active_policy_version.version,
             "verdict": decision_result.overall_verdict,
@@ -648,7 +674,8 @@ class ProcessExecutionService:
             raw_text = p.get("raw_text") or ""
             raw_lower = raw_text.lower()
             page_num = p.get("page_number", 1)
-            doc_name = p.get("document_name", "")
+            doc_name = p.get("document_name", "documento.pdf")
+            page_in_doc = p.get("page_in_document", 1)
 
             # 6.1 Detecção de Petição Inicial para ancoragem de pedidos
             if not initial_petition_evidence and any(k in raw_lower for k in ["petição inicial", "peticao inicial", "dos pedidos", "valor da causa", "dá-se à causa"]):
@@ -657,7 +684,9 @@ class ProcessExecutionService:
                     page_raw_text=raw_text,
                     words_data=p.get("words_data", []),
                     document_type="PETICAO_INICIAL",
-                    page_number=page_num
+                    page_number=page_num,
+                    document_name=doc_name,
+                    page_in_document=page_in_doc
                 )
                 if valid:
                     initial_petition_evidence = ev
@@ -680,7 +709,9 @@ class ProcessExecutionService:
                     page_raw_text=raw_text,
                     words_data=p.get("words_data", []),
                     document_type="NOTA_FISCAL",
-                    page_number=page_num
+                    page_number=page_num,
+                    document_name=doc_name,
+                    page_in_document=page_in_doc
                 )
                 if valid:
                     facts["financial"]["has_fiscal_receipt"] = True
@@ -688,6 +719,7 @@ class ProcessExecutionService:
                     facts["financial"]["receipts_found"].append({
                         "page_number": page_num,
                         "document_name": doc_name,
+                        "page_in_document": page_in_doc,
                         "snippet": raw_text[:120].strip()
                     })
 
@@ -711,7 +743,9 @@ class ProcessExecutionService:
                     page_raw_text=raw_text,
                     words_data=p.get("words_data", []),
                     document_type="LAUDO_MEDICO",
-                    page_number=page_num
+                    page_number=page_num,
+                    document_name=doc_name,
+                    page_in_document=page_in_doc
                 )
                 if valid:
                     facts["treatment"]["has_medical_report"] = True
@@ -742,7 +776,9 @@ class ProcessExecutionService:
                     page_raw_text=raw_text,
                     words_data=p.get("words_data", []),
                     document_type="NEGATIVA_OPERADORA",
-                    page_number=page_num
+                    page_number=page_num,
+                    document_name=doc_name,
+                    page_in_document=page_in_doc
                 )
                 if valid:
                     facts["administrative_denial"]["has_administrative_denial"] = True
@@ -752,12 +788,15 @@ class ProcessExecutionService:
         if not facts["financial"]["evidence"] and initial_petition_evidence:
             facts["financial"]["evidence"] = initial_petition_evidence
         elif not facts["financial"]["evidence"] and len(pages) > 0:
+            first_p = pages[0]
             valid, ev = EvidenceGroundingValidator.validate_and_create_evidence(
                 extracted_snippet="R$",
-                page_raw_text=pages[0].get("raw_text") or "",
-                words_data=pages[0].get("words_data", []),
+                page_raw_text=first_p.get("raw_text") or "",
+                words_data=first_p.get("words_data", []),
                 document_type="PETICAO_INICIAL",
-                page_number=1
+                page_number=1,
+                document_name=first_p.get("document_name", "documento.pdf"),
+                page_in_document=first_p.get("page_in_document", 1)
             )
             if valid:
                 facts["financial"]["evidence"] = ev

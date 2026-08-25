@@ -129,6 +129,64 @@ async def get_process_details(process_id: str):
                 "words_data": pr.words_data or []
             })
 
+        # Agrupa documentos únicos a partir de DocumentPage para a Matriz de Cruzamento
+        doc_map = {}
+        for pr in pages_records:
+            doc_name = pr.document_name or "documento.pdf"
+            if doc_name not in doc_map:
+                doc_map[doc_name] = {
+                    "document_name": doc_name,
+                    "pages_count": 0,
+                    "first_global_page": pr.page_number,
+                    "segments": set()
+                }
+            doc_map[doc_name]["pages_count"] += 1
+            if pr.segment_type:
+                doc_map[doc_name]["segments"].add(pr.segment_type)
+
+        documents_summary = []
+        documents_matrix = []
+        for idx, (dname, dinfo) in enumerate(doc_map.items()):
+            doc_summary_item = {
+                "document_index": idx + 1,
+                "document_name": dname,
+                "filename": dname,
+                "pages_count": dinfo["pages_count"],
+                "first_global_page": dinfo["first_global_page"],
+                "segments": list(dinfo["segments"])
+            }
+            documents_summary.append(doc_summary_item)
+
+            contributed = []
+            fin_val = facts_dict.get("financial", {})
+            if isinstance(fin_val, dict):
+                ev = fin_val.get("evidence")
+                if ev and isinstance(ev, dict) and ev.get("document_name") == dname:
+                    contributed.append(f"Financeiro (Valor Pleiteado: R$ {fin_val.get('requested_amount', 0):,.2f})")
+                for rc in fin_val.get("receipts_found", []):
+                    if isinstance(rc, dict) and rc.get("document_name") == dname:
+                        contributed.append("Comprovante / Nota Fiscal de Desembolso")
+            
+            treat_val = facts_dict.get("treatment", {})
+            if isinstance(treat_val, dict):
+                ev = treat_val.get("evidence")
+                if ev and isinstance(ev, dict) and ev.get("document_name") == dname:
+                    contributed.append(f"Laudo Médico / Diagnóstico (CID {treat_val.get('cid_10') or 'Geral'})")
+
+            adm_val = facts_dict.get("administrative_denial", {})
+            if isinstance(adm_val, dict):
+                ev = adm_val.get("evidence")
+                if ev and isinstance(ev, dict) and ev.get("document_name") == dname:
+                    contributed.append("Negativa Administrativa da Operadora")
+
+            documents_matrix.append({
+                "document_index": idx + 1,
+                "document_name": dname,
+                "pages_count": dinfo["pages_count"],
+                "identified_pieces": list(dinfo["segments"]),
+                "contributed_facts": contributed if contributed else ["Peça processual / Documentos anexos"]
+            })
+
         return {
             "process_id": proc.id,
             "cnj_number": proc.cnj_number,
@@ -140,6 +198,9 @@ async def get_process_details(process_id: str):
             "summary": eval_record.decision_summary if eval_record else "Em processamento",
             "identified_theme": identified_theme,
             "policy_version": p_ver.version if p_ver else "2026.1",
+            "documents_count": len(documents_summary),
+            "documents_summary": documents_summary,
+            "documents_matrix": documents_matrix,
             "total_pages_stored": len(pages_records),
             "pages": pages_list,
             "facts": facts_dict,
@@ -271,6 +332,7 @@ async def upload_judicial_process(
             "operator_name": operator_name or "Operadora de Saúde",
             "documents_count": result.get("documents_count", len(pdf_files_payload)),
             "documents_summary": result.get("documents_summary", []),
+            "documents_matrix": result.get("documents_matrix", []),
             "total_pages": result["total_pages"],
             "policy_version": result["policy_version"],
             "identified_theme": result.get("identified_theme"),

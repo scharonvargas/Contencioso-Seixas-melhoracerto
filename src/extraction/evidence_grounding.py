@@ -16,6 +16,8 @@ class EvidenceGroundingValidator:
         words_data: List[Dict[str, Any]],
         document_type: str,
         page_number: int,
+        document_name: Optional[str] = None,
+        page_in_document: Optional[int] = None,
         ocr_engine: str = "PyMuPDF",
         min_similarity_ratio: float = 0.85
     ) -> Tuple[bool, Optional[Dict[str, Any]]]:
@@ -68,6 +70,8 @@ class EvidenceGroundingValidator:
 
         evidence_dict = {
             "document_type": document_type,
+            "document_name": document_name or "documento.pdf",
+            "page_in_document": page_in_document or 1,
             "page_number": page_number,
             "bounding_box": bbox,
             "text_snippet": clean_snippet,
